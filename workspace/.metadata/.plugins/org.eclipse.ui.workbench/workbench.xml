@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<workbench progressCount="14" version="2.0">
+<workbench progressCount="20" version="2.0">
 <workbenchAdvisor/>
 <window height="768" maximized="true" width="1024" x="377" y="-15">
 <fastViewData fastViewLocation="1024"/>
@@ -32,20 +32,16 @@
 <presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
 <part id="0"/>
 <part id="1"/>
-<part id="2"/>
 </presentation>
 </folder>
 </info>
 </editorArea>
-<editor id="com.xilinx.sdk.hw.ui.HwSpecXMLEditor" name="system.xml" partName="system.xml" path="C:/Users/superman/Documents/spaceinvaders/workspace/XPS_hw_platform/system.xml" title="system.xml" tooltip="XPS_hw_platform/system.xml" workbook="DefaultEditorWorkbook">
-<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/XPS_hw_platform/system.xml"/>
-</editor>
-<editor id="com.xilinx.sdk.sw.MSSEditor" name="system.mss" partName="system.mss" path="C:/Users/superman/Documents/spaceinvaders/workspace/hello_world_bsp_0/system.mss" title="system.mss" tooltip="hello_world_bsp_0/system.mss" workbook="DefaultEditorWorkbook">
+<editor activePart="true" focus="true" id="com.xilinx.sdk.sw.MSSEditor" name="system.mss" partName="system.mss" path="C:/Users/superman/Documents/spaceinvaders/workspace/hello_world_bsp_0/system.mss" title="system.mss" tooltip="hello_world_bsp_0/system.mss" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hello_world_bsp_0/system.mss"/>
 </editor>
-<editor activePart="true" focus="true" id="org.eclipse.cdt.ui.editor.CEditor" name="helloworld.c" partName="helloworld.c" path="C:/Users/superman/Documents/spaceinvaders/workspace/hello_world_0/src/helloworld.c" title="helloworld.c" tooltip="hello_world_0/src/helloworld.c" workbook="DefaultEditorWorkbook">
+<editor id="org.eclipse.cdt.ui.editor.CEditor" name="helloworld.c" partName="helloworld.c" path="C:/Users/superman/Documents/spaceinvaders/workspace/hello_world_0/src/helloworld.c" title="helloworld.c" tooltip="hello_world_0/src/helloworld.c" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hello_world_0/src/helloworld.c"/>
-<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="0" selectionTopPixel="0"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="977" selectionTopPixel="0"/>
 </editor>
 </editors>
 <views>
@@ -190,6 +186,8 @@
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hello_world_0/src/helloworld.c"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hello_world_bsp_0/microblaze_0/include/xenv_standalone.h"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hello_world_bsp_0/microblaze_0/include/_profile_timer_hw.h"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="com.xilinx.sdk.sw.MSSEditor" path="/hello_world_bsp_0/system.mss"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="com.xilinx.sdk.hw.ui.HwSpecXMLEditor" path="/XPS_hw_platform/system.xml"/>
 </editors>
 <item historyLabel="system.xml" index="0"/>
 <item historyLabel="system.mss" index="1"/>
@@ -205,9 +203,15 @@
 <item historyLabel="_profile_timer_hw.h" index="4">
 <position info="not_deleted" x="0" y="0"/>
 </item>
-<item active="true" historyLabel="helloworld.c" index="2">
+<item historyLabel="helloworld.c" index="2">
 <position info="not_deleted" x="0" y="0"/>
 </item>
+<item historyLabel="helloworld.c" index="2">
+<position info="not_deleted" x="977" y="0"/>
+</item>
+<item historyLabel="system.mss" index="5"/>
+<item historyLabel="system.xml" index="6"/>
+<item active="true" historyLabel="system.mss" index="5"/>
 </navigationHistory>
 <input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
 </page>
