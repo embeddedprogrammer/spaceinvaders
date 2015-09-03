@@ -1,0 +1,11 @@
+XPS/
+.metadata/
+hello_world_bsp_0/
+XPS_hw_platform/
+Debug/
+.*project
+lscript.ld
+
+
+
+
