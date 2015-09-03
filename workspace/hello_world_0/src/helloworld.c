@@ -23,12 +23,25 @@
 #include <stdio.h>
 #include "platform.h"
 
+int fib(int n)
+{
+	if(n < 2)
+		return 1;
+	else
+		return fib(n - 1) + fib(n - 2);
+}
 
 int main()
 {
     init_platform();
 
     xil_printf("Hello World\n\r");
+	int n = 0;
+	for(n = 0; n < 5; n++)
+	{
+    	xil_printf("%d ", fib(n));
+	}
+	xil_printf("\n\r");
 
     cleanup_platform();
 
