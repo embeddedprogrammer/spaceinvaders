@@ -1,6 +1,6 @@
 XPS/
 .metadata/
-hello_world_bsp_0/
+*bsp*/
 XPS_hw_platform/
 Debug/
 .*project
