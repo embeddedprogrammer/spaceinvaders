@@ -48,8 +48,8 @@ void displayTime_modifyTick() {
 	int timeButton = displayTime_debouncedButtonState & (PUSH_BUTTONS_LEFT | PUSH_BUTTONS_CENTER | PUSH_BUTTONS_RIGHT);
 	if (modifyTimer_state == modifyTimer_state_waitForTimeButton && timeButton) {
 		modifyTimer_state = modifyTimer_state_waitForUpDown;
-	} else if (modifyTimer_state > modifyTimer_state_waitForTimeButton && !timeButton) { // Go backwards if released
 		enable = false;
+	} else if (modifyTimer_state > modifyTimer_state_waitForTimeButton && !timeButton) { // Go backwards if released
 		modifyTimer_state = modifyTimer_state_waitForTimeButton;
 		enable = true;
 	}
