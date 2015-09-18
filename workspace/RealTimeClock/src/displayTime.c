@@ -46,12 +46,9 @@ void displayTime_modifyTick() {
 
 	// Wait for user to push a time button (left, center, or right)
 	int timeButton = displayTime_debouncedButtonState & (PUSH_BUTTONS_LEFT | PUSH_BUTTONS_CENTER | PUSH_BUTTONS_RIGHT);
-	static int pushedTimeButton = 0;
 	if (modifyTimer_state == modifyTimer_state_waitForTimeButton && timeButton) {
-		pushedTimeButton = timeButton; // Lock in the button. Don't allow user to push different time button
 		modifyTimer_state = modifyTimer_state_waitForUpDown;
-
-	} else if (modifyTimer_state > modifyTimer_state_waitForTimeButton && !(timeButton & pushedTimeButton)) { // Go backwards if released
+	} else if (modifyTimer_state > modifyTimer_state_waitForTimeButton && !timeButton) { // Go backwards if released
 		enable = false;
 		modifyTimer_state = modifyTimer_state_waitForTimeButton;
 		enable = true;
@@ -64,7 +61,7 @@ void displayTime_modifyTick() {
 	bool modifyTime = false;
 
 	if (modifyTimer_state == modifyTimer_state_waitForUpDown && upDown) {
-		pushedUpDown = upDown; // Lock in the button. Don't allow user to push different up down button
+		pushedUpDown = upDown; // Lock in the button. Don't allow user to push different up down button (at least not without first stopping auto increment)
 		modifyTimer_state = modifyTimer_state_AutoIncrement;
 		modifyTime = true; // Modify time on initial press
 		autoIncrementTimer = 0;
