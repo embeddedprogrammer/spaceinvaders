@@ -14,6 +14,7 @@ static int hours = 0;   // current value of the hour counter
 static int minutes = 0; // current value of the minutes counter
 static int seconds = 0; // current value of the seconds counter
 
+static bool enable = true;
 int displayTime_debouncedButtonState = 0;    // the value of the button register after debouncing
 
 void displayTime_setButtonsVal(int debouncedButtons)
@@ -51,7 +52,9 @@ void displayTime_modifyTick() {
 		modifyTimer_state = modifyTimer_state_waitForUpDown;
 
 	} else if (modifyTimer_state > modifyTimer_state_waitForTimeButton && !(timeButton & pushedTimeButton)) { // Go backwards if released
+		enable = false;
 		modifyTimer_state = modifyTimer_state_waitForTimeButton;
+		enable = true;
 	}
 
 	// Wait for user to push up and down buttons
@@ -130,12 +133,15 @@ void displayTime_increment() {
 
 // Tracks normal time operations
 void displayTime_tick() {
-	static int displayTime_timer = 0;
-	const int DISPLAYTIMER_ONESECOND = 100;
-	displayTime_timer++;
-	if (displayTime_timer == DISPLAYTIMER_ONESECOND) { // adjust every second
-		displayTime_timer = 0; // reset display timer
-		displayTime_increment();
-		displayTime_display();
+	if(enable)
+	{
+		static int displayTime_timer = 0;
+		const int DISPLAYTIMER_ONESECOND = 100;
+		displayTime_timer++;
+		if (displayTime_timer == DISPLAYTIMER_ONESECOND) { // adjust every second
+			displayTime_timer = 0; // reset display timer
+			displayTime_increment();
+			displayTime_display();
+		}
 	}
 }
