@@ -16,6 +16,7 @@
 void draw_Bunkers();
 void draw_Tank(point_t position);
 void draw_AlienFleet(bool in);
+void draw_rectangle(point_t pos, int width, int height, int color);
 
 
 #endif /* DRAWSHAPE_H_ */
