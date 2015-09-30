@@ -137,7 +137,6 @@ int main()
 			control_moveTankRight();
 			break;
 		case KEY_KILL_ALIEN:
-		{
 			xil_printf("waiting for kill\r\n");
 			int idx = 0;
 			while ((input = getchar()) != 'k') {
@@ -148,15 +147,16 @@ int main()
 			control_killAlien(idx);
 			draw_AlienFleet(in);
 			break;
-		}
 		case KEY_MOVE_ALIEN:
 			xil_printf("shift alien fleet\r\n");
 			control_shiftAlienFleet();
 			in = !in;
 			draw_AlienFleet(in);
+			break;
 		case KEY_TANK_FIRE_BULLET:
 			xil_printf("fire bullet\r\n");
 			control_fireBullet();
+			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}

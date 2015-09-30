@@ -127,6 +127,7 @@ void control_shiftAlienFleet()
 		erasePos.row = alienPos.row;
 		draw_rectangle(erasePos, ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
 	}
+	setAlienFleetPositionGlobal(alienPos);
 }
 
 void control_fireBullet()
