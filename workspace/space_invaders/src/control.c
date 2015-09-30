@@ -85,16 +85,19 @@ void shiftAlienFleetDown()
 	setAlienFleetPositionGlobal(alienPos);
 }
 
-//void shiftDownErase(point_t alienPos)
-//{
-//	int i;
-//	int row = alienPos.row;
-//	int col = alienPos.col;
-//	for (i = topAlienRow; i < bottomAlienRow; i++ ) {
-//		point_t erasePos;
-//		erasePos.row =
-//	}
-//}
+void shiftDownErase(point_t alienPos)
+{
+	int i;
+	int row = alienPos.row - ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
+	int col = alienPos.col;
+	point_t erasePos;
+	erasePos.col = alienPos.col;
+	erasePos.row = alienPos.row - ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
+	for (i = topAlienRow; i < bottomAlienRow; i++ ) {
+		draw_rectangle(erasePos, ALIEN_BITMAP_WIDTH*11, ALIEN_FLEET_SHIFT_DOWN_AMOUNT, BACKGROUND_COLOR);
+
+	}
+}
 
 static bool directionRight = true;
 bool control_AlienDirectionIsRight() { return directionRight; }
