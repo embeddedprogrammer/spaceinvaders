@@ -124,44 +124,45 @@ int main()
      // Oscillate between frame 0 and frame 1.
      // int sillyTimer = MAX_SILLY_TIMER;  // Just a cheap delay between frames.
 
-     bool in = false;
-     while (1) {
-    	 char input;
-		 input = getchar();
-		 switch (input) {
-		 case KEY_TANK_LEFT:
-			 control_moveTankLeft();
-			 break;
-		 case KEY_TANK_RIGHT:
-			 control_moveTankRight();
-			 break;
-		 case KEY_KILL_ALIEN:
-		 {
-			 xil_printf("waiting for kill\r\n");
-			 int idx = 0;
-			 while ((input = getchar()) != 'k') {
-				 idx *= 10;
-				 idx += input - '0';
-			 }
-			 xil_printf("killed %d\r\n", idx);
-			 control_killAlien(idx);
-			 draw_AlienFleet(in);
-			 break;
-		 }
-		 case KEY_MOVE_ALIEN:
-			 xil_printf("shift alien fleet\r\n");
-			 control_shiftAlienFleet();
-			 in = !in;
-			 draw_AlienFleet(in);
-		 }
+    bool in = false;
+	while (1) {
+		char input;
+		input = getchar();
+		switch (input) {
+		case KEY_TANK_LEFT:
+			control_moveTankLeft();
+			break;
+		case KEY_TANK_RIGHT:
+			control_moveTankRight();
+			break;
+		case KEY_KILL_ALIEN:
+		{
+			xil_printf("waiting for kill\r\n");
+			int idx = 0;
+			while ((input = getchar()) != 'k') {
+				idx *= 10;
+				idx += input - '0';
+			}
+			xil_printf("killed %d\r\n", idx);
+			control_killAlien(idx);
+			draw_AlienFleet(in);
+			break;
+		}
+		case KEY_MOVE_ALIEN:
+			xil_printf("shift alien fleet\r\n");
+			control_shiftAlienFleet();
+			in = !in;
+			draw_AlienFleet(in);
+		}
 
-//    	 while (sillyTimer) sillyTimer--;    // Decrement the timer.
-//    	 sillyTimer = MAX_SILLY_TIMER;       // Reset the timer.
-         if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, 0,  XAXIVDMA_READ)) {
-        	 xil_printf("vdma parking failed\n\r");
-         }
-     }
-     cleanup_platform();
+		//    	while (sillyTimer) sillyTimer--;    // Decrement the timer.
+		//    	sillyTimer = MAX_SILLY_TIMER;       // Reset the timer.
+		if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, 0,
+				XAXIVDMA_READ)) {
+			xil_printf("vdma parking failed\n\r");
+		}
+	}
+	cleanup_platform();
 
-    return 0;
+	return 0;
 }
