@@ -85,6 +85,17 @@ void shiftAlienFleetDown()
 	setAlienFleetPositionGlobal(alienPos);
 }
 
+//void shiftDownErase(point_t alienPos)
+//{
+//	int i;
+//	int row = alienPos.row;
+//	int col = alienPos.col;
+//	for (i = topAlienRow; i < bottomAlienRow; i++ ) {
+//		point_t erasePos;
+//		erasePos.row =
+//	}
+//}
+
 static bool directionRight = true;
 bool control_AlienDirectionIsRight() { return directionRight; }
 
@@ -93,13 +104,27 @@ void control_shiftAlienFleet()
 	bool shiftDown = (directionRight) ? alienFleetAtRightScreenEdge() : alienFleetAtLeftScreenEdge();
 
 	point_t alienPos = getAlienFleetPositionGlobal();
+
 	if (shiftDown) {
 		directionRight = !directionRight;
 		alienPos.row += ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
+		point_t erasePos;
 
 	} else {
-		alienPos.col += (directionRight) ? ALIEN_SHIFT_AMMOUNT : -ALIEN_SHIFT_AMMOUNT;
+		point_t erasePos;
+		if (directionRight) {
+			alienPos.col = ALIEN_SHIFT_AMMOUNT;
+			erasePos.col = alienPos.col - ALIEN_SHIFT_AMMOUNT;
+		} else {
+			alienPos.col = -ALIEN_SHIFT_AMMOUNT;
+			erasePos.col = alienPos.col + ALIEN_BITMAP_WIDTH*11;
+		}
+		erasePos.row = alienPos.row;
+		draw_rectangle(erasePos, ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
 	}
+
+
+
 	setAlienFleetPositionGlobal(alienPos);
 }
 

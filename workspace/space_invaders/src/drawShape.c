@@ -55,10 +55,10 @@ void draw_Damage(const uint width, const uint height, point_t pos, const int* sh
 		uint shapeWord = shapeBuffer[y];
 		for (col = col_start; col < maxCol; x++) {
 			int buffer_point = shapeWord & (0x01 << (width - 1 - x));
-			int onScreen_point = frameBuffer[row*640 + col];
+			int onScreen_point = frameBuffer[row*SCREENBUFFER_WIDTH + col];
 			int color = (buffer_point | onScreen_point) ? BACKGROUND_COLOR : BACKGROUND_COLOR;
-			frameBuffer[row*640 + col++] = color;
-			frameBuffer[row*640 + col++] = color;
+			frameBuffer[row*SCREENBUFFER_WIDTH + col++] = color;
+			frameBuffer[row*SCREENBUFFER_WIDTH + col++] = color;
 		}
 		y += (inc_y++) % 2;// increment every other line.
 	}
@@ -105,11 +105,23 @@ void draw_Bunkers() {
 	}
 
 }
-#define ALIEN_VERTICAL_SPACER 6
 
+void draw_rectangle(point_t pos, int width, int height, int color) {
+	uint* frameBuffer = getFrameBuffer();
+	uint row_start = TO_SCREENSIZE(pos.row);
+	uint col_start = TO_SCREENSIZE(pos.col);
+	uint maxCol = col_start + TO_SCREENSIZE(width);
+	uint maxRow = row_start + TO_SCREENSIZE(height);
+	uint row;
+	uint col;
+	for (row = row_start; row < maxRow; row++) {
+		for (col = col_start; col < maxCol;) {
+			frameBuffer[row*SCREENBUFFER_WIDTH + col++] = color;
+			frameBuffer[row*SCREENBUFFER_WIDTH + col++] = color;
+		}
+	}
+}
 
-static int alienFleet_Width = (ALIEN_BITMAP_WIDTH*11);
-static int alienFleet_Height = (ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4);
 
 void drawEraseBuffer(point_t pos) {
 	const int horizontalEraseBuffer [ALIEN_BITMAP_HEIGHT] = {0,0,0,0,0,0,0,0};
