@@ -2,10 +2,10 @@ XPS/
 .metadata/
 *bsp*/
 XPS_hw_platform/
+SpaceInvadersHW/
 Debug/
 .*project
 lscript.ld
-
 
 
 
