@@ -13,8 +13,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
+bool outOfBounds(point_t pos) {
+	return (pos.col < 0)                ||
+		   (pos.col > GAMEBUFFER_WIDTH) ||
+		   (pos.row < 0)                ||
+		   (pos.row > GAMEBUFFER_HEIGHT);
+}
+
 //draws a shape based on game coordinates and converts them to screen coordinates
 void draw_Shape(const uint width, const uint height, int shapeColor, point_t pos, const int* shapeBuffer) {
+
 	uint* frameBuffer = getFrameBuffer();
 
 	uint row_start = TO_SCREENSIZE(pos.row);
@@ -173,7 +181,8 @@ void draw_AlienFleet(bool in)
 				draw_AlienBottom(alienPos, in);
 				break;
 			}
-		} else {
+		//} else if (alienPos.col >= 0 && alienPos.col + ALIEN_BITMAP_WIDTH < GAMEBUFFER_WIDTH){//we dont want to write off screen
+		} else {//we dont want to write off screen
 			draw_Shape(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, alienPos, ARRAY_PTR(alien_erase_14x8));
 		}
 	}

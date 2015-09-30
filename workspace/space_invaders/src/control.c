@@ -42,33 +42,41 @@ void control_killAlien(uint alienIdx)
 	aliensAlive[alienIdx] = false;
 
 	/* update aliens matrix dimensions */
-//	int i;
-//	int j;
-//	for (i = 0; i < 5; i++)
-//		for (j = 0; j < 11; j++)
-//			if (aliensAlive[ARRAY_2D(i,j)])
-//				topAlienRow = i;
-//
-//	for (i = 4; i >= 0; i++)
-//		for (j = 0; j < 11; j++)
-//			if (aliensAlive[ARRAY_2D(i,j)])
-//				bottomAlienRow = i;
-//
-//
-//	for (j = 0; j < 11; j++)
-//		for (i = 0; i < 5; i++)
-//			if (aliensAlive[ARRAY_2D(i,j)])
-//				leftAlienCol = j;
-//
-//	for (j = 10; j >= 0; j--)
-//		for (i = 0; i < 5; i++)
-//			if (aliensAlive[ARRAY_2D(i,j)])
-//				rightAlienCol = j;
+	int i;
+	int j;
+	for (i = 0; i < 5; i++)
+		for (j = 0; j < 11; j++)
+			if (aliensAlive[ARRAY_2D(i,j)]) {
+				topAlienRow = i;
+				goto topAlienExit;
+			}
+	topAlienExit:
+	for (i = 4; i >= 0; i--)
+		for (j = 0; j < 11; j++)
+			if (aliensAlive[ARRAY_2D(i,j)]) {
+				bottomAlienRow = i;
+				goto bottomAlienExit;
+			}
+
+	bottomAlienExit:
+	for (j = 0; j < 11; j++)
+		for (i = 0; i < 5; i++)
+			if (aliensAlive[ARRAY_2D(i,j)]) {
+				leftAlienCol = j;
+				goto leftAlienExit;
+			}
+	leftAlienExit:
+	for (j = 10; j >= 0; j--)
+		for (i = 0; i < 5; i++)
+			if (aliensAlive[ARRAY_2D(i,j)]) {
+				rightAlienCol = j;
+				return;
+			}
 }
 
 bool alienFleetAtRightScreenEdge()
 {
-	int alienFleetWidth = (rightAlienCol - leftAlienCol + 1)*ALIEN_BITMAP_WIDTH;
+	int alienFleetWidth = (rightAlienCol + 1)*ALIEN_BITMAP_WIDTH;
 	point_t alienPos = getAlienFleetPositionGlobal();
 	return (alienPos.col + alienFleetWidth + ALIEN_SHIFT_AMMOUNT > GAMEBUFFER_WIDTH);
 }
@@ -77,6 +85,12 @@ bool alienFleetAtLeftScreenEdge()
 {
 	int alienFleetLeftOffset = leftAlienCol*ALIEN_BITMAP_WIDTH;
 	point_t alienPos = getAlienFleetPositionGlobal();
+//	{
+//		xil_printf("alien col = %d\n\r", alienPos.col);
+//		xil_printf("alien row = %d\n\r", alienPos.row);
+//		xil_printf("offset = %d\n\r", alienFleetLeftOffset);
+//		xil_printf("param = %d\n\r", alienPos.col + alienFleetLeftOffset - ALIEN_SHIFT_AMMOUNT);
+//	}
 	return (alienPos.col + alienFleetLeftOffset - ALIEN_SHIFT_AMMOUNT < 0);
 }
 
@@ -91,12 +105,10 @@ void shiftDownErase(point_t alienPos)
 {
 	int i;
 	point_t erasePos;
-	xil_printf("alienPos row = %d", alienPos.row);
-	erasePos.col = alienPos.col;
+	erasePos.col = alienPos.col + leftAlienCol*ALIEN_BITMAP_WIDTH;
 	erasePos.row = alienPos.row - ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
 	for (i = topAlienRow; i < bottomAlienRow + 1; i++ ) {
-		draw_rectangle(erasePos, ALIEN_BITMAP_WIDTH*11, ALIEN_FLEET_SHIFT_DOWN_AMOUNT, BACKGROUND_COLOR);
-		xil_printf("row = %d\r\n", erasePos.row);
+		draw_rectangle(erasePos, ALIEN_BITMAP_WIDTH*(rightAlienCol - leftAlienCol + 1), ALIEN_FLEET_SHIFT_DOWN_AMOUNT, BACKGROUND_COLOR);
 		erasePos.row += ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER;
 
 	}
@@ -107,9 +119,12 @@ bool control_AlienDirectionIsRight() { return directionRight; }
 
 void control_shiftAlienFleet()
 {
-	bool shiftDown = (directionRight) ? alienFleetAtRightScreenEdge() : alienFleetAtLeftScreenEdge();
-
 	point_t alienPos = getAlienFleetPositionGlobal();
+	bool shiftDown = (directionRight) ? alienFleetAtRightScreenEdge() : alienFleetAtLeftScreenEdge();
+	if (alienFleetAtLeftScreenEdge()) {
+		xil_printf("fleet at left screen edge\n\r");
+	}
+
 	if (shiftDown) {
 		directionRight = !directionRight;
 		alienPos.row += ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
@@ -117,15 +132,26 @@ void control_shiftAlienFleet()
 
 	} else {
 		point_t erasePos;
+		bool needEraseBuffer = true;
 		if (directionRight) {
 			alienPos.col += ALIEN_SHIFT_AMMOUNT;
-			erasePos.col = alienPos.col - ALIEN_SHIFT_AMMOUNT;
+			if (leftAlienCol != 0) {
+				needEraseBuffer = false;
+			} else {
+				erasePos.col = alienPos.col - ALIEN_SHIFT_AMMOUNT;
+			}
 		} else {
 			alienPos.col -= ALIEN_SHIFT_AMMOUNT;
-			erasePos.col = alienPos.col + ALIEN_BITMAP_WIDTH*11;
+			if (rightAlienCol != 10) {
+				needEraseBuffer = false;
+			} else {
+				erasePos.col = alienPos.col + ALIEN_BITMAP_WIDTH*11;
+			}
 		}
-		erasePos.row = alienPos.row;
-		draw_rectangle(erasePos, ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
+		if (needEraseBuffer) {
+			erasePos.row = alienPos.row;
+			draw_rectangle(erasePos, ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
+		}
 	}
 	setAlienFleetPositionGlobal(alienPos);
 }

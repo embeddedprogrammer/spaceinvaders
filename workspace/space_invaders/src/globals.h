@@ -43,8 +43,8 @@ typedef char byte;
 
 typedef struct
 {
-	ushort col;
-	ushort row;
+	short col;
+	short row;
 } point_t;
 
 typedef struct
