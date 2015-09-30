@@ -21,6 +21,8 @@
 #define TO_SCREENSIZE(X) (X<<1)
 #define TO_GAMESIZE(X) (X>>1)
 
+#define ARRAY_2D(i,j) (i*11 + j)
+
 #define FRAME_BUFFER_ADDR 0xC1000000 // Starting location in DDR where we will store the images that we display.
 
 #define BUNKER_DAMAGE_ARRAY_ROWS 3
@@ -75,6 +77,23 @@ bool* getAliensAliveArrayGlobal();
 point_t getAlienFleetPositionGlobal();
 
 void setAlienFleetPositionGlobal(point_t alienFleetPos);
+
+void setAlienFleetLeftColNumGlobal(int left);
+
+void setAlienFleetRightColNumGlobal(int right);
+
+void setAlienFleetTopRowNumGlobal(int top);
+
+void setAlienFleetBottomRowNumGlobal(int bottom);
+
+int getAlienFleetLeftColNumGlobal();
+
+int getAlienFleetRightColNumGlobal();
+
+int getAlienFleetTopRowNumGlobal();
+
+int getAlienFleetBottomRowNumGlobal();
+
 
 
 

@@ -147,44 +147,44 @@ void draw_AlienFleet(bool in)
 {
 	bool* aliensAlive = getAliensAliveArrayGlobal();
 	int i;
-	int row= 0;
+	int j;
+	int leftAlienCol = getAlienFleetLeftColNumGlobal();
+	int topAlienRow = getAlienFleetTopRowNumGlobal();
+	int rightAlienCol = getAlienFleetRightColNumGlobal();
+	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
 	point_t alienFleetPos = getAlienFleetPositionGlobal();
 	point_t alienPos;
-	const int startCol = alienFleetPos.col;
-	alienPos.row = alienFleetPos.row;
+	const int startCol = alienFleetPos.col + leftAlienCol*ALIEN_BITMAP_WIDTH;
+	alienPos.row = alienFleetPos.row + topAlienRow*(ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER);
 	alienPos.col = startCol;
-	for (i = 0; i < TOTAL_ALIENS; i++) {
-		if (i % 11 == 0) {
-			if (i != 0) {
-				row++;
-				alienPos.row += ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER;
+
+	for (i = topAlienRow; i <= bottomAlienRow; i++) {
+		for (j = leftAlienCol; j <= rightAlienCol; j++) {
+			if (aliensAlive[ARRAY_2D(i,j)]) {
+				switch (i) {
+				case 0:
+					draw_AlienTop(alienPos, in);
+					break;
+				case 1:
+					draw_AlienMiddle(alienPos, in);
+					break;
+				case 2:
+					draw_AlienMiddle(alienPos, in);
+					break;
+				case 3:
+					draw_AlienBottom(alienPos, in);
+					break;
+				case 4:
+					draw_AlienBottom(alienPos, in);
+					break;
+				}
+			} else {
+				draw_Shape(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, alienPos, ARRAY_PTR(alien_erase_14x8));
 			}
-			alienPos.col = startCol;
-		} else {
 			alienPos.col += ALIEN_BITMAP_WIDTH;
 		}
-		if (aliensAlive[i]) {
-			switch (row) {
-			case 0:
-				draw_AlienTop(alienPos, in);
-				break;
-			case 1:
-				draw_AlienMiddle(alienPos, in);
-				break;
-			case 2:
-				draw_AlienMiddle(alienPos, in);
-				break;
-			case 3:
-				draw_AlienBottom(alienPos, in);
-				break;
-			case 4:
-				draw_AlienBottom(alienPos, in);
-				break;
-			}
-		//} else if (alienPos.col >= 0 && alienPos.col + ALIEN_BITMAP_WIDTH < GAMEBUFFER_WIDTH){//we dont want to write off screen
-		} else {//we dont want to write off screen
-			draw_Shape(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, alienPos, ARRAY_PTR(alien_erase_14x8));
-		}
+		alienPos.col = startCol;
+		alienPos.row += ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER;
 	}
 }
 

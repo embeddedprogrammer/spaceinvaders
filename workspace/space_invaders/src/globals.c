@@ -102,6 +102,48 @@ void setAlienFleetPositionGlobal(point_t alienFleetPos) {
 	g_alienFleetPos = alienFleetPos;
 }
 
+static int leftAlienCol = 0;
+static int topAlienRow = 0;
+static int rightAlienCol = 10;
+static int bottomAlienRow = 4;
+
+void setAlienFleetLeftColNumGlobal(int left)
+{
+	leftAlienCol = left;
+}
+
+void setAlienFleetRightColNumGlobal(int right)
+{
+	rightAlienCol = right;
+}
+
+void setAlienFleetTopRowNumGlobal(int top)
+{
+	topAlienRow = top;
+}
+
+void setAlienFleetBottomRowNumGlobal(int bottom)
+{
+	bottomAlienRow = bottom;
+}
+
+int getAlienFleetLeftColNumGlobal()
+{
+	return leftAlienCol;
+}
+int getAlienFleetRightColNumGlobal()
+{
+	return rightAlienCol;
+}
+int getAlienFleetTopRowNumGlobal()
+{
+	return topAlienRow;
+}
+int getAlienFleetBottomRowNumGlobal()
+{
+	return bottomAlienRow;
+}
+
 
 
 
