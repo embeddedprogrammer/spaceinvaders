@@ -24,6 +24,7 @@ void print(char *str);
 #define KEY_TANK_RIGHT '6'
 #define KEY_MOVE_ALIEN '8'
 #define KEY_KILL_COMPLETE 'k'
+#define KEY_TANK_FIRE_BULLET '5'
 
 int main()
 {
@@ -153,6 +154,11 @@ int main()
 			control_shiftAlienFleet();
 			in = !in;
 			draw_AlienFleet(in);
+		case KEY_TANK_FIRE_BULLET:
+			xil_printf("fire bullet\r\n");
+			control_fireBullet();
+		default:
+			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}
 
 		//    	while (sillyTimer) sillyTimer--;    // Decrement the timer.

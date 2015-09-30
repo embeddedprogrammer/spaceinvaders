@@ -12,6 +12,7 @@ static int leftAlienCol = 0;
 static int topAlienRow = 0;
 static int rightAlienCol = 10;
 static int bottomAlienRow = 4;
+static point_t bulletLocation = (point_t){10, 10};
 
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
 #define ARRAY_2D(i,j) (i*11 + j)
@@ -126,9 +127,12 @@ void control_shiftAlienFleet()
 		erasePos.row = alienPos.row;
 		draw_rectangle(erasePos, ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
 	}
-	setAlienFleetPositionGlobal(alienPos);
 }
 
-
-
-
+void control_fireBullet()
+{
+	xil_printf("firing bullet\r\n");
+	erase_bullet(bulletLocation);
+	bulletLocation.row++;
+	draw_bullet(bulletLocation);
+}

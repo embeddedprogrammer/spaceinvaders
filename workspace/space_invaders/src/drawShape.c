@@ -122,7 +122,6 @@ void draw_rectangle(point_t pos, int width, int height, int color) {
 	}
 }
 
-
 void drawEraseBuffer(point_t pos) {
 	const int horizontalEraseBuffer [ALIEN_BITMAP_HEIGHT] = {0,0,0,0,0,0,0,0};
 	point_t eraseBufferPos;
@@ -135,6 +134,7 @@ void drawEraseBuffer(point_t pos) {
 
 	draw_Shape(ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, eraseBufferPos, ARRAY_PTR(horizontalEraseBuffer));
 }
+
 void draw_AlienFleet(bool in)
 {
 	bool* aliensAlive = getAliensAliveArrayGlobal();
@@ -204,4 +204,13 @@ void draw_BunkerDamage(point_t position) {
 //	}
 }
 
+void draw_bullet(point_t location)
+{
+	draw_Shape(BULLET_WIDTH, BULLET_HEIGHT, BULLET_COLOR, location, ARRAY_PTR(bullet_3x5));
+}
+
+void erase_bullet(point_t location)
+{
+	draw_Shape(BULLET_WIDTH, BULLET_HEIGHT,BACKGROUND_COLOR, location, ARRAY_PTR(bullet_3x5));
+}
 

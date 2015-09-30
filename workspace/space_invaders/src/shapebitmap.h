@@ -33,6 +33,9 @@
 #define packword6(b5,b4,b3,b2,b1,b0)                                                 \
 ((b5  << 5 ) | (b4  << 4 ) | (b3  << 3 ) | (b2  << 2 ) | (b1  << 1 ) | (b0  << 0 ) )
 
+#define packword3(b2,b1,b0)                                                 \
+((b2  << 2 ) | (b1  << 1 ) | (b0  << 0 ))
+
 //dimensions
 #define SAUCER_WIDTH 16
 #define SAUCER_HEIGHT 7
@@ -52,11 +55,14 @@
 #define BUNKER_HEIGHT 18
 #define BUNKER_DAMAGE_WIDTH 6
 #define BUNKER_DAMAGE_HEIGHT 6
+#define BULLET_WIDTH 3
+#define BULLET_HEIGHT 5
 
 //colors
 #define BUNKER_COLOR     0x0000FF00
 #define TANK_COLOR       0x000000FF
 #define ALIEN_COLOR      0x00FFFFFF
+#define BULLET_COLOR     0x00FFFFFF
 #define SAUCER_COLOR     0x00FF0000
 #define BACKGROUND_COLOR 0x00000000
 
@@ -233,5 +239,12 @@ static const int bunkerDamage3_6x6[] = {
 	packword6(1,1,1,1,1,1),
 	packword6(1,1,1,1,1,1)
 };
+
+static const int bullet_3x5[] = {
+	packword3(0,1,0),
+	packword3(0,1,0),
+	packword3(0,1,0),
+	packword3(1,1,1),
+	packword3(0,1,0)};
 
 #endif /* SHAPEBITMAP_C_ */
