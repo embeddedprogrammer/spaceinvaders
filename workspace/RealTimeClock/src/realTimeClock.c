@@ -3,45 +3,66 @@
 #include "platform.h"       // Enables caching and other system stuff.
 #include "mb_interface.h"   // provides the microblaze interrupt enables, etc.
 #include "xintc_l.h"        // Provides handy macros for the interrupt controller.
+#include <stdbool.h>
+#include "displayTime.h"
 
 XGpio gpLED;  // This is a handle for the LED GPIO block.
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
 
-#define PUSH_BUTTONS_CENTER 0x01
-#define PUSH_BUTTONS_RIGHT 0x02
-#define PUSH_BUTTONS_DOWN 0x04
-#define PUSH_BUTTONS_LEFT 0x08
-#define PUSH_BUTTONS_UP 0x10
+static int  debounceTimer = 0;           // 50 ms timer for debouncing buttons
+static bool debounceTimerEnable = false; // only counts when enabled
 
-int buttonTimer = 0;
+void custom_XIntc_EnableIntr(BaseAddress, EnableMask)
+{
+	*(volatile u32 *)(BaseAddress + XIN_IER_OFFSET) = EnableMask;
+}
+
+void custom_XIntc_MasterEnable(BaseAddress)
+{
+	*(volatile u32 *)(BaseAddress + XIN_MER_OFFSET) = XIN_INT_MASTER_ENABLE_MASK | XIN_INT_HARDWARE_ENABLE_MASK;
+}
+
+u32 custom_XIntc_GetIntrStatus(BaseAddress)
+{
+	return (*(volatile u32 *)(BaseAddress + XIN_ISR_OFFSET)) & (*(volatile u32 *)(BaseAddress + XIN_IER_OFFSET));
+}
+
+void custom_XIntc_AckIntr(BaseAddress, AckMask)
+{
+	*(volatile u32 *)(BaseAddress + XIN_IAR_OFFSET) = AckMask;
+}
+
+// After 50ms of button stability the buttons are
+// considered debounced and this timer is disabled
+void debounceButtons_tick() {
+	if (debounceTimerEnable) {
+		debounceTimer++;
+		if (debounceTimer == 5) { // 50 ms
+			debounceTimerEnable = false;
+			displayTime_setButtonsVal(XGpio_DiscreteRead(&gpPB, 1));
+		}
+	}
+}
 
 // This is invoked in response to a timer interrupt.
 // It does 2 things: 1) debounce switches, and 2) advances the time.
-void timer_interrupt_handler()
-{
-	static int i = 0;
-	i++;
-	if(i == 1000)
-	{
-		//XPAR_PUSH_BUTTONS_5BITS_BASEADDR
-		i = 0;
-		print("+ 10 seconds\n\r");
-	}
-	if(buttonTimer > 0)
-		buttonTimer--;
+void timer_interrupt_handler() { //10ms
+	debounceButtons_tick();
+	displayTime_modifyTick();
+	displayTime_tick();
 }
 
 // This is invoked each time there is a change in the button state (result of a push or a bounce).
-void pb_interrupt_handler()
-{
+void pb_interrupt_handler() {
 	// Clear the GPIO interrupt.
-	XGpio_InterruptGlobalDisable(&gpPB);                // Turn off all PB interrupts for now.
+	XGpio_InterruptGlobalDisable(&gpPB);                    // Turn off all PB interrupts for now.
 	int currentButtonState = XGpio_DiscreteRead(&gpPB, 1);  // Get the current state of the buttons.
-
-	if(currentButtonState && buttonTimer == 0)
+	static int previousButtonState;
+	if (previousButtonState != currentButtonState)
 	{
-		buttonTimer = 20;
-		xil_printf("do something %d \n\r", currentButtonState);
+		debounceTimer = 0;
+		debounceTimerEnable = true;
+		previousButtonState = currentButtonState;
 	}
 
 	// You need to do something here.
@@ -53,36 +74,27 @@ void pb_interrupt_handler()
 // fired the interrupt and then dispatches the corresponding interrupt handler.
 // This routine acks the interrupt at the controller level but the peripheral
 // interrupt must be ack'd by the dispatched interrupt handler.
-void interrupt_handler_dispatcher(void* ptr)
-{
-	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
+void interrupt_handler_dispatcher(void* ptr) {
+	int intc_status = custom_XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the FIT interrupt first.
 	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK)
 	{
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
+		custom_XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
 		timer_interrupt_handler();
 	}
 	// Check the push buttons.
 	if (intc_status & XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK)
 	{
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK);
-		pb_interrupt_handler();
-	}
-	// Check the switches
-	if (intc_status & XPAR_DIP_SWITCHES_8BITS_IP2INTC_IRPT_MASK)
-	{
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK);
+		custom_XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK);
 		pb_interrupt_handler();
 	}
 }
 
-int main (void)
-{
+int main (void) {
 	init_platform();
 	// Initialize the GPIO peripherals.
-	int success;
-	print("hello world\n\r");
-	success = XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
+	int success = XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
+
 	// Set the push button peripheral to be inputs.
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
 	// Enable the global GPIO interrupt for push buttons.
@@ -91,9 +103,9 @@ int main (void)
 	XGpio_InterruptEnable(&gpPB, 0xFFFFFFFF);
 
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
-	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
+	custom_XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
 			(XPAR_FIT_TIMER_0_INTERRUPT_MASK | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK));
-	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
+	custom_XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
 
 	while(1);  // Program never ends.
