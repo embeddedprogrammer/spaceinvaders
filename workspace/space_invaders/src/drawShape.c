@@ -144,6 +144,7 @@ void draw_AlienFleet(bool in)
 	point_t alienPos;
 	const int startCol = alienFleetPos.col;
 	alienPos.row = alienFleetPos.row;
+	alienPos.col = startCol;
 	for (i = 0; i < TOTAL_ALIENS; i++) {
 		if (i % 11 == 0) {
 			if (i != 0) {
@@ -151,7 +152,6 @@ void draw_AlienFleet(bool in)
 				alienPos.row += ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER;
 			}
 			alienPos.col = startCol;
-			drawEraseBuffer(alienPos);
 		} else {
 			alienPos.col += ALIEN_BITMAP_WIDTH;
 		}
