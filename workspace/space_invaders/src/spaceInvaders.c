@@ -23,8 +23,28 @@ void print(char *str);
 #define KEY_TANK_LEFT '4'
 #define KEY_TANK_RIGHT '6'
 #define KEY_MOVE_ALIEN '8'
-#define KEY_KILL_COMPLETE 'k'
 #define KEY_TANK_FIRE_BULLET '5'
+
+int getNumber()
+{
+	xil_printf("Please enter a number:\r\n");
+	int num = 0;
+	char input;
+	while (true)
+	{
+		input = getchar();
+		if(input >= '0' && input <= '9')
+		{
+			xil_printf("%c", input);
+			num = num*10 + (input - '0');
+		}
+		else //if any other key is pressed, exit
+		{
+			xil_printf("\r\n");
+			return num;
+		}
+	}
+}
 
 int main()
 {
@@ -137,14 +157,9 @@ int main()
 			control_moveTankRight();
 			break;
 		case KEY_KILL_ALIEN:
-			xil_printf("waiting for kill\r\n");
-			int idx = 0;
-			while ((input = getchar()) != 'k') {
-				idx *= 10;
-				idx += input - '0';
-			}
-			xil_printf("killed %d\r\n", idx);
-			control_killAlien(idx);
+			xil_printf("Kill alien - ");
+			control_killAlien(getNumber());
+			xil_printf("Alien killed\r\n");
 			draw_AlienFleet(in);
 			break;
 		case KEY_MOVE_ALIEN:
