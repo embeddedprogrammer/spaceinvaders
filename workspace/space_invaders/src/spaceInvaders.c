@@ -24,6 +24,9 @@ void print(char *str);
 #define KEY_TANK_RIGHT '6'
 #define KEY_MOVE_ALIEN '8'
 #define KEY_TANK_FIRE_BULLET '5'
+#define KEY_MOVE_BULLETS '9'
+#define KEY_ALIEN_FIRE_BULLET '3'
+#define KEY_ERODE_BUNKER '7'
 
 int getNumber()
 {
@@ -145,6 +148,18 @@ int main()
      // Oscillate between frame 0 and frame 1.
      // int sillyTimer = MAX_SILLY_TIMER;  // Just a cheap delay between frames.
 
+     xil_printf("Erode bunker: %c\n\r", KEY_ERODE_BUNKER);
+     xil_printf("Move aliens: %c\n\r", KEY_MOVE_ALIEN);
+     xil_printf("Move bullets: %c\n\r", KEY_MOVE_BULLETS);
+     xil_printf("------\n\r");
+     xil_printf("Left: %c\n\r", KEY_TANK_LEFT);
+     xil_printf("Fire tank bullet: %c\n\r", KEY_TANK_FIRE_BULLET);
+     xil_printf("Right: %c\n\r", KEY_TANK_RIGHT);
+     xil_printf("------\n\r");
+     xil_printf("Kill alien: %c\n\r", KEY_KILL_ALIEN);
+     xil_printf("Fire alien bullet: %c\n\r", KEY_ALIEN_FIRE_BULLET);
+
+
     bool in = false;
 	while (1) {
 		char input;
@@ -176,6 +191,11 @@ int main()
 			break;
 		case KEY_ALIEN_FIRE_BULLET:
 			control_fireAlienBullet(5);
+			break;
+		case KEY_ERODE_BUNKER:
+			xil_printf("Erode bunker - ");
+			control_erodeBunker(getNumber());
+			xil_printf("Bunker eroded\r\n");
 			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);

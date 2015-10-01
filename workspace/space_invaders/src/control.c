@@ -211,3 +211,23 @@ void control_fireTankBullet()
 	xil_printf("Cannot fire - Maxed out tank bullets\n\r");
 }
 
+// ******** Bunkers ********
+
+
+void control_erodeBunkerSection(int bunker, int row, int col)
+{
+	byte damage = getBunkerDamage(bunker, row, col);
+	damage++;
+	draw_BunkerDamageAtIndex(bunker, row, col, damage);
+	setBunkerDamage(bunker, row, col, damage);
+}
+
+void control_erodeBunker(int bunker)
+{
+	int i, j;
+	for(i = 0; i < 3; i++)
+		for(j = 0; j < 4; j++)
+			control_erodeBunkerSection(bunker, i, j);
+}
+
+

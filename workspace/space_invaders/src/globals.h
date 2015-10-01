@@ -64,9 +64,9 @@ typedef enum {
 
 uint* getFrameBuffer();
 
-byte* getBunkerDamage(bunker_t bunkerNum);
+byte getBunkerDamage(int bunker, int row, int col);
 
-uint* getBunkerFramePointer(bunker_t bunkerNum);
+void setBunkerDamage(int bunker, int row, int col, byte damage);
 
 point_t getTankPositionGlobal();
 

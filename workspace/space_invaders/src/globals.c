@@ -14,61 +14,21 @@ static uint* bunker1FramePointer = 0;
 static uint* bunker2FramePointer = 0;
 static uint* bunker3FramePointer = 0;
 
-static byte bunker0Damage[3][4] =
-{
-	{0,0,0,0},
-	{0,0,0,0},
-	{0,0,0,0}
-};
-
-static byte bunker1Damage[3][4] =
-{
-	{0,0,0,0},
-	{0,0,0,0},
-	{0,0,0,0}
-};
-
-static byte bunker2Damage[3][4] =
-{
-	{0,0,0,0},
-	{0,0,0,0},
-	{0,0,0,0}
-};
-
-static byte bunker3Damage[3][4] =
-{
-	{0,0,0,0},
-	{0,0,0,0},
-	{0,0,0,0}
-};
+static byte bunkerDamage[4][3][4];
 
 uint* getFrameBuffer()
 {
 	return framePointer;
 }
 
-byte* getBunkerDamage(bunker_t bunkerNum)
+byte getBunkerDamage(int bunker, int row, int col)
 {
-	switch (bunkerNum) {
-	case bunker_0: return ARRAY_PTR_2D(bunker0Damage);
-	case bunker_1: return ARRAY_PTR_2D(bunker1Damage);
-	case bunker_2: return ARRAY_PTR_2D(bunker2Damage);
-	case bunker_3: return ARRAY_PTR_2D(bunker3Damage);
-	default:
-		return NULL;
-	}
+	return bunkerDamage[bunker][row][col];
 }
 
-uint* getBunkerFramePointer(bunker_t bunkerNum)
+void setBunkerDamage(int bunker, int row, int col, byte damage)
 {
-	switch (bunkerNum) {
-	case bunker_0: return bunker0FramePointer;
-	case bunker_1: return bunker1FramePointer;
-	case bunker_2: return bunker2FramePointer;
-	case bunker_3: return bunker3FramePointer;
-	default:
-		return NULL;
-	}
+	bunkerDamage[bunker][row][col] = damage;
 }
 
 static point_t g_tankPos;

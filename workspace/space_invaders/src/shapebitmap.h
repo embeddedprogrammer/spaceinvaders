@@ -202,7 +202,7 @@ static const int bunker_24x18[] = {
 
 
 // These are the blocks that comprise the bunker and each time a bullet
-// strikes one of these blocks, you erod the block as you sequence through
+// strikes one of these blocks, you erode the block as you sequence through
 // these patterns.
 static const int bunkerDamage0_6x6[] = {
 	packword6(0,1,1,0,0,0),

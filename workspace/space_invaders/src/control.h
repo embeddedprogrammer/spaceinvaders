@@ -20,6 +20,7 @@ bool control_AlienDirectionIsRight();
 void control_moveAllBullets();
 void control_fireAlienBullet(uint alienIdx);
 void control_fireTankBullet();
+void control_erodeBunker(int bunker);
 
 
 #endif /* CONTROL_H_ */

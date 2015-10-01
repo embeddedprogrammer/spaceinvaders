@@ -26,5 +26,7 @@ void draw_rectangle(point_t pos, int width, int height, int color);
 void draw_bullet(bullet_t position);
 void erase_bullet(bullet_t position);
 point_t draw_getAlienPosition(int i, int j);
+void draw_BunkerDamageAtLocation(point_t position, byte damage);
+void draw_BunkerDamageAtIndex(int bunker, int i, int j, byte damage);
 
 #endif /* DRAWSHAPE_H_ */
