@@ -57,10 +57,12 @@
 #define BUNKER_DAMAGE_HEIGHT 6
 #define BULLET_WIDTH 3
 #define BULLET_HEIGHT 5
+#define BULLET_TANK_OFFSET 8
+#define BULLET_ALIEN_OFFSET 5
 
 //colors
 #define BUNKER_COLOR     0x0000FF00
-#define TANK_COLOR       0x000000FF
+#define TANK_COLOR       0x0000FF00
 #define ALIEN_COLOR      0x00FFFFFF
 #define BULLET_COLOR     0x00FFFFFF
 #define SAUCER_COLOR     0x00FF0000
@@ -154,18 +156,6 @@ static const int alien_bottom_out_14x8[] = {
 	packword14(0,1,1,0,0,0,0,0,0,0,0,1,1,0)
 };
 
-static const int alien_erase_14x8[] = {
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-	packword14(0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-};
-
-
 static const int tank_19x8[] = {
 	packword19(0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0),
 	packword19(0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0),
@@ -246,12 +236,14 @@ static const int bullet_alien1_3x5[] = {
 	packword3(0,1,0),
 	packword3(1,1,1),
 	packword3(0,1,0)};
+
 static const int bullet_alien2_3x5[] = {
 	packword3(0,1,0),
 	packword3(0,0,1),
 	packword3(0,1,0),
 	packword3(1,0,0),
 	packword3(0,1,0)};
+
 static const int bullet_tank_3x5[] = {
 	packword3(0,1,0),
 	packword3(0,1,0),

@@ -178,7 +178,6 @@ int main()
 			draw_AlienFleet(in);
 			break;
 		case KEY_MOVE_ALIEN:
-			xil_printf("shift alien fleet\r\n");
 			control_shiftAlienFleet();
 			in = !in;
 			draw_AlienFleet(in);

@@ -13,13 +13,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool outOfBounds(point_t pos) {
-	return (pos.col < 0)                ||
-		   (pos.col > GAMEBUFFER_WIDTH) ||
-		   (pos.row < 0)                ||
-		   (pos.row > GAMEBUFFER_HEIGHT);
-}
-
 //Draw a 2x2 pixel using the 320x240 pixel location
 void drawPixel(point_t location, int color)
 {
@@ -119,19 +112,6 @@ void draw_rectangle(point_t pos, int width, int height, int color) {
 	}
 }
 
-void drawEraseBuffer(point_t pos) {
-	const int horizontalEraseBuffer [ALIEN_BITMAP_HEIGHT] = {0,0,0,0,0,0,0,0};
-	point_t eraseBufferPos;
-	eraseBufferPos.row = pos.row;
-	if(control_AlienDirectionIsRight()) {
-		eraseBufferPos.col = pos.col - ALIEN_SHIFT_AMOUNT;
-	} else {
-		eraseBufferPos.col = pos.col + ALIEN_BITMAP_WIDTH*11;
-	}
-
-	draw_bitmap(ALIEN_SHIFT_AMOUNT, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, true, eraseBufferPos, ARRAY_PTR(horizontalEraseBuffer));
-}
-
 point_t draw_getAlienPosition(int i, int j)
 {
 	point_t alienPos;
@@ -182,7 +162,7 @@ void draw_AlienFleet(bool in)
 					break;
 				}
 			} else {
-				draw_bitmap(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, true, alienPos, ARRAY_PTR(alien_erase_14x8));
+				draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
 			}
 			alienPos.col += ALIEN_BITMAP_WIDTH;
 		}
@@ -223,14 +203,14 @@ void draw_BunkerDamageAtIndex(int bunker, int row, int col, byte damage)
 
 void draw_bullet_color(bullet_t bullet, int shapeColor)
 {
-	int* bullt_ptr = NULL;
+	const int* bullet_ptr = NULL;
 	if(bullet.bulletType == bullet_tank)
-		bullt_ptr = ARRAY_PTR(bullet_tank_3x5);
+		bullet_ptr = ARRAY_PTR(bullet_tank_3x5);
 	else if(bullet.bulletType == bullet_alien1)
-		bullt_ptr = ARRAY_PTR(bullet_alien1_3x5);
+		bullet_ptr = ARRAY_PTR(bullet_alien1_3x5);
 	else //(bullet.bulletType == bullet_alien2)
-		bullt_ptr = ARRAY_PTR(bullet_alien2_3x5);
-	draw_bitmap(BULLET_WIDTH, BULLET_HEIGHT, shapeColor, true, bullet.location, bullt_ptr);
+		bullet_ptr = ARRAY_PTR(bullet_alien2_3x5);
+	draw_bitmap(BULLET_WIDTH, BULLET_HEIGHT, shapeColor, true, bullet.location, bullet_ptr);
 }
 
 void draw_bullet(bullet_t bullet)

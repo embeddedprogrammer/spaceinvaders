@@ -39,7 +39,8 @@ void control_killAlien(uint alienIdx)
 {
 	if (alienIdx >= TOTAL_ALIENS) return;
 	bool* aliensAlive = getAliensAliveArrayGlobal();
-	aliensAlive[alienIdx] = false;
+	bool alienWasAlive = aliensAlive[alienIdx];
+	aliensAlive[alienIdx] = false; // kill alien
 	/* update aliens matrix dimensions */
 	int i;
 	int j;
@@ -69,12 +70,16 @@ void control_killAlien(uint alienIdx)
 		for (i = 0; i < 5; i++)
 			if (aliensAlive[ARRAY_2D(i,j)]) {
 				setAlienFleetRightColNumGlobal(j);
-				return;
+				goto rightAlienExit;
 			}
-	point_t alienPos = getAlienFleetPositionGlobal();
-//	alienPos.row = alienIdx
-//	alienPos.row
-//	draw_Shape(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, alienPos, ARRAY_PTR(alien_erase_14x8));
+	rightAlienExit:
+	if (alienWasAlive){
+		point_t alienToKillPos;
+		point_t alienPos = getAlienFleetPositionGlobal();
+		alienToKillPos.row = alienPos.row + (alienIdx / 11)*(ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER);
+		alienToKillPos.col = alienPos.col + (alienIdx % 11)*ALIEN_BITMAP_WIDTH;
+		draw_rectangle(alienToKillPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
+	}
 
 }
 
@@ -116,7 +121,7 @@ void shiftDownErase(point_t alienPos)
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
 	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
 	erasePos.col = alienPos.col + leftAlienCol*ALIEN_BITMAP_WIDTH;
-	erasePos.row = alienPos.row - ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
+	erasePos.row = alienPos.row - ALIEN_FLEET_SHIFT_DOWN_AMOUNT + topAlienRow*(ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER);
 	for (i = topAlienRow; i < bottomAlienRow + 1; i++ ) {
 		draw_rectangle(erasePos, ALIEN_BITMAP_WIDTH*(rightAlienCol - leftAlienCol + 1), ALIEN_FLEET_SHIFT_DOWN_AMOUNT, BACKGROUND_COLOR);
 		erasePos.row += ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER;
@@ -185,12 +190,19 @@ void control_moveAllBullets()
 void control_fireAlienBullet(uint alienIdx)
 {
 	int i;
+	int leftAlienCol = getAlienFleetLeftColNumGlobal();
+	int rightAlienCol = getAlienFleetRightColNumGlobal();
+	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
 	for(i = FIRST_ALIEN_BULLET; i < FIRST_ALIEN_BULLET + MAX_ALIEN_BULLETS; i++)
 		if(bullets[i].bulletType == bullet_none)
 		{
 			bullets[i].bulletType = (rand() % 2) ? bullet_alien1 : bullet_alien2;
-			//TODO : Dead aliens can't fire bullets
-			bullets[i].location = draw_getAlienPosition(4, rand() % 11);
+			//TODO: dead aliens can't fire
+			int alienFleetWidth = rightAlienCol - leftAlienCol + 1;
+			int alienFleetOffset = leftAlienCol;
+			point_t alienPos = draw_getAlienPosition(bottomAlienRow, (rand() % alienFleetWidth) + alienFleetOffset);
+			bullets[i].location.row = alienPos.row + ALIEN_BITMAP_HEIGHT;
+			bullets[i].location.col = alienPos.col + BULLET_ALIEN_OFFSET;
 			draw_bullet(bullets[i]);
 			return;
 		}
@@ -204,7 +216,10 @@ void control_fireTankBullet()
 		if(bullets[i].bulletType == bullet_none)
 		{
 			bullets[i].bulletType = bullet_tank;
-			bullets[i].location = getTankPositionGlobal();
+			point_t tankPos = getTankPositionGlobal();
+			bullets[i].location.row = tankPos.row - BULLET_HEIGHT;
+			bullets[i].location.col = tankPos.col + BULLET_TANK_OFFSET;
+
 			draw_bullet(bullets[i]);
 			return;
 		}
