@@ -218,7 +218,7 @@ void control_erodeBunkerSection(int bunker, int row, int col)
 {
 	byte damage = getBunkerDamage(bunker, row, col);
 	damage++;
-	draw_BunkerDamageAtIndex(bunker, row, col, damage);
+	draw_BunkerDamageAtIndex(bunker, row, col, damage - 1);
 	setBunkerDamage(bunker, row, col, damage);
 }
 
