@@ -154,8 +154,13 @@ int main()
 			draw_AlienFleet(in);
 			break;
 		case KEY_TANK_FIRE_BULLET:
-			xil_printf("fire bullet\r\n");
-			control_fireBullet();
+			control_fireTankBullet();
+			break;
+		case KEY_MOVE_BULLETS:
+			control_moveAllBullets();
+			break;
+		case KEY_ALIEN_FIRE_BULLET:
+			control_fireAlienBullet(5);
 			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);

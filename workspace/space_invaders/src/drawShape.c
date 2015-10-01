@@ -135,12 +135,21 @@ void drawEraseBuffer(point_t pos) {
 	point_t eraseBufferPos;
 	eraseBufferPos.row = pos.row;
 	if(control_AlienDirectionIsRight()) {
-		eraseBufferPos.col = pos.col - ALIEN_SHIFT_AMMOUNT;
+		eraseBufferPos.col = pos.col - ALIEN_SHIFT_AMOUNT;
 	} else {
 		eraseBufferPos.col = pos.col + ALIEN_BITMAP_WIDTH*11;
 	}
 
-	draw_Shape(ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, eraseBufferPos, ARRAY_PTR(horizontalEraseBuffer));
+	draw_Shape(ALIEN_SHIFT_AMOUNT, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, eraseBufferPos, ARRAY_PTR(horizontalEraseBuffer));
+}
+
+point_t draw_getAlienPosition(int i, int j)
+{
+	point_t alienPos;
+	point_t alienFleetPos = getAlienFleetPositionGlobal();
+	alienPos.row = alienFleetPos.row + i*(ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER);
+	alienPos.col = alienFleetPos.col + j*ALIEN_BITMAP_WIDTH;
+	return alienPos;
 }
 
 void draw_AlienFleet(bool in)
@@ -213,13 +222,25 @@ void draw_BunkerDamage(point_t position) {
 //	}
 }
 
-void draw_bullet(point_t location)
+void draw_bullet_color(bullet_t bullet, int shapeColor)
 {
-	draw_Shape(BULLET_WIDTH, BULLET_HEIGHT, BULLET_COLOR, location, ARRAY_PTR(bullet_3x5));
+	int* bullt_ptr = NULL;
+	if(bullet.bulletType == bullet_tank)
+		bullt_ptr = ARRAY_PTR(bullet_tank_3x5);
+	else if(bullet.bulletType == bullet_alien1)
+		bullt_ptr = ARRAY_PTR(bullet_alien1_3x5);
+	else //(bullet.bulletType == bullet_alien2)
+		bullt_ptr = ARRAY_PTR(bullet_alien2_3x5);
+	draw_Shape(BULLET_WIDTH, BULLET_HEIGHT, shapeColor, bullet.location, bullt_ptr);
 }
 
-void erase_bullet(point_t location)
+void draw_bullet(bullet_t bullet)
 {
-	draw_Shape(BULLET_WIDTH, BULLET_HEIGHT,BACKGROUND_COLOR, location, ARRAY_PTR(bullet_3x5));
+	draw_bullet_color(bullet, BULLET_COLOR);
 }
 
+
+void erase_bullet(bullet_t bullet)
+{
+	draw_bullet_color(bullet, BACKGROUND_COLOR);
+}

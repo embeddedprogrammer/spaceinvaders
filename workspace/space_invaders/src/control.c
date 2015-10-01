@@ -7,12 +7,15 @@
 
 #include "control.h"
 #include <stdio.h>
+#include <stdlib.h> //for rand()
 
-
-static point_t bulletLocation = (point_t){10, 10};
+#define MAX_TANK_BULLETS 1
+#define MAX_ALIEN_BULLETS 10
+#define FIRST_ALIEN_BULLET MAX_TANK_BULLETS
+#define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
+static bullet_t bullets[MAX_BULLETS_COUNT];
 
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
-
 
 void control_moveTankLeft()
 {
@@ -80,7 +83,7 @@ bool alienFleetAtRightScreenEdge()
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
 	int alienFleetWidth = (rightAlienCol + 1)*ALIEN_BITMAP_WIDTH;
 	point_t alienPos = getAlienFleetPositionGlobal();
-	return (alienPos.col + alienFleetWidth + ALIEN_SHIFT_AMMOUNT > GAMEBUFFER_WIDTH);
+	return (alienPos.col + alienFleetWidth + ALIEN_SHIFT_AMOUNT > GAMEBUFFER_WIDTH);
 }
 
 bool alienFleetAtLeftScreenEdge()
@@ -94,7 +97,7 @@ bool alienFleetAtLeftScreenEdge()
 //		xil_printf("offset = %d\n\r", alienFleetLeftOffset);
 //		xil_printf("param = %d\n\r", alienPos.col + alienFleetLeftOffset - ALIEN_SHIFT_AMMOUNT);
 //	}
-	return (alienPos.col + alienFleetLeftOffset - ALIEN_SHIFT_AMMOUNT < 0);
+	return (alienPos.col + alienFleetLeftOffset - ALIEN_SHIFT_AMOUNT < 0);
 }
 
 void shiftAlienFleetDown()
@@ -142,24 +145,69 @@ void control_shiftAlienFleet()
 	} else {
 		point_t erasePos;
 		if (directionRight) {
-			alienPos.col += ALIEN_SHIFT_AMMOUNT;
-			erasePos.col = alienPos.col + leftAlienCol*ALIEN_BITMAP_WIDTH - ALIEN_SHIFT_AMMOUNT;
+			alienPos.col += ALIEN_SHIFT_AMOUNT;
+			erasePos.col = alienPos.col + leftAlienCol*ALIEN_BITMAP_WIDTH - ALIEN_SHIFT_AMOUNT;
 
 		} else {
-			alienPos.col -= ALIEN_SHIFT_AMMOUNT;
+			alienPos.col -= ALIEN_SHIFT_AMOUNT;
 			erasePos.col = alienPos.col + (rightAlienCol+1)*ALIEN_BITMAP_WIDTH;
 		}
 		erasePos.row = alienPos.row;
-		draw_rectangle(erasePos, ALIEN_SHIFT_AMMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
+		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, ALIEN_BITMAP_HEIGHT*5 + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);
 
 	}
 	setAlienFleetPositionGlobal(alienPos);
 }
 
-void control_fireBullet()
+void control_moveBullet(int i)
 {
-	xil_printf("firing bullet\r\n");
-	erase_bullet(bulletLocation);
-	bulletLocation.row++;
-	draw_bullet(bulletLocation);
+	erase_bullet(bullets[i]);
+	if(bullets[i].bulletType == bullet_tank)
+		bullets[i].location.row--;
+	else if(bullets[i].bulletType == bullet_alien1 || bullets[i].bulletType == bullet_alien2)
+		bullets[i].location.row++;
+	if(bullets[i].location.row < 0 || bullets[i].location.row >= GAMEBUFFER_HEIGHT)
+	{
+		bullets[i].bulletType = bullet_none;
+		return;
+	}
+	draw_bullet(bullets[i]);
 }
+
+void control_moveAllBullets()
+{
+	int i;
+	for(i = 0; i < MAX_BULLETS_COUNT; i++)
+		if(bullets[i].bulletType != bullet_none)
+			control_moveBullet(i);
+}
+
+void control_fireAlienBullet(uint alienIdx)
+{
+	int i;
+	for(i = FIRST_ALIEN_BULLET; i < FIRST_ALIEN_BULLET + MAX_ALIEN_BULLETS; i++)
+		if(bullets[i].bulletType == bullet_none)
+		{
+			bullets[i].bulletType = (rand() % 2) ? bullet_alien1 : bullet_alien2;
+			//TODO : Dead aliens can't fire bullets
+			bullets[i].location = draw_getAlienPosition(4, rand() % 11);
+			draw_bullet(bullets[i]);
+			return;
+		}
+	xil_printf("Cannot fire - Maxed out alien bullets\n\r");
+}
+
+void control_fireTankBullet()
+{
+	int i;
+	for(i = 0; i < MAX_TANK_BULLETS; i++)
+		if(bullets[i].bulletType == bullet_none)
+		{
+			bullets[i].bulletType = bullet_tank;
+			bullets[i].location = getTankPositionGlobal();
+			draw_bullet(bullets[i]);
+			return;
+		}
+	xil_printf("Cannot fire - Maxed out tank bullets\n\r");
+}
+

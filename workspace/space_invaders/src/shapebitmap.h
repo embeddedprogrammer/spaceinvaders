@@ -240,11 +240,23 @@ static const int bunkerDamage3_6x6[] = {
 	packword6(1,1,1,1,1,1)
 };
 
-static const int bullet_3x5[] = {
+static const int bullet_alien1_3x5[] = {
 	packword3(0,1,0),
 	packword3(0,1,0),
 	packword3(0,1,0),
 	packword3(1,1,1),
+	packword3(0,1,0)};
+static const int bullet_alien2_3x5[] = {
+	packword3(0,1,0),
+	packword3(0,0,1),
+	packword3(0,1,0),
+	packword3(1,0,0),
+	packword3(0,1,0)};
+static const int bullet_tank_3x5[] = {
+	packword3(0,1,0),
+	packword3(0,1,0),
+	packword3(0,1,0),
+	packword3(0,1,0),
 	packword3(0,1,0)};
 
 #endif /* SHAPEBITMAP_C_ */

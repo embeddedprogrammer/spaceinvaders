@@ -12,13 +12,14 @@
 #include "drawShape.h"
 #include "shapebitmap.h"
 
-
 void control_moveTankLeft();
 void control_moveTankRight();
 void control_killAlien(uint alienIdx);
 void control_shiftAlienFleet();
 bool control_AlienDirectionIsRight();
-void control_fireBullet();
+void control_moveAllBullets();
+void control_fireAlienBullet(uint alienIdx);
+void control_fireTankBullet();
 
 
 #endif /* CONTROL_H_ */
