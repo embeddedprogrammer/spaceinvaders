@@ -22,7 +22,7 @@ void drawPixel(point_t location, int color)
 	int subRow, subCol;
 	for(subRow = 0; subRow < 2; subRow++)
 		for(subCol = 0; subCol < 2; subCol++)
-			frameBuffer[(row + subRow)*640 + (col + subCol)] = color;
+			frameBuffer[(row + subRow)*SCREENBUFFER_WIDTH + (col + subCol)] = color;
 }
 
 // Return the pixel of the bitmap of the specified location
@@ -96,6 +96,7 @@ void draw_Bunkers()
 		draw_Bunker(getBunkerLocation(i));
 }
 
+// useful for erasing sections of the screen
 void draw_rectangle(point_t pos, int width, int height, int color) {
 	uint* frameBuffer = getFrameBuffer();
 	uint row_start = TO_SCREENSIZE(pos.row);
@@ -112,15 +113,17 @@ void draw_rectangle(point_t pos, int width, int height, int color) {
 	}
 }
 
+//given row and column returns aliens position
 point_t draw_getAlienPosition(int i, int j)
 {
 	point_t alienPos;
 	point_t alienFleetPos = getAlienFleetPositionGlobal();
-	alienPos.row = alienFleetPos.row + i*(ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER);
-	alienPos.col = alienFleetPos.col + j*ALIEN_BITMAP_WIDTH;
+	alienPos.row = alienFleetPos.row + i*(ALIEN_VERTICAL_DISTANCE);
+	alienPos.col = alienFleetPos.col + j*ALIEN_HORIZONTAL_DISTANCE;
 	return alienPos;
 }
 
+//draws the whole alien fleet
 void draw_AlienFleet(bool in)
 {
 	bool* aliensAlive = getAliensAliveArrayGlobal();
@@ -132,18 +135,13 @@ void draw_AlienFleet(bool in)
 	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
 	point_t alienFleetPos = getAlienFleetPositionGlobal();
 	point_t alienPos;
-	const int startCol = alienFleetPos.col + leftAlienCol*ALIEN_BITMAP_WIDTH;
-	alienPos.row = alienFleetPos.row + topAlienRow*(ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER);
+	const int startCol = alienFleetPos.col + leftAlienCol*ALIEN_HORIZONTAL_DISTANCE;
+	alienPos.row = alienFleetPos.row + topAlienRow*(ALIEN_VERTICAL_DISTANCE);
 	alienPos.col = startCol;
 
 	for (i = topAlienRow; i <= bottomAlienRow; i++) {
 		for (j = leftAlienCol; j <= rightAlienCol; j++) {
 			if (aliensAlive[ARRAY_2D(i,j)]) {
-				//check if position is equal
-//				point_t testPos = draw_getAlienPosition(i, j);
-//				if(testPos.row != alienPos.row || testPos.col != alienPos.col)
-//					xil_printf("Not equal %d != %d %d != %d\n\r", testPos.row, alienPos.row, testPos.col, alienPos.col);
-
 				switch (i) {
 				case 0:
 					draw_AlienTop(alienPos, in);
@@ -162,12 +160,12 @@ void draw_AlienFleet(bool in)
 					break;
 				}
 			} else {
-				draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
+				draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);//undraw alien location
 			}
-			alienPos.col += ALIEN_BITMAP_WIDTH;
+			alienPos.col += ALIEN_HORIZONTAL_DISTANCE;
 		}
 		alienPos.col = startCol;
-		alienPos.row += ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER;
+		alienPos.row += ALIEN_VERTICAL_DISTANCE;
 	}
 }
 
@@ -208,7 +206,7 @@ void draw_bullet_color(bullet_t bullet, int shapeColor)
 		bullet_ptr = ARRAY_PTR(bullet_tank_3x5);
 	else if(bullet.bulletType == bullet_alien1)
 		bullet_ptr = ARRAY_PTR(bullet_alien1_3x5);
-	else //(bullet.bulletType == bullet_alien2)
+	else // bullet_alien2
 		bullet_ptr = ARRAY_PTR(bullet_alien2_3x5);
 	draw_bitmap(BULLET_WIDTH, BULLET_HEIGHT, shapeColor, true, bullet.location, bullet_ptr);
 }

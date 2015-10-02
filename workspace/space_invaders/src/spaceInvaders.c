@@ -146,7 +146,6 @@ int main()
     	 xil_printf("vdma parking failed\n\r");
      }
      // Oscillate between frame 0 and frame 1.
-     // int sillyTimer = MAX_SILLY_TIMER;  // Just a cheap delay between frames.
 
      xil_printf("Erode bunker: %c\n\r", KEY_ERODE_BUNKER);
      xil_printf("Move aliens: %c\n\r", KEY_MOVE_ALIEN);
@@ -199,9 +198,6 @@ int main()
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}
-
-		//    	while (sillyTimer) sillyTimer--;    // Decrement the timer.
-		//    	sillyTimer = MAX_SILLY_TIMER;       // Reset the timer.
 		if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, 0,
 				XAXIVDMA_READ)) {
 			xil_printf("vdma parking failed\n\r");

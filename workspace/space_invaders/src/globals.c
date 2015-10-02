@@ -64,8 +64,8 @@ void setAlienFleetPositionGlobal(point_t alienFleetPos) {
 
 static int leftAlienCol = 0;
 static int topAlienRow = 0;
-static int rightAlienCol = 10;
-static int bottomAlienRow = 4;
+static int rightAlienCol = ALIEN_FLEET_COLS -1;
+static int bottomAlienRow = ALIEN_FLEET_ROWS - 1;
 
 void setAlienFleetLeftColNumGlobal(int left)
 {

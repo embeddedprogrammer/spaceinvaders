@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include "stdbool.h"
+#include "shapebitmap.h"
 
 #define SCREENBUFFER_WIDTH  640
 #define SCREENBUFFER_HEIGHT 480
@@ -32,8 +33,14 @@
 
 #define TOTAL_ALIENS 55
 
+#define ALIEN_FLEET_COLS 11
+#define ALIEN_FLEET_ROWS 5
+
 #define ALIEN_SHIFT_AMOUNT 4
 #define ALIEN_VERTICAL_SPACER 6
+
+#define ALIEN_HORIZONTAL_DISTANCE (ALIEN_BITMAP_WIDTH)
+#define ALIEN_VERTICAL_DISTANCE (ALIEN_BITMAP_HEIGHT + ALIEN_VERTICAL_SPACER)
 
 #define TANK_INTIAL_COL GAMEBUFFER_WIDTH/2
 #define TANK_ROW GAMEBUFFER_HEIGHT*8/9
