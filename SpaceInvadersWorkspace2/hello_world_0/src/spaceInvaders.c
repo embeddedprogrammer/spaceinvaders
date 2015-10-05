@@ -60,26 +60,34 @@ int getNumber()
 }
 
 #define BULLET_ADVANCE_TIME 1
-#define ALIEN_ADVANCE_TIME 60
+#define ALIEN_ADVANCE_TIME 50
+#define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*5
 
 static int bulletTimer = 0;
 static int alienTimer = 0;
+static int alienFireTimer = 0;
 
 // This is invoked in response to a timer interrupt.
 // It does 2 things: 1) debounce switches, and 2) advances the time.
 void timer_interrupt_handler()  //10ms
 {
 	bulletTimer++;
-	alienTimer++;
 	if(bulletTimer == BULLET_ADVANCE_TIME)
 	{
 		bulletTimer = 0;
 		control_moveAllBullets();
 	}
+	alienTimer++;
 	if(alienTimer == ALIEN_ADVANCE_TIME)
 	{
 		alienTimer = 0;
 		control_shiftAlienFleet();
+	}
+	alienFireTimer++;
+	if(alienFireTimer == ALIEN_FIRE_TIME)
+	{
+		alienFireTimer = 0;
+		control_fireAlienBullet();
 	}
 }
 
@@ -286,7 +294,7 @@ int main()
 			control_moveAllBullets();
 			break;
 		case KEY_ALIEN_FIRE_BULLET:
-			control_fireAlienBullet(5);
+			control_fireAlienBullet();
 			break;
 		case KEY_ERODE_BUNKER:
 			xil_printf("Erode bunker - ");

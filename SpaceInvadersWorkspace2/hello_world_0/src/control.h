@@ -18,7 +18,7 @@ void control_killAlien(uint alienIdx);
 void control_shiftAlienFleet();
 bool control_AlienDirectionIsRight();
 void control_moveAllBullets();
-void control_fireAlienBullet(uint alienIdx);
+void control_fireAlienBullet();
 void control_fireTankBullet();
 void control_erodeBunker(int bunker);
 

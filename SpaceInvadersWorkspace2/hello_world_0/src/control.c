@@ -202,7 +202,7 @@ point_t getAlienBottomRow()
 }
 
 //fires a alien bullet if one is avalible
-void control_fireAlienBullet(uint alienIdx)
+void control_fireAlienBullet()
 {
 	int i;
 	for(i = FIRST_ALIEN_BULLET; i < FIRST_ALIEN_BULLET + MAX_ALIEN_BULLETS; i++)
@@ -212,7 +212,9 @@ void control_fireAlienBullet(uint alienIdx)
 			point_t alienPos = getAlienBottomRow();
 			bullets[i].location.row = alienPos.row + ALIEN_BITMAP_HEIGHT;
 			bullets[i].location.col = alienPos.col + BULLET_ALIEN_OFFSET;
+			xil_printf("Stuck here\r\n");
 			draw_bullet(bullets[i]);
+			xil_printf("Just kidding, not stuck\r\n");
 			return;
 		}
 	xil_printf("Cannot fire - Maxed out alien bullets\n\r");
