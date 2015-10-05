@@ -37,6 +37,8 @@ void control_moveTankRight()
 
 }
 
+static bool alienLegsIn = false;
+
 // kills an alien then updates the rows and columns that are still viable
 void control_killAlien(uint alienIdx)
 {
@@ -82,6 +84,7 @@ void control_killAlien(uint alienIdx)
 		alienToKillPos.col = alienPos.col + (alienIdx % ALIEN_FLEET_COLS)*ALIEN_HORIZONTAL_DISTANCE;
 		draw_rectangle(alienToKillPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
 	}
+	draw_AlienFleet(alienLegsIn);
 }
 
 //checks to see if the fleet is at right screen edge
@@ -151,6 +154,8 @@ void control_shiftAlienFleet()
 
 	}
 	setAlienFleetPositionGlobal(alienPos);
+	alienLegsIn = !alienLegsIn;
+	draw_AlienFleet(alienLegsIn);
 }
 
 //advances the bullet specified by index i
