@@ -49,7 +49,7 @@ int getNumber()
 	}
 }
 
-int main()
+int main3()
 {
 	init_platform();                   // Necessary for all programs.
 	int Status;                        // Keep track of success/failure of system function calls.
