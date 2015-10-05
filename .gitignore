@@ -3,6 +3,7 @@ XPS/
 *bsp*/
 XPS_hw_platform/
 SpaceInvadersHW/
+SpaceInvaderTestHW2_hw_platform/
 Debug/
 .*project
 lscript.ld
