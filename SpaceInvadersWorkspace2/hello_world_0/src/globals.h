@@ -79,7 +79,9 @@ point_t getTankPositionGlobal();
 
 void setTankPositionGlobal(point_t tankPos);
 
-bool* getAliensAliveArrayGlobal();
+bool isAlienAlive(int row, int col);
+
+void setAlienAlive(int row, int col, bool alive);
 
 point_t getAlienFleetPositionGlobal();
 

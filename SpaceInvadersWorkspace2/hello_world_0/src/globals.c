@@ -41,15 +41,20 @@ void setTankPositionGlobal(point_t tankPos) {
 	g_tankPos = tankPos;
 }
 
-static bool g_aliensAlive[] = {true,true,true,true,true,true,true,true,true,true,true,
-						   	   true,true,true,true,true,true,true,true,true,true,true,
-							   true,true,true,true,true,true,true,true,true,true,true,
-							   true,true,true,true,true,true,true,true,true,true,true,
-							   true,true,true,true,true,true,true,true,true,true,true};
+static bool g_aliensAlive[5][11] = {{true, true, true, true, true, true, true, true, true, true, true},
+									{true, true, true, true, true, true, true, true, true, true, true},
+									{true, true, true, true, true, true, true, true, true, true, true},
+									{true, true, true, true, true, true, true, true, true, true, true},
+									{true, true, true, true, true, true, true, true, true, true, true}};
 
-bool* getAliensAliveArrayGlobal()
+bool isAlienAlive(int row, int col)
 {
-	return ARRAY_PTR(g_aliensAlive);
+	return g_aliensAlive[row][col];
+}
+
+void setAlienAlive(int row, int col, bool alive)
+{
+	g_aliensAlive[row][col] = alive;
 }
 
 static point_t g_alienFleetPos;
@@ -64,7 +69,7 @@ void setAlienFleetPositionGlobal(point_t alienFleetPos) {
 
 static int leftAlienCol = 0;
 static int topAlienRow = 0;
-static int rightAlienCol = ALIEN_FLEET_COLS -1;
+static int rightAlienCol = ALIEN_FLEET_COLS - 1;
 static int bottomAlienRow = ALIEN_FLEET_ROWS - 1;
 
 void setAlienFleetLeftColNumGlobal(int left)

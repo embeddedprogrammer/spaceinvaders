@@ -251,4 +251,30 @@ static const int bullet_tank_3x5[] = {
 	packword3(0,1,0),
 	packword3(0,1,0)};
 
+typedef struct
+{
+	uint width;
+	uint height;
+	int shapeColor;
+	const int* shapeBuffer;
+} bitmap_t;
+
+static const bitmap_t bitmapSaucer         = {SAUCER_WIDTH, SAUCER_HEIGHT, SAUCER_COLOR, saucer_16x7};
+static const bitmap_t bitmapExplosion      = {EXPLOSION_WIDTH, EXPLOSION_HEIGHT, ALIEN_COLOR, alien_explosion_14x10};
+static const bitmap_t bitmapAlienTopIn     = {ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, alien_top_in_14x8};
+static const bitmap_t bitmapAlienTopOut    = {ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, alien_top_out_14x8};
+static const bitmap_t bitmapAlienMiddleIn  = {ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, alien_middle_in_14x8};
+static const bitmap_t bitmapAlienMiddleOut = {ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, alien_middle_out_14x8};
+static const bitmap_t bitmapAlienBottomIn  = {ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, alien_bottom_in_14x8};
+static const bitmap_t bitmapAlienBottomOut = {ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, alien_bottom_out_14x8};
+static const bitmap_t bitmapTank           = {TANK_BITMAP_WIDTH, TANK_BITMAP_HEIGHT, TANK_COLOR, tank_19x8};
+static const bitmap_t bitmapBunker         = {BUNKER_WIDTH, BUNKER_HEIGHT, BUNKER_COLOR, bunker_24x18};
+static const bitmap_t bitmapBunkerDamage0  = {BUNKER_DAMAGE_WIDTH, BUNKER_DAMAGE_HEIGHT, BACKGROUND_COLOR, bunkerDamage0_6x6};
+static const bitmap_t bitmapBunkerDamage1  = {BUNKER_DAMAGE_WIDTH, BUNKER_DAMAGE_HEIGHT, BACKGROUND_COLOR, bunkerDamage1_6x6};
+static const bitmap_t bitmapBunkerDamage2  = {BUNKER_DAMAGE_WIDTH, BUNKER_DAMAGE_HEIGHT, BACKGROUND_COLOR, bunkerDamage2_6x6};
+static const bitmap_t bitmapBunkerDamage3  = {BUNKER_DAMAGE_WIDTH, BUNKER_DAMAGE_HEIGHT, BACKGROUND_COLOR, bunkerDamage3_6x6};
+static const bitmap_t bitmapBulletAlien1   = {BULLET_WIDTH, BULLET_HEIGHT, BULLET_COLOR, bullet_alien1_3x5};
+static const bitmap_t bitmapBulletAlien2   = {BULLET_WIDTH, BULLET_HEIGHT, BULLET_COLOR, bullet_alien2_3x5};
+static const bitmap_t bitmapBulletTank     = {BULLET_WIDTH, BULLET_HEIGHT, BULLET_COLOR, bullet_tank_3x5};
+
 #endif /* SHAPEBITMAP_C_ */

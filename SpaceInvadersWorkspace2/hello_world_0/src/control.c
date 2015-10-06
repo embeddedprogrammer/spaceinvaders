@@ -9,9 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h> //for rand()
 
-#define MAX_TANK_BULLETS 1
-#define MAX_ALIEN_BULLETS 4
-#define FIRST_ALIEN_BULLET 1
+#define FIRST_TANK_BULLET 0
+#define MAX_TANK_BULLETS 10
+#define FIRST_ALIEN_BULLET MAX_TANK_BULLETS
+#define MAX_ALIEN_BULLETS 10
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
 
@@ -40,51 +41,46 @@ void control_moveTankRight()
 static bool alienLegsIn = false;
 
 // kills an alien then updates the rows and columns that are still viable
-void control_killAlien(uint alienIdx)
+void control_killAlienRC(short row, short col)
 {
-	if (alienIdx >= TOTAL_ALIENS) return;
-	bool* aliensAlive = getAliensAliveArrayGlobal();
-	aliensAlive[alienIdx] = false; // kill alien
-	/* update aliens matrix dimensions */
-	int i;
-	int j;
-	for (i = 0; i < ALIEN_FLEET_ROWS; i++)
-		for (j = 0; j < ALIEN_FLEET_COLS; j++)
-			if (aliensAlive[ARRAY_2D(i,j)]) {
-				setAlienFleetTopRowNumGlobal(i);
-				goto topAlienExit;
-			}
-	topAlienExit:
-	for (i = ALIEN_FLEET_ROWS - 1; i >= 0; i--)
-		for (j = 0; j < ALIEN_FLEET_COLS; j++)
-			if (aliensAlive[ARRAY_2D(i,j)]) {
-				setAlienFleetBottomRowNumGlobal(i);
-				goto bottomAlienExit;
+	setAlienAlive(row, col, false);
+	point_t alienPos = draw_getAlienPosition(row, col);
+	draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
+	draw_AlienFleet(alienLegsIn);
+
+	//Update indexes:
+	int minRow = ALIEN_FLEET_ROWS;
+	int maxRow = 0;
+	int minCol = ALIEN_FLEET_COLS;
+	int maxCol = 0;
+	int r = 0;
+	int c = 0;
+
+	for (r = 0; r < ALIEN_FLEET_ROWS; r++)
+		for (c = 0; c < ALIEN_FLEET_COLS; c++)
+			if (isAlienAlive(r, c))
+			{
+				if(r > maxRow)
+					maxRow = r;
+				if(r < minRow)
+					minRow = r;
+				if(c > maxCol)
+					maxCol = c;
+				if(c < minCol)
+					minCol = c;
 			}
 
-	bottomAlienExit:
-	for (j = 0; j < ALIEN_FLEET_COLS; j++)
-		for (i = 0; i < ALIEN_FLEET_ROWS; i++)
-			if (aliensAlive[ARRAY_2D(i,j)]) {
-				setAlienFleetLeftColNumGlobal(j);
-				goto leftAlienExit;
-			}
-	leftAlienExit:
-	for (j = ALIEN_FLEET_COLS - 1; j >= 0; j--)
-		for (i = 0; i < ALIEN_FLEET_ROWS; i++)
-			if (aliensAlive[ARRAY_2D(i,j)]) {
-				setAlienFleetRightColNumGlobal(j);
-				goto rightAlienExit;
-			}
-	rightAlienExit:
-	{// undraw the alien
-		point_t alienToKillPos;
-		point_t alienPos = getAlienFleetPositionGlobal();
-		alienToKillPos.row = alienPos.row + (alienIdx / ALIEN_FLEET_COLS)*(ALIEN_VERTICAL_DISTANCE);
-		alienToKillPos.col = alienPos.col + (alienIdx % ALIEN_FLEET_COLS)*ALIEN_HORIZONTAL_DISTANCE;
-		draw_rectangle(alienToKillPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
-	}
-	draw_AlienFleet(alienLegsIn);
+	printf("Bounds: %d %d %d %d\n\r", maxRow ,minRow, maxCol, minCol);
+
+	setAlienFleetTopRowNumGlobal(minRow);
+	setAlienFleetBottomRowNumGlobal(maxRow);
+	setAlienFleetLeftColNumGlobal(minCol);
+	setAlienFleetRightColNumGlobal(maxCol);
+}
+
+void control_killAlien(uint alienIdx)
+{
+	control_killAlienRC(alienIdx / ALIEN_FLEET_COLS, alienIdx % ALIEN_FLEET_COLS);
 }
 
 //checks to see if the fleet is at right screen edge
@@ -158,19 +154,77 @@ void control_shiftAlienFleet()
 	draw_AlienFleet(alienLegsIn);
 }
 
+void killAlienIfAlienCollision(point_t location)
+{
+	printf("Check if alien collision at %d, %d\n\r", location.col, location.row);
+	point_t fleetPosition = getAlienFleetPositionGlobal();
+	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
+	   location.col > fleetPosition.col && location.col < (fleetPosition.row + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
+	{
+		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
+		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
+		printf("Kill alien at %d, %d\n\r", row, col);
+		control_killAlienRC(row, col);
+	}
+}
+
+//void killTankIfTankCollision(point_t location)
+//{
+//	point_t fleetPosition = getAlienFleetPositionGlobal();
+//	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
+//	   location.col > fleetPosition.col && location.col < (fleetPosition.row + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
+//	{
+//		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
+//		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
+//		control_killAlienRC(row, col);
+//	}
+//}
+//
+//void erodeBunkerIfBunkerCollision(point_t location)
+//{
+//	point_t fleetPosition = getAlienFleetPositionGlobal();
+//	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
+//	   location.col > fleetPosition.col && location.col < (fleetPosition.row + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
+//	{
+//		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
+//		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
+//		control_killAlienRC(row, col);
+//	}
+//}
+
 //advances the bullet specified by index i
 void control_moveBullet(int i)
 {
 	erase_bullet(bullets[i]);
+
+	//Move location
 	if(bullets[i].bulletType == bullet_tank)
 		bullets[i].location.row--;
 	else if(bullets[i].bulletType == bullet_alien1 || bullets[i].bulletType == bullet_alien2)
 		bullets[i].location.row++;
-	if(bullets[i].location.row < 0 || bullets[i].location.row >= GAMEBUFFER_HEIGHT)
+
+	//Check for off screen
+	if(bullets[i].location.row < 0 || bullets[i].location.row >= GAMEBUFFER_HEIGHT - BULLET_HEIGHT)
 	{
 		bullets[i].bulletType = bullet_none;
 		return;
 	}
+	short checkRow = bullets[i].location.row;
+	short checkCol = bullets[i].location.col;
+	if(bullets[i].bulletType == bullet_alien1 || bullets[i].bulletType == bullet_alien2)
+		checkRow += BULLET_HEIGHT - 1;
+
+	//Check for collisions
+	if(getPixel((point_t){checkCol, checkRow}) != 0 || getPixel((point_t){checkCol + 1, checkRow}) != 0 || getPixel((point_t){checkCol + 2, checkRow}) != 0)
+	{
+		point_t location = (point_t){checkCol + 1, checkRow};
+		xil_printf("Hit location: %d, %d\n\r", location.col, location.row);
+		xil_printf("Pixel hit: %d\n\r", getPixel(location));
+		killAlienIfAlienCollision(location);
+		bullets[i].bulletType = bullet_none;
+		return;
+	}
+
 	draw_bullet(bullets[i]);
 }
 
@@ -189,53 +243,58 @@ point_t getAlienBottomRow()
 	int leftAlienCol = getAlienFleetLeftColNumGlobal();
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
 	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
-	bool* alienAlive = getAliensAliveArrayGlobal();
 	int i;
 	int alienCount = 0;
-	int bottomRowStart = bottomAlienRow*ALIEN_FLEET_COLS + leftAlienCol;
 	int bottomRowArray[ALIEN_FLEET_COLS];
-	for (i = bottomRowStart; i < bottomRowStart + (rightAlienCol - leftAlienCol + 1); i++ )// find which aliens are alive
-		if (alienAlive[i])
+	for (i = leftAlienCol; i < rightAlienCol + 1; i++) // find which aliens are alive
+		if (isAlienAlive(bottomAlienRow, i))
 			bottomRowArray[alienCount++] = i;
 
-	return draw_getAlienPosition(bottomAlienRow, bottomRowArray[rand() % alienCount] % ALIEN_FLEET_COLS);// random alien
+	return draw_getAlienPosition(bottomAlienRow, bottomRowArray[rand() % alienCount]);// random alien
+}
+
+int control_getFirstEmptyBulletPosition(int start, int length)
+{
+	int i = 0;
+	for(i = start; i < start + length; i++)
+		if(bullets[i].bulletType == bullet_none)
+			return i;
+	return -1;
 }
 
 //fires a alien bullet if one is avalible
 void control_fireAlienBullet()
 {
-	int i;
-	for(i = FIRST_ALIEN_BULLET; i < FIRST_ALIEN_BULLET + MAX_ALIEN_BULLETS; i++)
-		if(bullets[i].bulletType == bullet_none)
-		{
-			bullets[i].bulletType = (rand() % 2) ? bullet_alien1 : bullet_alien2;// random bullet
-			point_t alienPos = getAlienBottomRow();
-			bullets[i].location.row = alienPos.row + ALIEN_BITMAP_HEIGHT;
-			bullets[i].location.col = alienPos.col + BULLET_ALIEN_OFFSET;
-			xil_printf("Stuck here\r\n");
-			draw_bullet(bullets[i]);
-			xil_printf("Just kidding, not stuck\r\n");
-			return;
-		}
-	xil_printf("Cannot fire - Maxed out alien bullets\n\r");
+	xil_printf("stuck\n\r");
+	int i = control_getFirstEmptyBulletPosition(FIRST_ALIEN_BULLET, MAX_ALIEN_BULLETS);
+	if(i != -1)
+	{
+		bullets[i].bulletType = (rand() % 2) ? bullet_alien1 : bullet_alien2;
+		point_t alienPos = getAlienBottomRow();
+		bullets[i].location.row = alienPos.row + ALIEN_BITMAP_HEIGHT;
+		bullets[i].location.col = alienPos.col + BULLET_ALIEN_OFFSET;
+		draw_bullet(bullets[i]);
+	}
+	else
+		xil_printf("Cannot fire - Maxed out alien bullets\n\r");
+	xil_printf("Not stuck\n\r");
 }
 
 // fires a tank bullet and places it at the end of its turret
 void control_fireTankBullet()
 {
-	int i;
-	for(i = 0; i < MAX_TANK_BULLETS; i++)
-		if(bullets[i].bulletType == bullet_none)
-		{
-			bullets[i].bulletType = bullet_tank;
-			point_t tankPos = getTankPositionGlobal();
-			bullets[i].location.row = tankPos.row - BULLET_HEIGHT;
-			bullets[i].location.col = tankPos.col + BULLET_TANK_OFFSET;
+	int i = control_getFirstEmptyBulletPosition(FIRST_TANK_BULLET, MAX_TANK_BULLETS);
+	if(i != -1)
+	{
+		bullets[i].bulletType = bullet_tank;
+		point_t tankPos = getTankPositionGlobal();
+		bullets[i].location.row = tankPos.row - BULLET_HEIGHT;
+		bullets[i].location.col = tankPos.col + BULLET_TANK_OFFSET;
 
-			draw_bullet(bullets[i]);
-			return;
-		}
-	xil_printf("Cannot fire - Maxed out tank bullets\n\r");
+		draw_bullet(bullets[i]);
+	}
+	else
+		xil_printf("Cannot fire - Maxed out tank bullets\n\r");
 }
 
 // ******** Bunkers ********

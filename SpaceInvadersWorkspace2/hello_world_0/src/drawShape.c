@@ -25,6 +25,15 @@ void drawPixel(point_t location, int color)
 			frameBuffer[(row + subRow)*SCREENBUFFER_WIDTH + (col + subCol)] = color;
 }
 
+//Draw a 2x2 pixel using the 320x240 pixel location
+int getPixel(point_t location)
+{
+	uint* frameBuffer = getFrameBuffer();
+	int row = TO_SCREENSIZE(location.row);
+	int col = TO_SCREENSIZE(location.col);
+	return frameBuffer[row*SCREENBUFFER_WIDTH + col];
+}
+
 // Return the pixel of the bitmap of the specified location
 bool getBitmapPixel(const int* shapeBuffer, const uint width, int row, int col)
 {
@@ -34,17 +43,17 @@ bool getBitmapPixel(const int* shapeBuffer, const uint width, int row, int col)
 }
 
 // Draw a bitmap at the specified location
-void draw_bitmap(const uint width, const uint height, int shapeColor, bool eraseBackground, point_t pos, const int* shapeBuffer)
+void draw_bitmap(bitmap_t bitmap, bool eraseForeground, bool eraseBackground, point_t pos)
 {
 	int row, col;
-	for (row = 0; row < height; row++)
+	for (row = 0; row < bitmap.height; row++)
 	{
-		for (col = 0; col < width; col++)
+		for (col = 0; col < bitmap.width; col++)
 		{
-			bool pixel = getBitmapPixel(shapeBuffer, width, row, col);
+			bool pixel = getBitmapPixel(bitmap.shapeBuffer, bitmap.width, row, col);
 			point_t pixelLocation = (point_t){pos.col + col, pos.row + row};
 			if(pixel)
-				drawPixel(pixelLocation, shapeColor);
+				drawPixel(pixelLocation, eraseForeground ? BACKGROUND_COLOR : bitmap.shapeColor);
 			else if(eraseBackground)
 				drawPixel(pixelLocation, BACKGROUND_COLOR);
 		}
@@ -52,31 +61,31 @@ void draw_bitmap(const uint width, const uint height, int shapeColor, bool erase
 }
 
 void draw_Saucer(point_t position) {
-	draw_bitmap(SAUCER_WIDTH, SAUCER_HEIGHT, SAUCER_COLOR, true, position, ARRAY_PTR(saucer_16x7));
+	draw_bitmap(bitmapSaucer, false, true, position);
 }
 
 void draw_AlienExplosion(point_t position) {
-	draw_bitmap(EXPLOSION_WIDTH, EXPLOSION_HEIGHT, ALIEN_COLOR, true, position, ARRAY_PTR(alien_explosion_14x10));
+	draw_bitmap(bitmapExplosion, false, true, position);
 }
 
 void draw_AlienTop(point_t position, bool in) {
-	draw_bitmap(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, true, position, (in) ? ARRAY_PTR(alien_top_in_14x8) : ARRAY_PTR(alien_top_out_14x8));
+	draw_bitmap(in ? bitmapAlienTopIn : bitmapAlienTopOut, false, true, position);
 }
 
 void draw_AlienMiddle(point_t position, bool in) {
-	draw_bitmap(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, true, position, (in) ? ARRAY_PTR(alien_middle_in_14x8) : ARRAY_PTR(alien_middle_out_14x8));
+	draw_bitmap(in ? bitmapAlienMiddleIn : bitmapAlienMiddleOut, false, true, position);
 }
 
 void draw_AlienBottom(point_t position, bool in) {
-	draw_bitmap(ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, ALIEN_COLOR, true, position, (in) ? ARRAY_PTR(alien_bottom_in_14x8) : ARRAY_PTR(alien_bottom_out_14x8));
+	draw_bitmap(in ? bitmapAlienBottomIn : bitmapAlienBottomOut, false, true, position);
 }
 
 void draw_Tank(point_t position) {
-	draw_bitmap(TANK_BITMAP_WIDTH, TANK_BITMAP_HEIGHT, TANK_COLOR, true, position, ARRAY_PTR(tank_19x8));
+	draw_bitmap(bitmapTank, false, true, position);
 }
 
 void draw_Bunker(point_t position) {
-	draw_bitmap(BUNKER_WIDTH, BUNKER_HEIGHT, BUNKER_COLOR, true, position, ARRAY_PTR(bunker_24x18));
+	draw_bitmap(bitmapBunker, false, true, position);
 }
 
 point_t getBunkerLocation(int i)
@@ -113,20 +122,24 @@ void draw_rectangle(point_t pos, int width, int height, int color) {
 	}
 }
 
+//point_t getAlienIndex()
+//{
+//
+//}
+
 //given row and column returns aliens position
-point_t draw_getAlienPosition(int i, int j)
+point_t draw_getAlienPosition(int row, int col)
 {
 	point_t alienPos;
 	point_t alienFleetPos = getAlienFleetPositionGlobal();
-	alienPos.row = alienFleetPos.row + i*(ALIEN_VERTICAL_DISTANCE);
-	alienPos.col = alienFleetPos.col + j*ALIEN_HORIZONTAL_DISTANCE;
+	alienPos.row = alienFleetPos.row + row*(ALIEN_VERTICAL_DISTANCE);
+	alienPos.col = alienFleetPos.col + col*ALIEN_HORIZONTAL_DISTANCE;
 	return alienPos;
 }
 
 //draws the whole alien fleet
 void draw_AlienFleet(bool in)
 {
-	bool* aliensAlive = getAliensAliveArrayGlobal();
 	int i;
 	int j;
 	int leftAlienCol = getAlienFleetLeftColNumGlobal();
@@ -141,8 +154,10 @@ void draw_AlienFleet(bool in)
 
 	for (i = topAlienRow; i <= bottomAlienRow; i++) {
 		for (j = leftAlienCol; j <= rightAlienCol; j++) {
-			if (aliensAlive[ARRAY_2D(i,j)]) {
-				switch (i) {
+			if(isAlienAlive(i, j))
+			{
+				switch (i)
+				{
 				case 0:
 					draw_AlienTop(alienPos, in);
 					break;
@@ -159,7 +174,9 @@ void draw_AlienFleet(bool in)
 					draw_AlienBottom(alienPos, in);
 					break;
 				}
-			} else {
+			}
+			else
+			{
 				draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);//undraw alien location
 			}
 			alienPos.col += ALIEN_HORIZONTAL_DISTANCE;
@@ -171,24 +188,24 @@ void draw_AlienFleet(bool in)
 
 void draw_BunkerDamageAtLocation(point_t position, byte damage)
 {
-	const int* damagePtr;
+	bitmap_t damagePtr;
 	switch (damage)
 	{
 	case 0:
-		damagePtr = bunkerDamage0_6x6;
+		damagePtr = bitmapBunkerDamage0;
 		break;
 	case 1:
-		damagePtr = bunkerDamage1_6x6;
+		damagePtr = bitmapBunkerDamage1;
 		break;
 	case 2:
-		damagePtr = bunkerDamage2_6x6;
+		damagePtr = bitmapBunkerDamage2;
 		break;
 	case 3:
 	default:
-		damagePtr = bunkerDamage3_6x6;
+		damagePtr = bitmapBunkerDamage3;
 		break;
 	}
-	draw_bitmap(BUNKER_DAMAGE_WIDTH, BUNKER_DAMAGE_HEIGHT, BACKGROUND_COLOR, false, position, damagePtr);
+	draw_bitmap(damagePtr, true, false, position);
 }
 
 void draw_BunkerDamageAtIndex(int bunker, int row, int col, byte damage)
@@ -199,25 +216,25 @@ void draw_BunkerDamageAtIndex(int bunker, int row, int col, byte damage)
 	draw_BunkerDamageAtLocation(pos, damage);
 }
 
-void draw_bullet_color(bullet_t bullet, int shapeColor)
+void draw_bullet_color(bullet_t bullet, bool erase)
 {
-	const int* bullet_ptr = NULL;
+	bitmap_t bullet_ptr;
 	if(bullet.bulletType == bullet_tank)
-		bullet_ptr = ARRAY_PTR(bullet_tank_3x5);
+		bullet_ptr = bitmapBulletTank;
 	else if(bullet.bulletType == bullet_alien1)
-		bullet_ptr = ARRAY_PTR(bullet_alien1_3x5);
+		bullet_ptr = bitmapBulletAlien1;
 	else // bullet_alien2
-		bullet_ptr = ARRAY_PTR(bullet_alien2_3x5);
-	draw_bitmap(BULLET_WIDTH, BULLET_HEIGHT, shapeColor, true, bullet.location, bullet_ptr);
+		bullet_ptr = bitmapBulletAlien2;
+	draw_bitmap(bullet_ptr, erase, false, bullet.location);
 }
 
 void draw_bullet(bullet_t bullet)
 {
-	draw_bullet_color(bullet, BULLET_COLOR);
+	draw_bullet_color(bullet, false);
 }
 
 
 void erase_bullet(bullet_t bullet)
 {
-	draw_bullet_color(bullet, BACKGROUND_COLOR);
+	draw_bullet_color(bullet, true);
 }

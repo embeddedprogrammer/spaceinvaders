@@ -19,6 +19,7 @@ typedef struct
 	point_t location;
 } bullet_t;
 
+int getPixel(point_t location);
 void draw_Bunkers();
 void draw_Tank(point_t position);
 void draw_AlienFleet(bool in);
