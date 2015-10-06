@@ -88,7 +88,7 @@ void draw_Bunker(point_t position) {
 	draw_bitmap(bitmapBunker, false, true, position);
 }
 
-point_t getBunkerLocation(int i)
+point_t draw_getBunkerLocation(int i)
 {
 	int bunkerWidthSpacing = GAMEBUFFER_WIDTH/TOTAL_BUNKERS;
 	int topOfBunerHeight = (GAMEBUFFER_HEIGHT*3)/4;
@@ -102,7 +102,7 @@ void draw_Bunkers()
 {
 	int i;
 	for (i = 0; i < TOTAL_BUNKERS; i++)
-		draw_Bunker(getBunkerLocation(i));
+		draw_Bunker(draw_getBunkerLocation(i));
 }
 
 // useful for erasing sections of the screen
@@ -210,7 +210,7 @@ void draw_BunkerDamageAtLocation(point_t position, byte damage)
 
 void draw_BunkerDamageAtIndex(int bunker, int row, int col, byte damage)
 {
-	point_t pos = getBunkerLocation(bunker);
+	point_t pos = draw_getBunkerLocation(bunker);
 	pos.row += row * BUNKER_DAMAGE_HEIGHT;
 	pos.col += col * BUNKER_DAMAGE_WIDTH;
 	draw_BunkerDamageAtLocation(pos, damage);

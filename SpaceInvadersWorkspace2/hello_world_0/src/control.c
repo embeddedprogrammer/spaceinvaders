@@ -70,7 +70,7 @@ void control_killAlienRC(short row, short col)
 					minCol = c;
 			}
 
-	printf("Bounds: %d %d %d %d\n\r", maxRow ,minRow, maxCol, minCol);
+	xil_printf("Bounds: %d %d %d %d\n\r", maxRow ,minRow, maxCol, minCol);
 
 	setAlienFleetTopRowNumGlobal(minRow);
 	setAlienFleetBottomRowNumGlobal(maxRow);
@@ -154,18 +154,59 @@ void control_shiftAlienFleet()
 	draw_AlienFleet(alienLegsIn);
 }
 
-void killAlienIfAlienCollision(point_t location)
+//erodes a particular bunker section based on bunker row and column
+void control_erodeBunkerSection(int bunker, int row, int col)
 {
-	printf("Check if alien collision at %d, %d\n\r", location.col, location.row);
+	if (row >= BUNKER_DAMAGE_ARRAY_ROWS || row < 0 || col >= BUNKER_DAMAGE_ARRAY_COLS || col < 0)
+		return;
+
+	byte damage = getBunkerDamage(bunker, row, col);
+	damage++;
+	draw_BunkerDamageAtIndex(bunker, row, col, damage - 1);
+	setBunkerDamage(bunker, row, col, damage);
+}
+
+//erodes the entire bunker
+void control_erodeBunker(int bunker)
+{
+	int i, j;
+	for(i = 0; i < BUNKER_SECTION_ROWS; i++)
+		for(j = 0; j < BUNKER_SECTION_COLS; j++)
+			control_erodeBunkerSection(bunker, i, j);
+}
+
+bool killAlienIfAlienCollision(point_t location)
+{
+
 	point_t fleetPosition = getAlienFleetPositionGlobal();
 	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
-	   location.col > fleetPosition.col && location.col < (fleetPosition.row + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
+	   location.col > fleetPosition.col && location.col < (fleetPosition.col + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
 	{
 		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
 		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
-		printf("Kill alien at %d, %d\n\r", row, col);
 		control_killAlienRC(row, col);
+		return true;
 	}
+	return false;
+}
+
+bool erodeBunkerIfCollision(point_t location)
+{
+	xil_printf("Check if bunker collision at %d, %d\n\r", location.col, location.row);
+	int i;
+	for (i = 0; i < TOTAL_BUNKERS; i++ ) {
+
+		point_t bunkerPos = draw_getBunkerLocation(i);
+		if ((location.row >= bunkerPos.row) && location.row < (bunkerPos.row + BUNKER_HEIGHT) &&
+		    (location.col >= bunkerPos.col) && location.col < (bunkerPos.col + BUNKER_WIDTH))
+		{
+			int row = (location.row - bunkerPos.row) / BUNKER_DAMAGE_HEIGHT;
+			int col = (location.col - bunkerPos.col) / BUNKER_DAMAGE_WIDTH;
+			control_erodeBunkerSection(i, row, col);
+			return true;
+		}
+	}
+	return false;
 }
 
 //void killTankIfTankCollision(point_t location)
@@ -220,7 +261,13 @@ void control_moveBullet(int i)
 		point_t location = (point_t){checkCol + 1, checkRow};
 		xil_printf("Hit location: %d, %d\n\r", location.col, location.row);
 		xil_printf("Pixel hit: %d\n\r", getPixel(location));
-		killAlienIfAlienCollision(location);
+		if (bullets[i].bulletType != bullet_tank) {
+			erodeBunkerIfCollision(location);
+		} else {
+			if (!killAlienIfAlienCollision(location))
+				erodeBunkerIfCollision(location);
+		}
+
 		bullets[i].bulletType = bullet_none;
 		return;
 	}
@@ -299,22 +346,8 @@ void control_fireTankBullet()
 
 // ******** Bunkers ********
 
-//erodes a particular bunker section based on bunker row and column
-void control_erodeBunkerSection(int bunker, int row, int col)
-{
-	byte damage = getBunkerDamage(bunker, row, col);
-	damage++;
-	draw_BunkerDamageAtIndex(bunker, row, col, damage - 1);
-	setBunkerDamage(bunker, row, col, damage);
-}
 
-//erodes the entire bunker
-void control_erodeBunker(int bunker)
-{
-	int i, j;
-	for(i = 0; i < 3; i++)
-		for(j = 0; j < 4; j++)
-			control_erodeBunkerSection(bunker, i, j);
-}
+
+
 
 
