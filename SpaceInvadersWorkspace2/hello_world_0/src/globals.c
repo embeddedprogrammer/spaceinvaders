@@ -9,11 +9,6 @@
 
 static uint* framePointer = (uint*) FRAME_BUFFER_ADDR;
 
-static uint* bunker0FramePointer = 0;
-static uint* bunker1FramePointer = 0;
-static uint* bunker2FramePointer = 0;
-static uint* bunker3FramePointer = 0;
-
 static byte bunkerDamage[4][3][4];
 
 uint* getFrameBuffer()
