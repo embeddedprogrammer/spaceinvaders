@@ -15,6 +15,7 @@
 #include "globals.h"
 #include "drawShape.h"
 #include "control.h"
+#include "timers.h"
 
 #include "xgpio.h"          // Provides access to PB GPIO driver.
 #include "platform.h"       // Enables caching and other system stuff.
@@ -62,58 +63,12 @@ int getNumber()
 #define BULLET_ADVANCE_TIME 10
 #define ALIEN_ADVANCE_TIME 500
 #define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*4
-#define MAX_TIMERS 10
-#define TIMER_INTERUPT_PERIOD 10
-
-customTimer_t timer[MAX_TIMERS];
-
-void testTimerFnc()
-{
-	xil_printf("Called function!!!\n\r");
-}
-
-customTimer_t* addTimer(int timeRemainingInMs, bool repeat, timerFncPtr_t fncPtr)
-{
-	int i;
-	for(i = 0; i < MAX_TIMERS; i++)
-		if(!timer[i].enabled)
-		{
-			timer[i].fncPtr = fncPtr;
-			timer[i].enabled = true;
-			timer[i].repeatEnabled = repeat;
-			timer[i].repeatPeriod = repeat ? timeRemainingInMs : 0;
-			timer[i].timeRemaining = timeRemainingInMs;
-			return &timer[i];
-		}
-	xil_printf("ERROR: No timer available.\n\r");
-	return NULL;
-}
 
 void initTimers()
 {
 	addTimer(BULLET_ADVANCE_TIME, true, &control_moveAllBullets);
 	addTimer(ALIEN_ADVANCE_TIME, true, &aliens_shiftAlienFleet);
 	addTimer(ALIEN_FIRE_TIME, true, &control_fireAlienBullet);
-}
-
-// This is invoked in response to a timer interrupt.
-// It does 2 things: 1) debounce switches, and 2) advances the time.
-void timer_interrupt_handler()  //10ms
-{
-	int i;
-	for(i = 0; i < MAX_TIMERS; i++)
-		if(timer[i].enabled)
-		{
-			timer[i].timeRemaining -= TIMER_INTERUPT_PERIOD;
-			if(timer[i].timeRemaining <= 0)
-			{
-				if(timer[i].repeatEnabled)
-					timer[i].timeRemaining = timer[i].repeatPeriod;
-				else
-					timer[i].enabled = false;
-				timer[i].fncPtr();
-			}
-		}
 }
 
 // This is invoked each time there is a change in the button state (result of a push or a bounce).

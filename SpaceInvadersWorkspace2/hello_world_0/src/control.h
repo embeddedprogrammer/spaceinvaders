@@ -17,6 +17,7 @@ void control_moveTankRight();
 void aliens_killAlien(uint alienIdx);
 void aliens_shiftAlienFleet();
 bool aliens_fleetDirectionIsRight();
+void aliens_removeExplosion();
 void control_moveAllBullets();
 void control_fireAlienBullet();
 void control_fireTankBullet();

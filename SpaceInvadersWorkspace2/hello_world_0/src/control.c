@@ -6,6 +6,7 @@
  */
 
 #include "control.h"
+#include "timers.h"
 #include <stdio.h>
 #include <stdlib.h> //for rand()
 
@@ -15,6 +16,7 @@
 #define MAX_ALIEN_BULLETS 10
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
+#define EXPLOSION_TIME 100
 
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
 
@@ -39,6 +41,35 @@ void control_moveTankRight()
 
 static bool aliens_alienLegsIn = false;
 
+#define MAX_CONCURRENT_EXPLOSIONS 3
+point_t explosions[MAX_CONCURRENT_EXPLOSIONS];
+
+void aliens_removeExplosion()
+{
+	int i;
+	for(i = 0; i < MAX_CONCURRENT_EXPLOSIONS; i++)
+		if(explosions[i].row != 0)
+		{
+			draw_AlienExplosion(explosions[i], true);
+			explosions[i].row = 0;
+		}
+}
+
+void aliens_explode(point_t location)
+{
+	draw_AlienExplosion(location, false);
+	int i;
+	for(i = 0; i < MAX_CONCURRENT_EXPLOSIONS; i++)
+		if(explosions[i].row == 0)
+		{
+			draw_AlienExplosion(location, false);
+			explosions[i] = location;
+			addTimer(EXPLOSION_TIME, false, &aliens_removeExplosion);
+			return;
+		}
+	xil_printf("Too many explosions\n\r");
+}
+
 // kills an alien then updates the rows and columns that are still viable
 void aliens_killAlienRC(short row, short col)
 {
@@ -46,7 +77,7 @@ void aliens_killAlienRC(short row, short col)
 	point_t alienPos = draw_getAlienPosition(row, col);
 	point_t explosionPos = (point_t){alienPos.col + (ALIEN_BITMAP_WIDTH  / 2) - (EXPLOSION_WIDTH  / 2),
 									 alienPos.row + (ALIEN_BITMAP_HEIGHT / 2) - (EXPLOSION_HEIGHT / 2)};
-	draw_AlienExplosion(explosionPos);
+	aliens_explode(explosionPos);
 
 	//Update indexes:
 	int minRow = ALIEN_FLEET_ROWS;
