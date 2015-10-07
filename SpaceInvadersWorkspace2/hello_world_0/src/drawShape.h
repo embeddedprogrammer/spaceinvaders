@@ -23,6 +23,7 @@ int getPixel(point_t location);
 void draw_AlienExplosion(point_t position, bool erase);
 void draw_Bunkers();
 void draw_Tank(point_t position);
+void draw_erodeTank(point_t position);
 void draw_AlienFleet(bool in);
 void draw_rectangle(point_t pos, int width, int height, int color);
 void draw_bullet(bullet_t position);

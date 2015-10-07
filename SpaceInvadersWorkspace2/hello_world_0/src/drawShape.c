@@ -84,6 +84,13 @@ void draw_Tank(point_t position) {
 	draw_bitmap(bitmapTank, false, true, position);
 }
 
+void draw_erodeTank(point_t position)
+{
+	int i;
+	for(i = 0; i < 3; i++)
+		draw_BunkerDamageAtLocation((point_t){position.col + i * BUNKER_DAMAGE_WIDTH, position.row}, 0);
+}
+
 void draw_Bunker(point_t position) {
 	draw_bitmap(bitmapBunker, false, true, position);
 }

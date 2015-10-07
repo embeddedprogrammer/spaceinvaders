@@ -62,7 +62,7 @@ int getNumber()
 
 #define BULLET_ADVANCE_TIME 10
 #define ALIEN_ADVANCE_TIME 500
-#define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*4
+#define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*2
 
 void initTimers()
 {

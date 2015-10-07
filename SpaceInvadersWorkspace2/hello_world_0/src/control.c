@@ -249,6 +249,7 @@ bool erodeBunkerIfCollision(point_t location)
 void control_killTank()
 {
     xil_printf("Kill tank\n\r");
+    draw_erodeTank(getTankPositionGlobal());
 }
 
 bool control_killTankIfCollision(point_t location)
