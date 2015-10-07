@@ -38,6 +38,8 @@ void print(char *str);
 #define KEY_MOVE_BULLETS '9'
 #define KEY_ALIEN_FIRE_BULLET '3'
 #define KEY_ERODE_BUNKER '7'
+#define KEY_RESTART 'r'
+
 
 int getNumber()
 {
@@ -178,27 +180,7 @@ void initVideo()
 	// Now, let's get ready to start displaying some stuff on the screen.
 	// The variables framePointer and framePointer1 are just pointers to the base address
 	// of frame 0 and frame 1.
-	uint* framePointer = getFrameBuffer();
-	// Just paint some large red, green, blue, and white squares in different
-	// positions of the image for each frame in the buffer (framePointer0 and framePointer1).
-	int row = 0, col = 0;
-	for (row = 0; row < 480; row++) {
-		for (col = 0; col < 640; col++) {
-			framePointer[row * 640 + col] = 0x00000000;
-		}
-	}
-	draw_Bunkers();
-	point_t alienFleetPos;
-	alienFleetPos.row = GAMEBUFFER_HEIGHT / 7;
-	alienFleetPos.col = GAMEBUFFER_WIDTH / 6;
-	setAlienFleetPositionGlobal(alienFleetPos);
-	draw_AlienFleet(true);
 
-	point_t tankPos = getTankPositionGlobal();
-	tankPos.row = TANK_ROW;
-	tankPos.col = TANK_INTIAL_COL;
-	draw_Tank(tankPos);
-	setTankPositionGlobal(tankPos);
 	// This tells the HDMI controller the resolution of your display (there must be a better way to do this).
 	XIo_Out32(XPAR_AXI_HDMI_0_BASEADDR, 640*480);
 
@@ -213,6 +195,32 @@ void initVideo()
 			XAXIVDMA_READ)) {
 		xil_printf("vdma parking failed\n\r");
 	}
+}
+
+void initGameScreen()
+{
+	uint* framePointer = getFrameBuffer();
+	// Just paint some large red, green, blue, and white squares in different
+	// positions of the image for each frame in the buffer (framePointer0 and framePointer1).
+	int row = 0, col = 0;
+	for (row = 0; row < 480; row++) {
+		for (col = 0; col < 640; col++) {
+			framePointer[row * 640 + col] = 0x00000000;
+		}
+	}
+
+	draw_Bunkers();
+	point_t alienFleetPos;
+	alienFleetPos.row = GAMEBUFFER_HEIGHT / 7;
+	alienFleetPos.col = GAMEBUFFER_WIDTH / 6;
+	setAlienFleetPositionGlobal(alienFleetPos);
+	draw_AlienFleet(true);
+
+	point_t tankPos = getTankPositionGlobal();
+	tankPos.row = TANK_ROW;
+	tankPos.col = TANK_INTIAL_COL;
+	draw_tank(tankPos, false);
+	setTankPositionGlobal(tankPos);
 }
 
 void initInterupts()
@@ -280,6 +288,8 @@ void listenToKeyPresses()
 			control_erodeBunker(getNumber());
 			xil_printf("Bunker eroded\r\n");
 			break;
+		case KEY_RESTART:
+			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}
@@ -289,6 +299,7 @@ void listenToKeyPresses()
 int main()
 {
 	initVideo();
+	initGameScreen();
 	initInterupts();
 	initTimers();
 	listenToKeyPresses();

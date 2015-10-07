@@ -80,8 +80,9 @@ void draw_AlienBottom(point_t position, bool in) {
 	draw_bitmap(in ? bitmapAlienBottomIn : bitmapAlienBottomOut, false, true, position);
 }
 
-void draw_Tank(point_t position) {
-	draw_bitmap(bitmapTank, false, true, position);
+void draw_tank(point_t position, bool erase)
+{
+	draw_bitmap(bitmapTank, erase, true, position);
 }
 
 void draw_erodeTank(point_t position)

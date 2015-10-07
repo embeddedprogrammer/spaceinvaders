@@ -17,26 +17,33 @@
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
 #define EXPLOSION_TIME 100
+#define ERODE_TANK_TIME 1000
+#define DISAPPEAR_TANK_TIME 2000
 
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
+
+bool tankAlive = true;
 
 //move tank left
 void control_moveTankLeft()
 {
+	if(!tankAlive)
+		return;
 	point_t tankPos = getTankPositionGlobal();
 	tankPos.col -= 2;
 	setTankPositionGlobal(tankPos);
-	draw_Tank(tankPos);
+	draw_tank(tankPos, false);
 }
 
 //move tank right
 void control_moveTankRight()
 {
+	if(!tankAlive)
+		return;
 	point_t tankPos = getTankPositionGlobal();
 	tankPos.col += 2;
 	setTankPositionGlobal(tankPos);
-	draw_Tank(tankPos);
-
+	draw_tank(tankPos, false);
 }
 
 static bool aliens_alienLegsIn = false;
@@ -100,8 +107,6 @@ void aliens_killAlienRC(short row, short col)
 				if(c < minCol)
 					minCol = c;
 			}
-
-	xil_printf("Bounds: %d %d %d %d\n\r", maxRow ,minRow, maxCol, minCol);
 
 	setAlienFleetTopRowNumGlobal(minRow);
 	setAlienFleetBottomRowNumGlobal(maxRow);
@@ -229,7 +234,6 @@ bool killAlienIfAlienCollision(point_t location)
 
 bool erodeBunkerIfCollision(point_t location)
 {
-	xil_printf("Check if bunker collision at %d, %d\n\r", location.col, location.row);
 	int i;
 	for (i = 0; i < TOTAL_BUNKERS; i++ ) {
 
@@ -246,10 +250,26 @@ bool erodeBunkerIfCollision(point_t location)
 	return false;
 }
 
+void control_reviveTank()
+{
+    xil_printf("Revive tank\n\r");
+	draw_tank(getTankPositionGlobal(), false);
+	tankAlive = true;
+}
+
+void control_disappearTank()
+{
+    xil_printf("Disappear tank\n\r");
+    draw_tank(getTankPositionGlobal(), true);
+    addTimer(DISAPPEAR_TANK_TIME, false, &control_reviveTank);
+}
+
 void control_killTank()
 {
+	tankAlive = false;
     xil_printf("Kill tank\n\r");
     draw_erodeTank(getTankPositionGlobal());
+    addTimer(ERODE_TANK_TIME, false, &control_disappearTank);
 }
 
 bool control_killTankIfCollision(point_t location)
@@ -345,7 +365,7 @@ int control_getFirstEmptyBulletPosition(int start, int length)
 //fires a alien bullet if one is avalible
 void control_fireAlienBullet()
 {
-	xil_printf("stuck\n\r");
+	xil_printf("");
 	int i = control_getFirstEmptyBulletPosition(FIRST_ALIEN_BULLET, MAX_ALIEN_BULLETS);
 	if(i != -1)
 	{
@@ -357,7 +377,7 @@ void control_fireAlienBullet()
 	}
 	else
 		xil_printf("Cannot fire - Maxed out alien bullets\n\r");
-	xil_printf("Not stuck\n\r");
+	xil_printf("");
 }
 
 // fires a tank bullet and places it at the end of its turret
