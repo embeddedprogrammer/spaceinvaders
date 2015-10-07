@@ -81,7 +81,7 @@ void timer_interrupt_handler()  //10ms
 	if(alienTimer == ALIEN_ADVANCE_TIME)
 	{
 		alienTimer = 0;
-		control_shiftAlienFleet();
+		aliens_shiftAlienFleet();
 	}
 	alienFireTimer++;
 	if(alienFireTimer == ALIEN_FIRE_TIME)
@@ -280,11 +280,11 @@ int main()
 			break;
 		case KEY_KILL_ALIEN:
 			xil_printf("Kill alien - ");
-			control_killAlien(getNumber());
+			aliens_killAlien(getNumber());
 			xil_printf("Alien killed\r\n");
 			break;
 		case KEY_MOVE_ALIEN:
-			control_shiftAlienFleet();
+			aliens_shiftAlienFleet();
 			break;
 		case KEY_TANK_FIRE_BULLET:
 			control_fireTankBullet();

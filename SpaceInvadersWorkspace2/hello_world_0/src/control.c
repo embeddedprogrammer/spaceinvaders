@@ -37,10 +37,10 @@ void control_moveTankRight()
 
 }
 
-static bool alienLegsIn = false;
+static bool aliens_alienLegsIn = false;
 
 // kills an alien then updates the rows and columns that are still viable
-void control_killAlienRC(short row, short col)
+void aliens_killAlienRC(short row, short col)
 {
 	setAlienAlive(row, col, false);
 	point_t alienPos = draw_getAlienPosition(row, col);
@@ -78,13 +78,13 @@ void control_killAlienRC(short row, short col)
 	setAlienFleetRightColNumGlobal(maxCol);
 }
 
-void control_killAlien(uint alienIdx)
+void aliens_killAlien(uint alienIdx)
 {
-	control_killAlienRC(alienIdx / ALIEN_FLEET_COLS, alienIdx % ALIEN_FLEET_COLS);
+	aliens_killAlienRC(alienIdx / ALIEN_FLEET_COLS, alienIdx % ALIEN_FLEET_COLS);
 }
 
 //checks to see if the fleet is at right screen edge
-bool alienFleetAtRightScreenEdge()
+bool aliens_fleetAtRightScreenEdge()
 {
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
 	int alienFleetWidth = (rightAlienCol + 1)*ALIEN_HORIZONTAL_DISTANCE;
@@ -93,7 +93,7 @@ bool alienFleetAtRightScreenEdge()
 }
 
 // checks to see if the fleet is at the left screen edge
-bool alienFleetAtLeftScreenEdge()
+bool aliens_fleetAtLeftScreenEdge()
 {
 	int leftAlienCol = getAlienFleetLeftColNumGlobal();
 	int alienFleetLeftOffset = leftAlienCol*ALIEN_HORIZONTAL_DISTANCE;
@@ -103,7 +103,7 @@ bool alienFleetAtLeftScreenEdge()
 }
 
 // erase the parts of aliens that get left behind by a redraw
-void shiftDownErase(point_t alienPos)
+void aliens_shiftDownErase(point_t alienPos)
 {
 	int i;
 	point_t erasePos;
@@ -120,20 +120,23 @@ void shiftDownErase(point_t alienPos)
 }
 
 static bool directionRight = true;
-bool control_AlienDirectionIsRight() { return directionRight; }
+bool aliens_fleetDirectionIsRight()
+{
+	return directionRight;
+}
 
 // shifts the whole alien fleet left right or down depending on position
-void control_shiftAlienFleet()
+void aliens_shiftAlienFleet()
 {
 	int leftAlienCol = getAlienFleetLeftColNumGlobal();
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
 	point_t alienPos = getAlienFleetPositionGlobal();
-	bool shiftDown = (directionRight) ? alienFleetAtRightScreenEdge() : alienFleetAtLeftScreenEdge();// at screen edge
+	bool shiftDown = (directionRight) ? aliens_fleetAtRightScreenEdge() : aliens_fleetAtLeftScreenEdge();// at screen edge
 
 	if (shiftDown) {
 		directionRight = !directionRight;
 		alienPos.row += ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
-		shiftDownErase(alienPos);// erase remaining alien parts
+		aliens_shiftDownErase(alienPos);// erase remaining alien parts
 
 	} else {// shift left or right
 		point_t erasePos;
@@ -150,9 +153,12 @@ void control_shiftAlienFleet()
 
 	}
 	setAlienFleetPositionGlobal(alienPos);
-	alienLegsIn = !alienLegsIn;
-	draw_AlienFleet(alienLegsIn);
+	aliens_alienLegsIn = !aliens_alienLegsIn;
+	draw_AlienFleet(aliens_alienLegsIn);
 }
+
+
+//BUNKERS
 
 //erodes a particular bunker section based on bunker row and column
 void control_erodeBunkerSection(int bunker, int row, int col)
@@ -184,7 +190,7 @@ bool killAlienIfAlienCollision(point_t location)
 	{
 		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
 		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
-		control_killAlienRC(row, col);
+		aliens_killAlienRC(row, col);
 		return true;
 	}
 	return false;
