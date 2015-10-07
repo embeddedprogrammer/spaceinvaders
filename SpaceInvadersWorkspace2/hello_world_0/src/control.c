@@ -25,7 +25,6 @@ void control_moveTankLeft()
 	tankPos.col -= 2;
 	setTankPositionGlobal(tankPos);
 	draw_Tank(tankPos);
-
 }
 
 //move tank right
@@ -45,8 +44,9 @@ void control_killAlienRC(short row, short col)
 {
 	setAlienAlive(row, col, false);
 	point_t alienPos = draw_getAlienPosition(row, col);
-	draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);
-	draw_AlienFleet(alienLegsIn);
+	point_t explosionPos = (point_t){alienPos.col + (ALIEN_BITMAP_WIDTH  / 2) - (EXPLOSION_WIDTH  / 2),
+									 alienPos.row + (ALIEN_BITMAP_HEIGHT / 2) - (EXPLOSION_HEIGHT / 2)};
+	draw_AlienExplosion(explosionPos);
 
 	//Update indexes:
 	int minRow = ALIEN_FLEET_ROWS;
@@ -209,29 +209,22 @@ bool erodeBunkerIfCollision(point_t location)
 	return false;
 }
 
-//void killTankIfTankCollision(point_t location)
-//{
-//	point_t fleetPosition = getAlienFleetPositionGlobal();
-//	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
-//	   location.col > fleetPosition.col && location.col < (fleetPosition.row + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
-//	{
-//		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
-//		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
-//		control_killAlienRC(row, col);
-//	}
-//}
-//
-//void erodeBunkerIfBunkerCollision(point_t location)
-//{
-//	point_t fleetPosition = getAlienFleetPositionGlobal();
-//	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
-//	   location.col > fleetPosition.col && location.col < (fleetPosition.row + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
-//	{
-//		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
-//		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
-//		control_killAlienRC(row, col);
-//	}
-//}
+void control_killTank()
+{
+    xil_printf("Kill tank\n\r");
+}
+
+bool control_killTankIfCollision(point_t location)
+{
+    point_t tankPosition = getTankPositionGlobal();
+    if(location.row > tankPosition.row && location.row < (tankPosition.row + TANK_HEIGHT) &&
+       location.col > tankPosition.col && location.col < (tankPosition.row + TANK_WIDTH))
+    {
+    	control_killTank();
+        return true;
+    }
+    return false;
+}
 
 //advances the bullet specified by index i
 void control_moveBullet(int i)
@@ -255,22 +248,24 @@ void control_moveBullet(int i)
 	if(bullets[i].bulletType == bullet_alien1 || bullets[i].bulletType == bullet_alien2)
 		checkRow += BULLET_HEIGHT - 1;
 
-	//Check for collisions
-	if(getPixel((point_t){checkCol, checkRow}) != 0 || getPixel((point_t){checkCol + 1, checkRow}) != 0 || getPixel((point_t){checkCol + 2, checkRow}) != 0)
-	{
-		point_t location = (point_t){checkCol + 1, checkRow};
-		xil_printf("Hit location: %d, %d\n\r", location.col, location.row);
-		xil_printf("Pixel hit: %d\n\r", getPixel(location));
-		if (bullets[i].bulletType != bullet_tank) {
-			erodeBunkerIfCollision(location);
-		} else {
-			if (!killAlienIfAlienCollision(location))
-				erodeBunkerIfCollision(location);
-		}
-
-		bullets[i].bulletType = bullet_none;
-		return;
-	}
+    //Check for collisions
+    int c;
+    for(c = 0; c <= 2; c++)
+    {
+        point_t location = (point_t){checkCol + c, checkRow};
+        if(getPixel(location) != 0)
+        {
+            bool collision = false;
+            if (bullets[i].bulletType == bullet_tank)
+                collision = killAlienIfAlienCollision(location) || erodeBunkerIfCollision(location);
+            else if (bullets[i].bulletType != bullet_tank)
+                collision = erodeBunkerIfCollision(location) || control_killTankIfCollision(location) || control_killTankIfCollision(location);
+            if(collision == false)
+                xil_printf("Bullet hit unknown pixel\n\r");
+            bullets[i].bulletType = bullet_none;
+            return;
+        }
+    }
 
 	draw_bullet(bullets[i]);
 }
@@ -343,8 +338,6 @@ void control_fireTankBullet()
 	else
 		xil_printf("Cannot fire - Maxed out tank bullets\n\r");
 }
-
-// ******** Bunkers ********
 
 
 
