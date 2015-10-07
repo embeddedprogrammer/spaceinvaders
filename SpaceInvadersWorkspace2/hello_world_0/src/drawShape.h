@@ -13,9 +13,11 @@
 #include <sys/types.h>
 #include <stdbool.h>
 
+typedef enum {bullet_none, bullet_tank, bullet_alien1, bullet_alien2} bulletTypes_t;
+
 typedef struct
 {
-	enum bulletTypes {bullet_none, bullet_tank, bullet_alien1, bullet_alien2} bulletType;
+	bulletTypes_t bulletType;
 	point_t location;
 } bullet_t;
 

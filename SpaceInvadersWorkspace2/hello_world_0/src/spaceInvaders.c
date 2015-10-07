@@ -14,7 +14,10 @@
 #include "unistd.h"
 #include "globals.h"
 #include "drawShape.h"
-#include "control.h"
+#include "bullets.h"
+#include "bunkers.h"
+#include "aliens.h"
+#include "tank.h"
 
 #include "xgpio.h"          // Provides access to PB GPIO driver.
 #include "platform.h"       // Enables caching and other system stuff.
@@ -75,13 +78,13 @@ void timer_interrupt_handler()  //10ms
 	if(bulletTimer == BULLET_ADVANCE_TIME)
 	{
 		bulletTimer = 0;
-		control_moveAllBullets();
+		bullets_tick();
 	}
 	alienTimer++;
 	if(alienTimer == ALIEN_ADVANCE_TIME)
 	{
 		alienTimer = 0;
-		control_shiftAlienFleet();
+		aliens_shiftAlienFleet();
 	}
 	alienFireTimer++;
 	if(alienFireTimer == ALIEN_FIRE_TIME)
@@ -273,31 +276,31 @@ int main()
 		input = getchar();
 		switch (input) {
 		case KEY_TANK_LEFT:
-			control_moveTankLeft();
+			tank_moveLeft();
 			break;
 		case KEY_TANK_RIGHT:
-			control_moveTankRight();
+			tank_moveRight();
 			break;
 		case KEY_KILL_ALIEN:
 			xil_printf("Kill alien - ");
-			control_killAlien(getNumber());
+			aliens_killAlien(getNumber());
 			xil_printf("Alien killed\r\n");
 			break;
 		case KEY_MOVE_ALIEN:
-			control_shiftAlienFleet();
+			aliens_shiftAlienFleet();
 			break;
 		case KEY_TANK_FIRE_BULLET:
-			control_fireTankBullet();
+			bullets_fireTankBullet();
 			break;
 		case KEY_MOVE_BULLETS:
-			control_moveAllBullets();
+			bullets_moveAllBullets();
 			break;
 		case KEY_ALIEN_FIRE_BULLET:
-			control_fireAlienBullet();
+			bullets_fireAlienBullet();
 			break;
 		case KEY_ERODE_BUNKER:
 			xil_printf("Erode bunker - ");
-			control_erodeBunker(getNumber());
+			bunkers_erode(getNumber());
 			xil_printf("Bunker eroded\r\n");
 			break;
 		default:

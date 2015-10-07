@@ -7,7 +7,6 @@
 
 #include "drawShape.h"
 #include "shapebitmap.h"
-#include "control.h"
 #include <stdbool.h>
 #include <sys/types.h>
 #include <stdint.h>
