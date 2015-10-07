@@ -14,6 +14,7 @@
 #include "unistd.h"
 #include "globals.h"
 #include "drawShape.h"
+#include "tank.h"
 #include "control.h"
 #include "timers.h"
 
@@ -39,7 +40,7 @@ void print(char *str);
 #define KEY_ALIEN_FIRE_BULLET '3'
 #define KEY_ERODE_BUNKER '7'
 #define KEY_RESTART 'r'
-
+#define KEY_SAUCER 's'
 
 int getNumber()
 {
@@ -64,13 +65,17 @@ int getNumber()
 
 #define BULLET_ADVANCE_TIME 10
 #define ALIEN_ADVANCE_TIME 500
+#define SAUCER_ADVANCE_TIME 50
 #define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*2
+#define SAUCER_START_TIME 1000*10
 
 void initTimers()
 {
 	addTimer(BULLET_ADVANCE_TIME, true, &control_moveAllBullets);
 	addTimer(ALIEN_ADVANCE_TIME, true, &aliens_shiftAlienFleet);
 	addTimer(ALIEN_FIRE_TIME, true, &control_fireAlienBullet);
+	addTimer(SAUCER_ADVANCE_TIME, true, &aliens_moveSaucer);
+	addTimer(SAUCER_START_TIME, true, &aliens_startSaucer);
 }
 
 // This is invoked each time there is a change in the button state (result of a push or a bounce).
@@ -255,6 +260,7 @@ void listenToKeyPresses()
 	xil_printf("                   %c ", ' ');
 	xil_printf("Kill alien:        %c ", KEY_KILL_ALIEN);
 	xil_printf("Fire alien bullet: %c ", KEY_ALIEN_FIRE_BULLET);
+	xil_printf("------\n\r");
 
 	while (1) {
 		char input;
@@ -289,6 +295,10 @@ void listenToKeyPresses()
 			xil_printf("Bunker eroded\r\n");
 			break;
 		case KEY_RESTART:
+			initGameScreen();
+			break;
+		case KEY_SAUCER:
+			aliens_startSaucer();
 			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
@@ -299,8 +309,8 @@ void listenToKeyPresses()
 int main()
 {
 	initVideo();
-	initGameScreen();
 	initInterupts();
+	initGameScreen();
 	initTimers();
 	listenToKeyPresses();
 

@@ -60,8 +60,9 @@ void draw_bitmap(bitmap_t bitmap, bool eraseForeground, bool eraseBackground, po
 	}
 }
 
-void draw_Saucer(point_t position) {
-	draw_bitmap(bitmapSaucer, false, true, position);
+void draw_Saucer(point_t position, bool erase)
+{
+	draw_bitmap(bitmapSaucer, erase, true, position);
 }
 
 void draw_AlienExplosion(point_t position, bool erase) {

@@ -20,6 +20,7 @@ typedef struct
 } bullet_t;
 
 int getPixel(point_t location);
+void draw_Saucer(point_t position, bool erase);
 void draw_AlienExplosion(point_t position, bool erase);
 void draw_Bunkers();
 void draw_tank(point_t position, bool erase);

@@ -25,6 +25,51 @@ static bool aliens_alienLegsIn = false;
 #define MAX_CONCURRENT_EXPLOSIONS 3
 point_t explosions[MAX_CONCURRENT_EXPLOSIONS];
 
+point_t spacecraftLocation = (point_t){0, 0};
+bool spacecraftTravelingRight = true;
+
+void aliens_moveSaucer()
+{
+	if(spacecraftLocation.row != 0)
+	{
+		if(spacecraftLocation.col < 0 || spacecraftLocation.col > GAMEBUFFER_WIDTH - SAUCER_WIDTH)
+		{
+			draw_Saucer(spacecraftLocation, true);
+			spacecraftLocation.row = 0;
+			return;
+		}
+		point_t erasePos = spacecraftLocation;
+		if(spacecraftTravelingRight)
+		{
+			erasePos.col = spacecraftLocation.col;
+			spacecraftLocation.col += ALIEN_SHIFT_AMOUNT;
+		}
+		else
+		{
+			spacecraftLocation.col -= ALIEN_SHIFT_AMOUNT;
+			erasePos.col = spacecraftLocation.col + SAUCER_WIDTH;
+		}
+		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, SAUCER_HEIGHT, BACKGROUND_COLOR);
+		draw_Saucer(spacecraftLocation, false);
+	}
+}
+
+void aliens_startSaucer()
+{
+	xil_printf("Start flying saucer\n\r");
+	spacecraftLocation.row = 10;
+	if(rand() % 2)
+	{
+		spacecraftTravelingRight = true;
+		spacecraftLocation.col = 0;
+	}
+	else
+	{
+		spacecraftTravelingRight = false;
+		spacecraftLocation.col = GAMEBUFFER_WIDTH - SAUCER_WIDTH;
+	}
+}
+
 void aliens_removeExplosion()
 {
 	int i;
@@ -86,6 +131,15 @@ void aliens_killAlienRC(short row, short col)
 	setAlienFleetBottomRowNumGlobal(maxRow);
 	setAlienFleetLeftColNumGlobal(minCol);
 	setAlienFleetRightColNumGlobal(maxCol);
+}
+
+void aliens_killSaucer()
+{
+	point_t explosionPos = (point_t){spacecraftLocation.col + (SAUCER_WIDTH  / 2) - (EXPLOSION_WIDTH  / 2),
+									 spacecraftLocation.row + (SAUCER_HEIGHT / 2) - (EXPLOSION_HEIGHT / 2)};
+	draw_Saucer(spacecraftLocation, true);
+	aliens_explode(explosionPos);
+	spacecraftLocation.row = 0;
 }
 
 void aliens_killAlien(uint alienIdx)
@@ -202,6 +256,11 @@ bool killAlienIfAlienCollision(point_t location)
 		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
 		aliens_killAlienRC(row, col);
 		return true;
+	}
+	else if(location.row > spacecraftLocation.row && location.row < (spacecraftLocation.row + SAUCER_HEIGHT) &&
+	        location.col > spacecraftLocation.col && location.col < (spacecraftLocation.col + SAUCER_WIDTH))
+	{
+		aliens_killSaucer();
 	}
 	return false;
 }
