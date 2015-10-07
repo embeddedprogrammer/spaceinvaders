@@ -261,10 +261,10 @@ void listenToKeyPresses()
 		input = getchar();
 		switch (input) {
 		case KEY_TANK_LEFT:
-			control_moveTankLeft();
+			tank_moveTankLeft();
 			break;
 		case KEY_TANK_RIGHT:
-			control_moveTankRight();
+			tank_moveTankRight();
 			break;
 		case KEY_KILL_ALIEN:
 			xil_printf("Kill alien - ");
@@ -285,7 +285,7 @@ void listenToKeyPresses()
 			break;
 		case KEY_ERODE_BUNKER:
 			xil_printf("Erode bunker - ");
-			control_erodeBunker(getNumber());
+			bunkers_erodeBunker(getNumber());
 			xil_printf("Bunker eroded\r\n");
 			break;
 		case KEY_RESTART:

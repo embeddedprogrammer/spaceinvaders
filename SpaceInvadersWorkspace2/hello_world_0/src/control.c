@@ -7,6 +7,7 @@
 
 #include "control.h"
 #include "timers.h"
+#include "tank.h"
 #include <stdio.h>
 #include <stdlib.h> //for rand()
 
@@ -17,34 +18,7 @@
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
 #define EXPLOSION_TIME 100
-#define ERODE_TANK_TIME 1000
-#define DISAPPEAR_TANK_TIME 2000
-
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
-
-bool tankAlive = true;
-
-//move tank left
-void control_moveTankLeft()
-{
-	if(!tankAlive)
-		return;
-	point_t tankPos = getTankPositionGlobal();
-	tankPos.col -= 2;
-	setTankPositionGlobal(tankPos);
-	draw_tank(tankPos, false);
-}
-
-//move tank right
-void control_moveTankRight()
-{
-	if(!tankAlive)
-		return;
-	point_t tankPos = getTankPositionGlobal();
-	tankPos.col += 2;
-	setTankPositionGlobal(tankPos);
-	draw_tank(tankPos, false);
-}
 
 static bool aliens_alienLegsIn = false;
 
@@ -197,7 +171,7 @@ void aliens_shiftAlienFleet()
 //BUNKERS
 
 //erodes a particular bunker section based on bunker row and column
-void control_erodeBunkerSection(int bunker, int row, int col)
+void bunkers_erodeBunkerSection(int bunker, int row, int col)
 {
 	if (row >= BUNKER_DAMAGE_ARRAY_ROWS || row < 0 || col >= BUNKER_DAMAGE_ARRAY_COLS || col < 0)
 		return;
@@ -209,12 +183,12 @@ void control_erodeBunkerSection(int bunker, int row, int col)
 }
 
 //erodes the entire bunker
-void control_erodeBunker(int bunker)
+void bunkers_erodeBunker(int bunker)
 {
 	int i, j;
 	for(i = 0; i < BUNKER_SECTION_ROWS; i++)
 		for(j = 0; j < BUNKER_SECTION_COLS; j++)
-			control_erodeBunkerSection(bunker, i, j);
+			bunkers_erodeBunkerSection(bunker, i, j);
 }
 
 bool killAlienIfAlienCollision(point_t location)
@@ -243,33 +217,11 @@ bool erodeBunkerIfCollision(point_t location)
 		{
 			int row = (location.row - bunkerPos.row) / BUNKER_DAMAGE_HEIGHT;
 			int col = (location.col - bunkerPos.col) / BUNKER_DAMAGE_WIDTH;
-			control_erodeBunkerSection(i, row, col);
+			bunkers_erodeBunkerSection(i, row, col);
 			return true;
 		}
 	}
 	return false;
-}
-
-void control_reviveTank()
-{
-    xil_printf("Revive tank\n\r");
-	draw_tank(getTankPositionGlobal(), false);
-	tankAlive = true;
-}
-
-void control_disappearTank()
-{
-    xil_printf("Disappear tank\n\r");
-    draw_tank(getTankPositionGlobal(), true);
-    addTimer(DISAPPEAR_TANK_TIME, false, &control_reviveTank);
-}
-
-void control_killTank()
-{
-	tankAlive = false;
-    xil_printf("Kill tank\n\r");
-    draw_erodeTank(getTankPositionGlobal());
-    addTimer(ERODE_TANK_TIME, false, &control_disappearTank);
 }
 
 bool control_killTankIfCollision(point_t location)
@@ -278,7 +230,7 @@ bool control_killTankIfCollision(point_t location)
     if(location.row > tankPosition.row && location.row < (tankPosition.row + TANK_HEIGHT) &&
        location.col > tankPosition.col && location.col < (tankPosition.row + TANK_WIDTH))
     {
-    	control_killTank();
+		tank_killTank();
         return true;
     }
     return false;

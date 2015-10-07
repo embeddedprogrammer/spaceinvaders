@@ -241,7 +241,6 @@ void draw_bullet(bullet_t bullet)
 	draw_bullet_color(bullet, false);
 }
 
-
 void erase_bullet(bullet_t bullet)
 {
 	draw_bullet_color(bullet, true);
