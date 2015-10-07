@@ -38,6 +38,12 @@ void tank_moveTankRight()
 	draw_tank(tankPos, false);
 }
 
+void tank_fireBullet()
+{
+	if(tankAlive)
+		control_fireTankBullet();
+}
+
 void tank_reviveTank()
 {
 	draw_tank(getTankPositionGlobal(), false);

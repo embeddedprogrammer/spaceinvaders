@@ -373,7 +373,7 @@ int control_getFirstEmptyBulletPosition(int start, int length)
 	return -1;
 }
 
-//fires a alien bullet if one is avalible
+//fires a alien bullet if one is available
 void control_fireAlienBullet()
 {
 	xil_printf("");

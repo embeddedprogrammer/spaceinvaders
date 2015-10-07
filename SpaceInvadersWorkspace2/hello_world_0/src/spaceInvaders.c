@@ -65,9 +65,9 @@ int getNumber()
 
 #define BULLET_ADVANCE_TIME 10
 #define ALIEN_ADVANCE_TIME 500
-#define SAUCER_ADVANCE_TIME 50
+#define SAUCER_ADVANCE_TIME 100
 #define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*2
-#define SAUCER_START_TIME 1000*10
+#define SAUCER_START_TIME 1000*30
 
 void initTimers()
 {
@@ -281,7 +281,7 @@ void listenToKeyPresses()
 			aliens_shiftAlienFleet();
 			break;
 		case KEY_TANK_FIRE_BULLET:
-			control_fireTankBullet();
+			tank_fireBullet();
 			break;
 		case KEY_MOVE_BULLETS:
 			control_moveAllBullets();
