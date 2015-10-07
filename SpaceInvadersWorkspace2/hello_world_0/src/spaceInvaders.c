@@ -132,11 +132,12 @@ void interrupt_handler_dispatcher(void* ptr) {
 	}
 }
 
-int main()
+XAxiVdma videoDMAController;
+
+void initVideo()
 {
 	init_platform(); // Necessary for all programs.
 	int Status; // Keep track of success/failure of system function calls.
-	XAxiVdma videoDMAController;
 	// There are 3 steps to initializing the vdma driver and IP.
 	// Step 1: lookup the memory structure that is used to access the vdma driver.
 	XAxiVdma_Config * VideoDMAConfig = XAxiVdma_LookupConfig(
@@ -232,8 +233,10 @@ int main()
 			XAXIVDMA_READ)) {
 		xil_printf("vdma parking failed\n\r");
 	}
+}
 
-
+void initInterupts()
+{
 	// Initialize the GPIO peripherals. NOTE: We wait to do this till after the HDMI to ensure that nothing happens before the HDMI is enabled.
 	int success = XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
 
@@ -249,24 +252,21 @@ int main()
 			(XPAR_FIT_TIMER_0_INTERRUPT_MASK | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK));
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
+}
 
-//	while(1);  // Program never ends.
-
-
-
-
-     xil_printf("Erode bunker:      %c ", KEY_ERODE_BUNKER);
-     xil_printf("Move aliens:       %c ", KEY_MOVE_ALIEN);
-     xil_printf("Move bullets:      %c ", KEY_MOVE_BULLETS);
-     xil_printf("------\n\r");
-     xil_printf("Left:              %c ", KEY_TANK_LEFT);
-     xil_printf("Fire tank bullet   %c ", KEY_TANK_FIRE_BULLET);
-     xil_printf("Right:             %c ", KEY_TANK_RIGHT);
-     xil_printf("------\n\r");
-     xil_printf("                   %c ", ' ');
-     xil_printf("Kill alien:        %c ", KEY_KILL_ALIEN);
-     xil_printf("Fire alien bullet: %c ", KEY_ALIEN_FIRE_BULLET);
-
+void listenToKeyPresses()
+{
+	xil_printf("Erode bunker:      %c ", KEY_ERODE_BUNKER);
+	xil_printf("Move aliens:       %c ", KEY_MOVE_ALIEN);
+	xil_printf("Move bullets:      %c ", KEY_MOVE_BULLETS);
+	xil_printf("------\n\r");
+	xil_printf("Left:              %c ", KEY_TANK_LEFT);
+	xil_printf("Fire tank bullet   %c ", KEY_TANK_FIRE_BULLET);
+	xil_printf("Right:             %c ", KEY_TANK_RIGHT);
+	xil_printf("------\n\r");
+	xil_printf("                   %c ", ' ');
+	xil_printf("Kill alien:        %c ", KEY_KILL_ALIEN);
+	xil_printf("Fire alien bullet: %c ", KEY_ALIEN_FIRE_BULLET);
 
 	while (1) {
 		char input;
@@ -303,11 +303,15 @@ int main()
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}
-		if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, 0,
-				XAXIVDMA_READ)) {
-			xil_printf("vdma parking failed\n\r");
-		}
 	}
+}
+
+int main()
+{
+	initVideo();
+	initInterupts();
+	listenToKeyPresses();
+
 	cleanup_platform();
 
 	return 0;
