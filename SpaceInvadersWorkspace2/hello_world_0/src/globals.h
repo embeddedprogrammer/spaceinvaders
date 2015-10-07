@@ -62,6 +62,17 @@ typedef struct
 	ushort height;
 } dimension_t;
 
+typedef void (*timerFncPtr_t)();
+
+typedef struct
+{
+	timerFncPtr_t fncPtr;
+	bool enabled;
+	bool repeatEnabled;
+	int repeatPeriod;
+	int timeRemaining;
+} customTimer_t;
+
 typedef enum {
 	bunker_0,
 	bunker_1,
