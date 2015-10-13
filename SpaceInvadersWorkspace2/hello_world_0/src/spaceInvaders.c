@@ -301,6 +301,9 @@ void listenToKeyPresses()
 		case KEY_SAUCER:
 			aliens_startSaucer();
 			break;
+		case ' ':
+			draw_character('A', (point_t){10, 10}, false);
+			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}

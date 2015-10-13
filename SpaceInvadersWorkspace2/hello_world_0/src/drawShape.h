@@ -33,5 +33,6 @@ point_t draw_getAlienPosition(int i, int j);
 void draw_BunkerDamageAtLocation(point_t position, byte damage);
 void draw_BunkerDamageAtIndex(int bunker, int i, int j, byte damage);
 point_t draw_getBunkerLocation(int i);
+void draw_character(char c, point_t position, bool erase);
 
 #endif /* DRAWSHAPE_H_ */

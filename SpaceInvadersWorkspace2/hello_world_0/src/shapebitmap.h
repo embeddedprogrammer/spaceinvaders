@@ -63,6 +63,7 @@
 #define BUNKER_SECTION_COLS 4
 
 //colors
+#define FONT_COLOR     0x0000FF00
 #define BUNKER_COLOR     0x0000FF00
 #define TANK_COLOR       0x0000FF00
 #define ALIEN_COLOR      0x00FFFFFF

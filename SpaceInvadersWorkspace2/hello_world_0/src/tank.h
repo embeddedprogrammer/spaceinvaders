@@ -11,5 +11,6 @@
 void tank_moveTankLeft();
 void tank_moveTankRight();
 void tank_killTank();
+void control_fireTankBullet();
 
 #endif /* TANK_H_ */

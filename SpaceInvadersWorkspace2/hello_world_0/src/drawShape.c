@@ -6,7 +6,8 @@
  */
 
 #include "drawShape.h"
-#include "shapebitmap.h"
+#include "shapeBitmap.h"
+#include "fontBitmap.h"
 #include "control.h"
 #include <stdbool.h>
 #include <sys/types.h>
@@ -245,4 +246,25 @@ void draw_bullet(bullet_t bullet)
 void erase_bullet(bullet_t bullet)
 {
 	draw_bullet_color(bullet, true);
+}
+
+void draw_character(char c, point_t position, bool erase)
+{
+	int offset = 0;
+	if(c >= 'A' && c <= 'Z')
+		offset = c - 'A' + CHARACTER_OFFSET_UPPERCASE_A;
+	else if(c >= 'a' && c <= 'z')
+		offset = c - 'a' + CHARACTER_OFFSET_LOWERCASE_A;
+	else if(c >= '0' && c <= '9')
+		offset = c - '0' + CHARACTER_OFFSET_NUMBER_0;
+	else if(c == ' ')
+	{
+		return;
+	}
+	else
+	{
+		xil_printf("Symbol not found");
+		return;
+	}
+	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, FONT_COLOR, characters[offset]}, erase, true, position);
 }
