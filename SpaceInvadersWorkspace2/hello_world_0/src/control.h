@@ -12,12 +12,6 @@
 #include "drawShape.h"
 #include "shapebitmap.h"
 
-void aliens_moveSaucer();
-void aliens_startSaucer();
-void aliens_killAlien(uint alienIdx);
-void aliens_shiftAlienFleet();
-bool aliens_fleetDirectionIsRight();
-void aliens_removeExplosion();
 void control_moveAllBullets();
 void control_fireAlienBullet();
 void control_fireTankBullet();

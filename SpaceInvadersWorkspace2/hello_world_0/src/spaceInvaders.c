@@ -17,6 +17,7 @@
 #include "tank.h"
 #include "control.h"
 #include "timers.h"
+#include "aliens.h"
 
 #include "xgpio.h"          // Provides access to PB GPIO driver.
 #include "platform.h"       // Enables caching and other system stuff.
