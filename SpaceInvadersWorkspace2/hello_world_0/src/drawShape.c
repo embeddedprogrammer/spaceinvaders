@@ -268,3 +268,14 @@ void draw_character(char c, point_t position, bool erase)
 	}
 	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, FONT_COLOR, characters[offset]}, erase, true, position);
 }
+
+void draw_string(const char* s, point_t position, bool erase)
+{
+	int i = 0;
+	while(s[i] != '\0')
+	{
+		draw_character(s[i], position, erase);
+		position.col += FONT_COLS_OFFSET;
+		i++;
+	}
+}
