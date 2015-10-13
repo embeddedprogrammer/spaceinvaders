@@ -33,7 +33,7 @@
 #define packword6(b5,b4,b3,b2,b1,b0)                                                 \
 ((b5  << 5 ) | (b4  << 4 ) | (b3  << 3 ) | (b2  << 2 ) | (b1  << 1 ) | (b0  << 0 ) )
 
-#define packword3(b2,b1,b0)                                                 \
+#define packword3(b2,b1,b0)              \
 ((b2  << 2 ) | (b1  << 1 ) | (b0  << 0 ))
 
 //dimensions
@@ -252,6 +252,98 @@ static const int bullet_tank_3x5[] = {
 	packword3(0,1,0),
 	packword3(0,1,0),
 	packword3(0,1,0)};
+
+static const int number_0_6x7[] = {
+	packword6(0,1,1,1,0,0),
+	packword6(1,0,0,0,1,0),
+	packword6(1,0,0,1,1,0),
+	packword6(1,0,1,0,1,0),
+	packword6(1,1,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,0,0)};
+
+static const int number_1_6x7[] = {
+	packword6(0,0,1,0,0,0),
+	packword6(0,1,1,0,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,1,1,1,0,0)};
+
+
+static const int number_2_6x7[] = {
+	packword6(0,1,1,1,0,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,0,0,0,1,0),
+	packword6(0,0,0,1,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,1,0,0,0,0),
+	packword6(1,1,1,1,1,0)};
+
+static const int number_3_6x7[] = {
+	packword6(1,1,1,1,1,0),
+	packword6(0,0,0,1,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,0,1,0,0),
+	packword6(0,0,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,0,0)};
+
+
+static const int number_4_6x7[] = {
+	packword6(0,0,0,1,0,0),
+	packword6(0,0,1,1,0,0),
+	packword6(0,1,0,1,0,0),
+	packword6(1,0,0,1,0,0),
+	packword6(1,1,1,1,1,0),
+	packword6(0,0,0,1,0,0),
+	packword6(0,0,0,1,0,0)};
+
+static const int number_5_6x7[] = {
+	packword6(1,1,1,1,1,1),
+	packword6(1,0,0,0,0,0),
+	packword6(1,1,1,1,0,0),
+	packword6(0,0,0,0,1,0),
+	packword6(0,0,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,0,0)};
+
+static const int number_6_6x7[] = {
+	packword6(0,0,1,1,0,0),
+	packword6(0,1,0,0,0,0),
+	packword6(1,0,0,0,0,0),
+	packword6(1,1,1,1,0,0),
+	packword6(1,0,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,0,0)};
+
+static const int number_7_6x7[] = {
+	packword6(1,1,1,1,1,0),
+	packword6(0,0,0,0,1,0),
+	packword6(0,0,0,1,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,1,0,0,0),
+	packword6(0,0,1,0,0,0)};
+
+static const int number_8_6x7[] = {
+	packword6(0,1,1,1,0,0),
+	packword6(1,0,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,0,0),
+	packword6(1,0,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,0,0)};
+
+static const int number_9_6x7[] = {
+	packword6(0,1,1,1,0,0),
+	packword6(1,0,0,0,1,0),
+	packword6(1,0,0,0,1,0),
+	packword6(0,1,1,1,1,0),
+	packword6(0,0,0,0,1,0),
+	packword6(0,0,0,1,0,0),
+	packword6(0,1,1,0,0,0)};
 
 typedef struct
 {

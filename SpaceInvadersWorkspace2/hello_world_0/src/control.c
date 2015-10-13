@@ -194,6 +194,8 @@ void aliens_shiftAlienFleet()
 {
 	int leftAlienCol = getAlienFleetLeftColNumGlobal();
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
+	int topAlienRow = getAlienFleetTopRowNumGlobal();
+	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
 	point_t alienPos = getAlienFleetPositionGlobal();
 	bool shiftDown = (directionRight) ? aliens_fleetAtRightScreenEdge() : aliens_fleetAtLeftScreenEdge();// at screen edge
 
@@ -212,8 +214,9 @@ void aliens_shiftAlienFleet()
 			alienPos.col -= ALIEN_SHIFT_AMOUNT;
 			erasePos.col = alienPos.col + (rightAlienCol+1)*ALIEN_HORIZONTAL_DISTANCE;
 		}
-		erasePos.row = alienPos.row;
-		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, ALIEN_BITMAP_HEIGHT*ALIEN_FLEET_ROWS + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);// undraw remaing alien pieces
+		erasePos.row = alienPos.row + ALIEN_VERTICAL_DISTANCE*topAlienRow;
+		int eraseHeight = ALIEN_VERTICAL_DISTANCE*(bottomAlienRow - topAlienRow + 1) - ALIEN_VERTICAL_SPACER;
+		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, eraseHeight, BACKGROUND_COLOR);// undraw remaining alien pieces
 
 	}
 	setAlienFleetPositionGlobal(alienPos);
