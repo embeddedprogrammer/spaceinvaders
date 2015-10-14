@@ -9,6 +9,7 @@
 #define DRAWSHAPE_H_
 
 #include "globals.h"
+#include "aliens.h"
 #include <stdint.h>
 #include <sys/types.h>
 #include <stdbool.h>

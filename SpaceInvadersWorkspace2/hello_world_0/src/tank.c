@@ -90,14 +90,20 @@ void updateLives(int newLives)
 	tankAlive = true;
 }
 
-void tank_init()
+void tank_init(bool newGame)
 {
 	draw_scoreAndLifeText(false);
-	updateScore(0);
-	updateLives(3);
-	point_t tankPos = getTankPositionGlobal();
-	tankPos.row = TANK_ROW;
-	tankPos.col = TANK_INTIAL_COL;
+	int prevLives = lives;
+	updateLives(0);
+	if (newGame) {
+		updateScore(0);
+		updateLives(3);
+	} else {
+		updateScore(score);
+		updateLives(prevLives);
+	}
+
+	point_t tankPos = {TANK_INTIAL_COL, TANK_ROW};
 	draw_tank(tankPos, false);
 	setTankPositionGlobal(tankPos);
 	tankAlive = true;

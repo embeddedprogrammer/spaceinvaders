@@ -188,7 +188,8 @@ void initVideo()
 		xil_printf("vdma parking failed\n\r");
 	}
 }
-
+static bool isNewGame;
+static int gameLevel = 1;
 void initGameScreen()
 {
 	uint* framePointer = getFrameBuffer();
@@ -199,22 +200,38 @@ void initGameScreen()
 			framePointer[row * 640 + col] = BACKGROUND_COLOR;
 
 	draw_Bunkers();
+	bunker_init(isNewGame);
 	bullets_init();
 	aliens_init();
-	tank_init();
+	tank_init(isNewGame);
 }
 
 void gameOver()
 {
 	removeAllTimers();
 	draw_string("GAME OVER", GAME_OVER_COLOR, (point_t){GAMEBUFFER_WIDTH/2-(9/2*FONT_COLS_OFFSET), GAMEBUFFER_HEIGHT/2}, false);
+	isNewGame = true;
+	gameLevel = 1;
 	addTimer(10000, false, &initGameScreen);
+}
+
+void nextLevel()
+{
+	removeAllTimers();
+	char* nextLevelText = "Level   ";
+	gameLevel++;
+	char tens = gameLevel % 10;
+	nextLevelText[6] = ((tens) ? (tens) : ' ') + '0';
+	nextLevelText[7] = (gameLevel - tens*10) + '0';
+	draw_string(nextLevelText, SCORE_ABC_COLOR, (point_t){GAMEBUFFER_WIDTH/2-(9/2*FONT_COLS_OFFSET), GAMEBUFFER_HEIGHT/2}, false);
+	isNewGame = false;
+	addTimer(3000, false, &initGameScreen);
 }
 
 void initInterupts()
 {
 	// Initialize the GPIO peripherals. NOTE: We wait to do this till after the HDMI to ensure that nothing happens before the HDMI is enabled.
-	int success = XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
+	XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
 
 	// Set the push button peripheral to be inputs.
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
@@ -293,6 +310,7 @@ int main()
 {
 	initVideo();
 	initInterupts();
+	isNewGame = true;
 	initGameScreen();
 	listenToKeyPresses();
 

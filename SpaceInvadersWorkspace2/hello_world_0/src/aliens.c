@@ -103,11 +103,15 @@ void aliens_init()
 	setAlienFleetPositionGlobal(alienFleetPos);
 	draw_AlienFleet(true);
 	int r, c;
-	for(r = 0; r < 5; r++)
-		for(c = 0; c < 5; c++)
+	for(r = 0; r < ALIEN_FLEET_ROWS; r++)
+		for(c = 0; c < ALIEN_FLEET_COLS; c++)
 			setAlienAlive(r, c, true);
 	spacecraftTravelingRight = true;
 	saucerLocation = (point_t){0, 0};
+	setAlienFleetTopRowNumGlobal(0);
+	setAlienFleetBottomRowNumGlobal(ALIEN_FLEET_ROWS-1);
+	setAlienFleetLeftColNumGlobal(0);
+	setAlienFleetRightColNumGlobal(ALIEN_FLEET_COLS-1);
 	addTimer(ALIEN_ADVANCE_TIME, true, &aliens_shiftAlienFleet);
 	addTimer(ALIEN_FIRE_TIME, true, &bullets_fireAlienBullet);
 	addTimer(SAUCER_ADVANCE_TIME, true, &aliens_moveSaucer);
@@ -244,7 +248,10 @@ void aliens_killAlienRC(short row, short col)
 				if(c < minCol)
 					minCol = c;
 			}
-
+	if (maxRow < minRow || maxCol < minCol) {
+		nextLevel();
+		return;
+	}
 	setAlienFleetTopRowNumGlobal(minRow);
 	setAlienFleetBottomRowNumGlobal(maxRow);
 	setAlienFleetLeftColNumGlobal(minCol);

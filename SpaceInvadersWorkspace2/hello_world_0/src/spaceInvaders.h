@@ -9,5 +9,6 @@
 #define SPACEINVADERS_H_
 
 void gameOver();
+void nextLevel();
 
 #endif /* SPACEINVADERS_H_ */

@@ -34,12 +34,30 @@ void setBunkerDamage(int bunker, int row, int col, byte damage)
 
 void bullets_init()
 {
+	int i;
+	for (i = 0; i < MAX_BULLETS_COUNT; i++) {
+		bullets[i].bulletType = bullet_none;
+	}
 	addTimer(BULLET_ADVANCE_TIME, true, &bullets_moveAllBullets);
+}
+
+void bunker_init(bool newGame)
+{
 	int b, r, c;
-	for(b = 0; b < 4; b++)
-		for(r = 0; r < 3; r++)
-			for(c = 0; c < 4; c++)
-				setBunkerDamage(b, r, c, 0);
+	if (newGame) {
+		for(b = 0; b < TOTAL_BUNKERS; b++)
+			for(r = 0; r < BUNKER_SECTION_ROWS; r++)
+				for(c = 0; c < BUNKER_SECTION_COLS; c++)
+					setBunkerDamage(b, r, c, 0);
+	} else {
+		for(b = 0; b < TOTAL_BUNKERS; b++)
+			for(r = 0; r < BUNKER_SECTION_ROWS; r++)
+				for(c = 0; c < BUNKER_SECTION_COLS; c++) {
+					byte damage = getBunkerDamage(b, r, c);
+					if (damage)
+						draw_BunkerDamageAtIndex(b, r, c, damage - 1);
+				}
+	}
 }
 
 //erodes a particular bunker section based on bunker row and column

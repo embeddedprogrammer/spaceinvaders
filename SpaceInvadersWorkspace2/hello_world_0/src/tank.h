@@ -14,7 +14,7 @@ void tank_moveTankLeft();
 void tank_moveTankRight();
 void tank_killTank();
 void tank_fireBullet();
-void tank_init();
+void tank_init(bool gameOver);
 void tank_cleanup();
 point_t getTankPositionGlobal();
 void addPoints(int points);
