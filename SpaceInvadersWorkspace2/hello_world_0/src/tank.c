@@ -9,12 +9,109 @@
 #include "timers.h"
 #include "globals.h"
 #include "drawShape.h"
+#include "bullets.h"
+#include "fontBitmap.h"
+#include "spaceInvaders.h"
 #include <stdio.h>
 
 #define ERODE_TANK_TIME 1000
 #define DISAPPEAR_TANK_TIME 2000
+#define START_LIVES 5
 
-bool tankAlive = true;
+bool tankAlive;
+
+#define SCORE_TEXT_COL    0
+#define SCORE_TEXT_ROW    0
+#define SCORE_DISPLAY_COL (SCORE_TEXT_COL+FONT_COLS_OFFSET*6)
+#define SCORE_DISPLAY_ROW 0
+#define LIVES_TEXT_COL    GAMEBUFFER_WIDTH/2
+#define LIVES_TEXT_ROW    0
+#define LIVES_DISPLAY_COL (LIVES_TEXT_COL+FONT_COLS_OFFSET*6)
+#define LIVES_DISPLAY_ROW 0
+#define LIVES_SPACER      2
+
+static int score = 0;
+static int lives = 0;
+
+static point_t g_tankPos;
+
+point_t getTankPositionGlobal() {
+	return g_tankPos;
+}
+
+void setTankPositionGlobal(point_t tankPos) {
+	g_tankPos = tankPos;
+}
+
+void draw_scoreAndLifeText(bool erase)
+{
+	draw_string("SCORE", SCORE_ABC_COLOR, (point_t){SCORE_TEXT_COL, SCORE_TEXT_ROW}, erase);
+	draw_string("LIVES", SCORE_ABC_COLOR, (point_t){LIVES_TEXT_COL, LIVES_TEXT_ROW}, erase);
+}
+
+void draw_tankLife(int life, bool erase)
+{
+	draw_tank((point_t){LIVES_DISPLAY_COL + (TANK_BITMAP_WIDTH + LIVES_SPACER)*(life - 1), LIVES_DISPLAY_ROW}, erase);
+}
+
+void draw_score(int score, bool erase)
+{
+	draw_number(score, SCORE_123_COLOR, (point_t){SCORE_DISPLAY_COL, SCORE_DISPLAY_ROW}, erase);
+}
+
+void updateScore(int newScore)
+{
+	if(newScore == -1)
+	{
+		draw_score(score, true);
+		score = 0;
+	}
+	score = newScore;
+	draw_score(score, false);
+}
+
+void addPoints(int points)
+{
+	updateScore(score + points);
+}
+
+void updateLives(int newLives)
+{
+	while(lives < newLives)
+	{
+		lives++;
+		draw_tankLife(lives, false);
+	}
+	while(lives > newLives)
+	{
+		draw_tankLife(lives, true);
+		lives--;
+	}
+	tankAlive = true;
+}
+
+void tank_init()
+{
+	draw_scoreAndLifeText(false);
+	updateScore(0);
+	updateLives(3);
+	point_t tankPos = getTankPositionGlobal();
+	tankPos.row = TANK_ROW;
+	tankPos.col = TANK_INTIAL_COL;
+	draw_tank(tankPos, false);
+	setTankPositionGlobal(tankPos);
+	tankAlive = true;
+}
+
+void tank_cleanup()
+{
+	point_t tankPos = getTankPositionGlobal();
+	draw_tank(tankPos, true);
+	draw_scoreAndLifeText(true);
+	updateLives(0);
+	updateScore(-1);
+	tankAlive = false;
+}
 
 //move tank left
 void tank_moveTankLeft()
@@ -41,7 +138,7 @@ void tank_moveTankRight()
 void tank_fireBullet()
 {
 	if(tankAlive)
-		control_fireTankBullet();
+		bullets_fireTankBullet();
 }
 
 void tank_reviveTank()
@@ -53,7 +150,15 @@ void tank_reviveTank()
 void tank_disappearTank()
 {
     draw_tank(getTankPositionGlobal(), true);
-    addTimer(DISAPPEAR_TANK_TIME, false, &tank_reviveTank);
+	if(lives >= 1)
+	{
+		updateLives(lives - 1);
+		addTimer(DISAPPEAR_TANK_TIME, false, &tank_reviveTank);
+	}
+	else
+	{
+		gameOver();
+	}
 }
 
 void tank_killTank()

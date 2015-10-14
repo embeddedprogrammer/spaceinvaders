@@ -12,6 +12,7 @@
 #include "drawShape.h"
 #include "shapebitmap.h"
 
+void aliens_init();
 void aliens_moveSaucer();
 void aliens_startSaucer();
 void aliens_killAlien(uint alienIdx);
@@ -21,5 +22,7 @@ void aliens_removeExplosion();
 void aliens_killSaucer();
 void aliens_killAlienRC(short row, short col);
 point_t aliens_getSaucerLocation();
+point_t getAlienBottomRow();
+point_t getAlienFleetPositionGlobal();
 
 #endif /* ALIENS_H_ */

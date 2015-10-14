@@ -63,13 +63,16 @@
 #define BUNKER_SECTION_COLS 4
 
 //colors
-#define FONT_COLOR     0x0000FF00
 #define BUNKER_COLOR     0x0000FF00
 #define TANK_COLOR       0x0000FF00
 #define ALIEN_COLOR      0x00FFFFFF
 #define BULLET_COLOR     0x00FFFFFF
 #define SAUCER_COLOR     0x00FF0000
 #define BACKGROUND_COLOR 0x00000000
+#define GAME_OVER_COLOR  0x00FF0000
+#define SCORE_ABC_COLOR  0x00FFFFFF
+#define SCORE_123_COLOR  0x0000FF00
+#define ALIEN_PTS_COLOR  0x00FFFFFF
 
 // Must define packword for each of the different bit-widths.
 static const int saucer_16x7[] = {
@@ -253,98 +256,6 @@ static const int bullet_tank_3x5[] = {
 	packword3(0,1,0),
 	packword3(0,1,0),
 	packword3(0,1,0)};
-
-static const int number_0_6x7[] = {
-	packword6(0,1,1,1,0,0),
-	packword6(1,0,0,0,1,0),
-	packword6(1,0,0,1,1,0),
-	packword6(1,0,1,0,1,0),
-	packword6(1,1,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,0,0)};
-
-static const int number_1_6x7[] = {
-	packword6(0,0,1,0,0,0),
-	packword6(0,1,1,0,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,1,1,1,0,0)};
-
-
-static const int number_2_6x7[] = {
-	packword6(0,1,1,1,0,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,0,0,0,1,0),
-	packword6(0,0,0,1,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,1,0,0,0,0),
-	packword6(1,1,1,1,1,0)};
-
-static const int number_3_6x7[] = {
-	packword6(1,1,1,1,1,0),
-	packword6(0,0,0,1,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,0,1,0,0),
-	packword6(0,0,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,0,0)};
-
-
-static const int number_4_6x7[] = {
-	packword6(0,0,0,1,0,0),
-	packword6(0,0,1,1,0,0),
-	packword6(0,1,0,1,0,0),
-	packword6(1,0,0,1,0,0),
-	packword6(1,1,1,1,1,0),
-	packword6(0,0,0,1,0,0),
-	packword6(0,0,0,1,0,0)};
-
-static const int number_5_6x7[] = {
-	packword6(1,1,1,1,1,1),
-	packword6(1,0,0,0,0,0),
-	packword6(1,1,1,1,0,0),
-	packword6(0,0,0,0,1,0),
-	packword6(0,0,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,0,0)};
-
-static const int number_6_6x7[] = {
-	packword6(0,0,1,1,0,0),
-	packword6(0,1,0,0,0,0),
-	packword6(1,0,0,0,0,0),
-	packword6(1,1,1,1,0,0),
-	packword6(1,0,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,0,0)};
-
-static const int number_7_6x7[] = {
-	packword6(1,1,1,1,1,0),
-	packword6(0,0,0,0,1,0),
-	packword6(0,0,0,1,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,1,0,0,0),
-	packword6(0,0,1,0,0,0)};
-
-static const int number_8_6x7[] = {
-	packword6(0,1,1,1,0,0),
-	packword6(1,0,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,0,0),
-	packword6(1,0,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,0,0)};
-
-static const int number_9_6x7[] = {
-	packword6(0,1,1,1,0,0),
-	packword6(1,0,0,0,1,0),
-	packword6(1,0,0,0,1,0),
-	packword6(0,1,1,1,1,0),
-	packword6(0,0,0,0,1,0),
-	packword6(0,0,0,1,0,0),
-	packword6(0,1,1,0,0,0)};
 
 typedef struct
 {

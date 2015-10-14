@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <stdbool.h>
 
+#define SCOREBOARD_SPACING 10
+
 typedef struct
 {
 	enum bulletTypes {bullet_none, bullet_tank, bullet_alien1, bullet_alien2} bulletType;
@@ -33,7 +35,8 @@ point_t draw_getAlienPosition(int i, int j);
 void draw_BunkerDamageAtLocation(point_t position, byte damage);
 void draw_BunkerDamageAtIndex(int bunker, int i, int j, byte damage);
 point_t draw_getBunkerLocation(int i);
-void draw_character(char c, point_t position, bool erase);
-void draw_string(const char* s, point_t position, bool erase);
+void draw_character(char c, int fontColor, point_t position, bool erase);
+void draw_string(const char* s, int fontColor, point_t position, bool erase);
+void draw_number(int num, int fontColor, point_t position, bool erase);
 
 #endif /* DRAWSHAPE_H_ */

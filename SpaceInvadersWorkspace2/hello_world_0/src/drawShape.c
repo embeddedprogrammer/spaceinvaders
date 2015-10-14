@@ -8,7 +8,8 @@
 #include "drawShape.h"
 #include "shapeBitmap.h"
 #include "fontBitmap.h"
-#include "control.h"
+#include "bullets.h"
+#include "aliens.h"
 #include <stdbool.h>
 #include <sys/types.h>
 #include <stdint.h>
@@ -248,7 +249,7 @@ void erase_bullet(bullet_t bullet)
 	draw_bullet_color(bullet, true);
 }
 
-void draw_character(char c, point_t position, bool erase)
+void draw_character(char c, int fontColor, point_t position, bool erase)
 {
 	int offset = 0;
 	if(c >= 'A' && c <= 'Z')
@@ -259,23 +260,46 @@ void draw_character(char c, point_t position, bool erase)
 		offset = c - '0' + CHARACTER_OFFSET_NUMBER_0;
 	else if(c == ' ')
 	{
+		draw_rectangle(position, FONT_WIDTH, FONT_HEIGHT, BACKGROUND_COLOR);
 		return;
 	}
 	else
 	{
-		xil_printf("Symbol not found");
+		xil_printf("Character %c not found in font map\n\r", c);
 		return;
 	}
-	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, FONT_COLOR, characters[offset]}, erase, true, position);
+//	xil_printf("Print %c at %d %d\n\r", c, position.col, position.row);
+	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, fontColor, characters[offset]}, erase, true, position);
 }
 
-void draw_string(const char* s, point_t position, bool erase)
+void draw_string(const char* s, int fontColor, point_t position, bool erase)
 {
 	int i = 0;
 	while(s[i] != '\0')
 	{
-		draw_character(s[i], position, erase);
+		draw_character(s[i], fontColor, position, erase);
 		position.col += FONT_COLS_OFFSET;
 		i++;
 	}
+}
+
+void draw_number(int num, int fontColor, point_t position, bool erase)
+{
+//	xil_printf("Number: %d\n\r", num);
+	int maxLength = 4;
+	char buffer[] = "    ";
+	int pos = 0;
+	int digitValue = 1;
+	while(digitValue*10 <= num)
+		digitValue*=10;
+	int digit;
+	while(digitValue > 0 && pos < maxLength)
+	{
+		digit = num / digitValue;
+		num -= (digit * digitValue);
+		digitValue /= 10;
+		buffer[pos] = '0' + digit;
+		pos++;
+	}
+	draw_string(buffer, SCORE_123_COLOR, position, erase);
 }

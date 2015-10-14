@@ -8,9 +8,15 @@
 #ifndef TANK_H_
 #define TANK_H_
 
+#include "globals.h"
+
 void tank_moveTankLeft();
 void tank_moveTankRight();
 void tank_killTank();
-void control_fireTankBullet();
+void tank_fireBullet();
+void tank_init();
+void tank_cleanup();
+point_t getTankPositionGlobal();
+void addPoints(int points);
 
 #endif /* TANK_H_ */

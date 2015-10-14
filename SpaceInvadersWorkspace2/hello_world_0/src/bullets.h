@@ -12,10 +12,11 @@
 #include "drawShape.h"
 #include "shapebitmap.h"
 
-void control_moveAllBullets();
-void control_fireAlienBullet();
-void control_fireTankBullet();
+void bullets_moveAllBullets();
+void bullets_fireAlienBullet();
 void bunkers_erodeBunker(int bunker);
+void bullets_fireTankBullet();
+void bullets_init();
 
 
 #endif /* CONTROL_H_ */

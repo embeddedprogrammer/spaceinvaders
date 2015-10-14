@@ -5,7 +5,7 @@
  *      Author: superman
  */
 
-#include "control.h"
+#include "bullets.h"
 #include "timers.h"
 #include "tank.h"
 #include "aliens.h"
@@ -18,8 +18,29 @@
 #define MAX_ALIEN_BULLETS 10
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
+#define BULLET_ADVANCE_TIME 10
 
-//BUNKERS
+static byte bunkerDamage[4][3][4];
+
+byte getBunkerDamage(int bunker, int row, int col)
+{
+	return bunkerDamage[bunker][row][col];
+}
+
+void setBunkerDamage(int bunker, int row, int col, byte damage)
+{
+	bunkerDamage[bunker][row][col] = damage;
+}
+
+void bullets_init()
+{
+	addTimer(BULLET_ADVANCE_TIME, true, &bullets_moveAllBullets);
+	int b, r, c;
+	for(b = 0; b < 4; b++)
+		for(r = 0; r < 3; r++)
+			for(c = 0; c < 4; c++)
+				setBunkerDamage(b, r, c, 0);
+}
 
 //erodes a particular bunker section based on bunker row and column
 void bunkers_erodeBunkerSection(int bunker, int row, int col)
@@ -94,7 +115,7 @@ bool control_killTankIfCollision(point_t location)
 }
 
 //advances the bullet specified by index i
-void control_moveBullet(int i)
+void bullets_moveBullet(int i)
 {
 	erase_bullet(bullets[i]);
 
@@ -105,7 +126,7 @@ void control_moveBullet(int i)
 		bullets[i].location.row++;
 
 	//Check for off screen
-	if(bullets[i].location.row < 0 || bullets[i].location.row >= GAMEBUFFER_HEIGHT - BULLET_HEIGHT)
+	if(bullets[i].location.row < SCOREBOARD_SPACING + TANK_BITMAP_HEIGHT || bullets[i].location.row >= GAMEBUFFER_HEIGHT - BULLET_HEIGHT)
 	{
 		bullets[i].bulletType = bullet_none;
 		return;
@@ -138,29 +159,15 @@ void control_moveBullet(int i)
 }
 
 //advances all on screen bullets
-void control_moveAllBullets()
+void bullets_moveAllBullets()
 {
 	int i;
 	for(i = 0; i < MAX_BULLETS_COUNT; i++)
 		if(bullets[i].bulletType != bullet_none)
-			control_moveBullet(i);
+			bullets_moveBullet(i);
 }
 
-//get a viable alien on the bottom row that can fire a bullet
-point_t getAlienBottomRow()
-{
-	int leftAlienCol = getAlienFleetLeftColNumGlobal();
-	int rightAlienCol = getAlienFleetRightColNumGlobal();
-	int bottomAlienRow = getAlienFleetBottomRowNumGlobal();
-	int i;
-	int alienCount = 0;
-	int bottomRowArray[ALIEN_FLEET_COLS];
-	for (i = leftAlienCol; i < rightAlienCol + 1; i++) // find which aliens are alive
-		if (isAlienAlive(bottomAlienRow, i))
-			bottomRowArray[alienCount++] = i;
 
-	return draw_getAlienPosition(bottomAlienRow, bottomRowArray[rand() % alienCount]);// random alien
-}
 
 int control_getFirstEmptyBulletPosition(int start, int length)
 {
@@ -172,7 +179,7 @@ int control_getFirstEmptyBulletPosition(int start, int length)
 }
 
 //fires a alien bullet if one is available
-void control_fireAlienBullet()
+void bullets_fireAlienBullet()
 {
 	xil_printf("");
 	int i = control_getFirstEmptyBulletPosition(FIRST_ALIEN_BULLET, MAX_ALIEN_BULLETS);
@@ -190,7 +197,7 @@ void control_fireAlienBullet()
 }
 
 // fires a tank bullet and places it at the end of its turret
-void control_fireTankBullet()
+void bullets_fireTankBullet()
 {
 	int i = control_getFirstEmptyBulletPosition(FIRST_TANK_BULLET, MAX_TANK_BULLETS);
 	if(i != -1)

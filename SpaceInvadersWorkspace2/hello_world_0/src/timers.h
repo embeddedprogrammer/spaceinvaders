@@ -22,9 +22,9 @@ typedef struct
 } customTimer_t;
 
 void testTimerFnc();
-
 int addTimer(int timeRemainingInMs, bool repeat, timerFncPtr_t fncPtr);
-
 void timer_interrupt_handler();
+void removeTimer(int i);
+void removeAllTimers();
 
 #endif /* TIMERS_H_ */

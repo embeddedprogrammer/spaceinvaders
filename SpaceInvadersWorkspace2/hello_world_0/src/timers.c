@@ -6,6 +6,7 @@
  */
 
 #include "timers.h"
+#include <stdio.h>
 
 #define TIMER_INTERUPT_PERIOD 10
 #define MAX_TIMERS 10
@@ -27,6 +28,18 @@ int addTimer(int timeRemainingInMs, bool repeat, timerFncPtr_t fncPtr)
 		}
 	xil_printf("ERROR: No timer left.\n\r");
 	return -1;
+}
+
+void removeTimer(int i)
+{
+	timer[i].enabled = false;
+}
+
+void removeAllTimers()
+{
+	int i;
+	for(i = 0; i < MAX_TIMERS; i++)
+		timer[i].enabled = false;
 }
 
 // This is invoked in response to a timer interrupt.

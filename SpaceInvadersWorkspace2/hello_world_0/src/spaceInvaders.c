@@ -10,12 +10,13 @@
 #include "xparameters.h"
 #include "xaxivdma.h"
 #include "xio.h"
+#include "fontBitmap.h"
 #include "time.h"
 #include "unistd.h"
 #include "globals.h"
 #include "drawShape.h"
 #include "tank.h"
-#include "control.h"
+#include "bullets.h"
 #include "timers.h"
 #include "aliens.h"
 
@@ -62,21 +63,6 @@ int getNumber()
 			return num;
 		}
 	}
-}
-
-#define BULLET_ADVANCE_TIME 10
-#define ALIEN_ADVANCE_TIME 500
-#define SAUCER_ADVANCE_TIME 100
-#define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*2
-#define SAUCER_START_TIME 1000*30
-
-void initTimers()
-{
-	addTimer(BULLET_ADVANCE_TIME, true, &control_moveAllBullets);
-	addTimer(ALIEN_ADVANCE_TIME, true, &aliens_shiftAlienFleet);
-	addTimer(ALIEN_FIRE_TIME, true, &control_fireAlienBullet);
-	addTimer(SAUCER_ADVANCE_TIME, true, &aliens_moveSaucer);
-	addTimer(SAUCER_START_TIME, true, &aliens_startSaucer);
 }
 
 // This is invoked each time there is a change in the button state (result of a push or a bounce).
@@ -183,7 +169,7 @@ void initVideo()
 	}
 	// Print a sanity message if you get this far.
 	xil_printf("Woohoo! I made it through initialization.\n\r");
-	// Now, let's get ready to start displaying some stuff on the screen.
+	// Now, let's get ready to start displaying some stuf4f on the screen.
 	// The variables framePointer and framePointer1 are just pointers to the base address
 	// of frame 0 and frame 1.
 
@@ -206,27 +192,23 @@ void initVideo()
 void initGameScreen()
 {
 	uint* framePointer = getFrameBuffer();
-	// Just paint some large red, green, blue, and white squares in different
-	// positions of the image for each frame in the buffer (framePointer0 and framePointer1).
-	int row = 0, col = 0;
-	for (row = 0; row < 480; row++) {
-		for (col = 0; col < 640; col++) {
-			framePointer[row * 640 + col] = 0x00000000;
-		}
-	}
+	// Clear screen
+	int row, col;
+	for (row = 0; row < 480; row++)
+		for (col = 0; col < 640; col++)
+			framePointer[row * 640 + col] = BACKGROUND_COLOR;
 
 	draw_Bunkers();
-	point_t alienFleetPos;
-	alienFleetPos.row = GAMEBUFFER_HEIGHT / 7;
-	alienFleetPos.col = GAMEBUFFER_WIDTH / 6;
-	setAlienFleetPositionGlobal(alienFleetPos);
-	draw_AlienFleet(true);
+	bullets_init();
+	aliens_init();
+	tank_init();
+}
 
-	point_t tankPos = getTankPositionGlobal();
-	tankPos.row = TANK_ROW;
-	tankPos.col = TANK_INTIAL_COL;
-	draw_tank(tankPos, false);
-	setTankPositionGlobal(tankPos);
+void gameOver()
+{
+	removeAllTimers();
+	draw_string("GAME OVER", GAME_OVER_COLOR, (point_t){GAMEBUFFER_WIDTH/2-(9/2*FONT_COLS_OFFSET), GAMEBUFFER_HEIGHT/2}, false);
+	addTimer(10000, false, &initGameScreen);
 }
 
 void initInterupts()
@@ -285,10 +267,10 @@ void listenToKeyPresses()
 			tank_fireBullet();
 			break;
 		case KEY_MOVE_BULLETS:
-			control_moveAllBullets();
+			bullets_moveAllBullets();
 			break;
 		case KEY_ALIEN_FIRE_BULLET:
-			control_fireAlienBullet();
+			bullets_fireAlienBullet();
 			break;
 		case KEY_ERODE_BUNKER:
 			xil_printf("Erode bunker - ");
@@ -301,9 +283,6 @@ void listenToKeyPresses()
 		case KEY_SAUCER:
 			aliens_startSaucer();
 			break;
-		case ' ':
-			draw_string("ABC", (point_t){10, 10}, false);
-			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 		}
@@ -315,7 +294,6 @@ int main()
 	initVideo();
 	initInterupts();
 	initGameScreen();
-	initTimers();
 	listenToKeyPresses();
 
 	cleanup_platform();

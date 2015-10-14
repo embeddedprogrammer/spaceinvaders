@@ -71,45 +71,4 @@ typedef enum {
 
 uint* getFrameBuffer();
 
-byte getBunkerDamage(int bunker, int row, int col);
-
-void setBunkerDamage(int bunker, int row, int col, byte damage);
-
-point_t getTankPositionGlobal();
-
-void setTankPositionGlobal(point_t tankPos);
-
-bool isAlienAlive(int row, int col);
-
-void setAlienAlive(int row, int col, bool alive);
-
-point_t getAlienFleetPositionGlobal();
-
-void setAlienFleetPositionGlobal(point_t alienFleetPos);
-
-void setAlienFleetLeftColNumGlobal(int left);
-
-void setAlienFleetRightColNumGlobal(int right);
-
-void setAlienFleetTopRowNumGlobal(int top);
-
-void setAlienFleetBottomRowNumGlobal(int bottom);
-
-int getAlienFleetLeftColNumGlobal();
-
-int getAlienFleetRightColNumGlobal();
-
-int getAlienFleetTopRowNumGlobal();
-
-int getAlienFleetBottomRowNumGlobal();
-
-
-
-
-
-
-
-
-
-
 #endif /* GLOBALS_H_ */
