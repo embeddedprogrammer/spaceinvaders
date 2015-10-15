@@ -6,6 +6,7 @@
  */
 
 #include "drawShape.h"
+#include "tank.h"
 #include "shapeBitmap.h"
 #include "fontBitmap.h"
 #include "bullets.h"
@@ -27,14 +28,14 @@ void draw_clearScreen()
 }
 
 // Return the pixel of the bitmap of the specified location
-bool getBitmapPixel(const int* shapeBuffer, const uint width, int row, int col)
+bool getBitmapPixel(bitmap_t bitmap, int row, int col)
 {
-	uint shapeWord = shapeBuffer[row];
-	int amountToShiftWord = width - 1 - col;
+	uint shapeWord = bitmap.shapeBuffer[row];
+	int amountToShiftWord = bitmap.width - 1 - col;
 	return shapeWord & (0x01 << amountToShiftWord);
 }
 
-int getBunkerPixel(point_t location)
+int getBunkerOrTankPixel(point_t location)
 {
 	int bunker;
 	for (bunker = 0; bunker < TOTAL_BUNKERS; bunker++)
@@ -49,29 +50,37 @@ int getBunkerPixel(point_t location)
 			int bunkerErodeSectionCol = bunkerPixelCol / BUNKER_DAMAGE_WIDTH;
 			int erodeSectionPixelRow = bunkerPixelRow % BUNKER_DAMAGE_HEIGHT;
 			int erodeSectionPixelCol = bunkerPixelCol % BUNKER_DAMAGE_WIDTH;
-			int bunkerPixel = getBitmapPixel(bitmapBunker.shapeBuffer, bitmapBunker.width, bunkerPixelRow, bunkerPixelCol);
+			bool bunkerPixel = getBitmapPixel(bitmapBunker, bunkerPixelRow, bunkerPixelCol);
 			if(bunkerPixel)
 			{
 				int damage = getBunkerDamage(bunker, bunkerErodeSectionRow, bunkerErodeSectionCol);
-				int damagePixel = 0;
+				bool damagePixel = 0;
 				if(damage == 0)
-					damagePixel = 0;
-				else if(damage == 1)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage0.shapeBuffer, bitmapBunkerDamage0.width, erodeSectionPixelRow, erodeSectionPixelCol);
-				else if(damage == 2)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage1.shapeBuffer, bitmapBunkerDamage1.width, erodeSectionPixelRow, erodeSectionPixelCol);
-				else if(damage == 3)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage2.shapeBuffer, bitmapBunkerDamage2.width, erodeSectionPixelRow, erodeSectionPixelCol);
-				else if(damage == 4)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage3.shapeBuffer, bitmapBunkerDamage3.width, erodeSectionPixelRow, erodeSectionPixelCol);
+					return BUNKER_COLOR;
+				else if(damage >= 1 && getBitmapPixel(bitmapBunkerDamage0, erodeSectionPixelRow, erodeSectionPixelCol))
+					return BACKGROUND_COLOR;
+				else if(damage >= 2 && getBitmapPixel(bitmapBunkerDamage1, erodeSectionPixelRow, erodeSectionPixelCol))
+					return BACKGROUND_COLOR;
+				else if(damage >= 3 && getBitmapPixel(bitmapBunkerDamage2, erodeSectionPixelRow, erodeSectionPixelCol))
+					return BACKGROUND_COLOR;
+				else if(damage >= 4 && getBitmapPixel(bitmapBunkerDamage3, erodeSectionPixelRow, erodeSectionPixelCol))
+					return BACKGROUND_COLOR;
 				else
-					damagePixel = 1;
-				return damagePixel ? BACKGROUND_COLOR : BUNKER_COLOR;
+					return BUNKER_COLOR;
 			}
 			else
 				return BACKGROUND_COLOR;
 		}
 	}
+    point_t tankPosition = getTankPositionGlobal();
+    if(location.row >= tankPosition.row && location.row < (tankPosition.row + TANK_BITMAP_HEIGHT) &&
+       location.col >= tankPosition.col && location.col < (tankPosition.col + TANK_BITMAP_WIDTH))
+    {
+		int tankPixelRow = location.row - tankPosition.row;
+		int tankPixelCol = location.col - tankPosition.col;
+		bool tankPixel = getBitmapPixel(bitmapTank, tankPixelRow, tankPixelCol);
+		return tankPixel ? TANK_COLOR : BACKGROUND_COLOR;
+    }
 	return BACKGROUND_COLOR;
 }
 
@@ -83,7 +92,7 @@ void drawPixel(point_t location, int color, bool topLayer)
 	if(location.col < 0 || location.row < 0 || location.col >= GAMEBUFFER_WIDTH || location.row >= GAMEBUFFER_HEIGHT)
 		return;//Out of bounds
 	if(topLayer && color == BACKGROUND_COLOR)
-		color = getBunkerPixel(location);
+		color = getBunkerOrTankPixel(location);
 	uint* frameBuffer = getFrameBuffer();
 	int row = TO_SCREENSIZE(location.row);
 	int col = TO_SCREENSIZE(location.col);
@@ -111,7 +120,7 @@ void draw_bitmap(bitmap_t bitmap, bool eraseForeground, bool eraseBackground, po
 	{
 		for (col = 0; col < bitmap.width; col++)
 		{
-			bool pixel = getBitmapPixel(bitmap.shapeBuffer, bitmap.width, row, col);
+			bool pixel = getBitmapPixel(bitmap, row, col);
 			point_t pixelLocation = (point_t){pos.col + col, pos.row + row};
 			if(pixel)
 				drawPixel(pixelLocation, eraseForeground ? BACKGROUND_COLOR : bitmap.shapeColor, topLayer);

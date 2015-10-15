@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 #include "platform.h"
+#include "keyboard.h"
+#include "xtmrctr.h"
 #include "xparameters.h"
 #include "xaxivdma.h"
 #include "xio.h"
@@ -33,44 +35,11 @@ XGpio gpPB;   // This is a handle for the push-button GPIO block.
 void print(char *str);
 
 #define MAX_SILLY_TIMER 10000000;
-#define KEY_KILL_ALIEN '2'
-#define KEY_TANK_LEFT '4'
-#define KEY_TANK_RIGHT '6'
-#define KEY_MOVE_ALIEN '8'
-#define KEY_TANK_FIRE_BULLET '5'
-#define KEY_MOVE_BULLETS '9'
-#define KEY_ALIEN_FIRE_BULLET '3'
-#define KEY_ERODE_BUNKER '7'
-#define KEY_RESTART 'r'
-#define KEY_SAUCER 's'
 #define BUTTON_RESPONSE_TIME 20
-
-int getNumber()
-{
-	xil_printf("Please enter a number:\r\n");
-	int num = 0;
-	char input;
-	while (true)
-	{
-		input = getchar();
-		if(input >= '0' && input <= '9')
-		{
-			xil_printf("%c", input);
-			num = num*10 + (input - '0');
-		}
-		else //if any other key is pressed, exit
-		{
-			xil_printf("\r\n");
-			return num;
-		}
-	}
-}
 
 void respondToButtonInput()
 {
-    const int PUSH_BUTTONS_CENTER = 0x01;
     const int PUSH_BUTTONS_RIGHT  = 0x02;
-    const int PUSH_BUTTONS_DOWN   = 0x04;
     const int PUSH_BUTTONS_LEFT   = 0x08;
     const int PUSH_BUTTONS_UP     = 0x10;
 	int buttonState = XGpio_DiscreteRead(&gpPB, 1);
@@ -207,6 +176,7 @@ void initVideo()
 }
 static bool isNewGame;
 static int gameLevel = 1;
+
 void initGameScreen()
 {
 	draw_clearScreen();
@@ -216,6 +186,14 @@ void initGameScreen()
 	aliens_init();
 	tank_init(isNewGame);
 	addTimer(BUTTON_RESPONSE_TIME, true, &respondToButtonInput);
+}
+
+void restart()
+{
+	removeAllTimers();
+	isNewGame = true;
+	isNewGame = 1;
+	initGameScreen();
 }
 
 void gameOver()
@@ -261,68 +239,31 @@ void initInterupts()
 
 void listenToKeyPresses()
 {
-	xil_printf("Erode bunker:      %c ", KEY_ERODE_BUNKER);
-	xil_printf("Move aliens:       %c ", KEY_MOVE_ALIEN);
-	xil_printf("Move bullets:      %c ", KEY_MOVE_BULLETS);
-	xil_printf("------\n\r");
-	xil_printf("Left:              %c ", KEY_TANK_LEFT);
-	xil_printf("Fire tank bullet   %c ", KEY_TANK_FIRE_BULLET);
-	xil_printf("Right:             %c ", KEY_TANK_RIGHT);
-	xil_printf("------\n\r");
-	xil_printf("                   %c ", ' ');
-	xil_printf("Kill alien:        %c ", KEY_KILL_ALIEN);
-	xil_printf("Fire alien bullet: %c ", KEY_ALIEN_FIRE_BULLET);
-	xil_printf("------\n\r");
+	XTmrCtr TmrCtrInstance;
+	if (XTmrCtr_Initialize(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID) != XST_SUCCESS)
+	{
+		xil_printf("Error initializing timer\n\r");
+	    return;
+	}
 
-	while (1) {
 
-		//TODO: REMOVE
-		char input;
-		input = getchar();
-		switch (input) {
-		case KEY_TANK_LEFT:
-			tank_moveTankLeft();
-			break;
-		case KEY_TANK_RIGHT:
-			tank_moveTankRight();
-			break;
-		case KEY_KILL_ALIEN:
-			xil_printf("Kill alien - ");
-			aliens_killAlien(getNumber());
-			xil_printf("Alien killed\r\n");
-			break;
-		case KEY_MOVE_ALIEN:
-			aliens_shiftAlienFleet();
-			break;
-		case KEY_TANK_FIRE_BULLET:
-			tank_fireBullet();
-			break;
-		case KEY_MOVE_BULLETS:
-			bullets_moveAllBullets();
-			break;
-		case KEY_ALIEN_FIRE_BULLET:
-			bullets_fireAlienBullet();
-			break;
-		case KEY_ERODE_BUNKER:
-			xil_printf("Erode bunker - ");
-			bunkers_erodeBunker(getNumber());
-			xil_printf("Bunker eroded\r\n");
-			break;
-		case KEY_RESTART:
-			removeAllTimers();
-			isNewGame = true;
-			gameLevel = 1;
-			initGameScreen();
-			break;
-		case KEY_SAUCER:
-			aliens_startSaucer();
-			break;
-		case ' ':
-			draw_rectangle((point_t){0, (GAMEBUFFER_HEIGHT*3)/4}, GAMEBUFFER_WIDTH, BUNKER_HEIGHT, BACKGROUND_COLOR, true);
-			break;
-		default:
-			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
-		}
+	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
+	xil_printf("Start\n\r"); XTmrCtr_Start(&TmrCtrInstance, 0);
+	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
+	xil_printf("Stop\n\r"); XTmrCtr_Stop(&TmrCtrInstance, 0);
+	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
+	xil_printf("Reset\n\r"); XTmrCtr_Reset(&TmrCtrInstance, 0);
+	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
+	xil_printf("Start\n\r"); XTmrCtr_Start(&TmrCtrInstance, 0);
+	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
+	xil_printf("Stop\n\r"); XTmrCtr_Stop(&TmrCtrInstance, 0);
+	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
+
+	//XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ
+
+	while (1)
+	{
+		pollKeyboard();
 	}
 }
 
@@ -332,9 +273,10 @@ int main()
 	initInterupts();
 	isNewGame = true;
 	initGameScreen();
-	listenToKeyPresses();
-
+	while (1)
+	{
+		pollKeyboard();
+	}
 	cleanup_platform();
-
 	return 0;
 }

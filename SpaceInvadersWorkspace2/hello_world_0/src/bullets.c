@@ -14,9 +14,9 @@
 #include <stdlib.h> //for rand()
 
 #define FIRST_TANK_BULLET 0
-#define MAX_TANK_BULLETS 50 //TODO: CHANGE TO 1
+#define MAX_TANK_BULLETS 1
 #define FIRST_ALIEN_BULLET MAX_TANK_BULLETS
-#define MAX_ALIEN_BULLETS 10 //TODO: CHANGE TO 3
+#define MAX_ALIEN_BULLETS 3
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
 #define BULLET_ADVANCE_TIME 10
@@ -127,7 +127,7 @@ bool control_killTankIfCollision(point_t location)
 {
     point_t tankPosition = getTankPositionGlobal();
     if(location.row >= tankPosition.row && location.row < (tankPosition.row + TANK_HEIGHT) &&
-       location.col >= tankPosition.col && location.col < (tankPosition.row + TANK_WIDTH))
+       location.col >= tankPosition.col && location.col < (tankPosition.col + TANK_WIDTH))
     {
 		tank_killTank();
         return true;
