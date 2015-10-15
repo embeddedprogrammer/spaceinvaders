@@ -240,9 +240,7 @@ int main()
 	initInterrupts();
 	isNewGame = true;
 	initGameScreen();
-	//while(true);
-	while (pollKeyboard());
-	printStats();
+	while(true);
 	cleanup_platform();
 	return 0;
 }

@@ -173,12 +173,8 @@ void aliens_moveSaucer()
 
 void aliens_startSaucer()
 {
-	xil_printf("Start flying saucer\n\r");
 	if(saucerLocation.row != 0)
-	{
-		xil_printf("Already exists a flying saucer\n\r");
 		return;
-	}
 	saucerLocation.row = SCOREBOARD_SPACING + TANK_BITMAP_HEIGHT;
 	if(rand() % 2)
 	{
@@ -216,7 +212,6 @@ void aliens_explode(point_t location)
 			addTimer(EXPLOSION_TIME, false, &aliens_removeExplosion);
 			return;
 		}
-	xil_printf("Too many explosions\n\r");
 }
 
 // kills an alien then updates the rows and columns that are still viable

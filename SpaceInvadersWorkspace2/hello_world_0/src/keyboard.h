@@ -9,6 +9,6 @@
 #define KEYBOARD_H_
 
 #include <stdbool.h>
-bool pollKeyboard();
+void pollKeyboard();
 
 #endif /* KEYBOARD_H_ */

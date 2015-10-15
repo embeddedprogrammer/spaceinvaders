@@ -11,5 +11,6 @@
 void gameOver();
 void restart();
 void nextLevel();
+void printStats();
 
 #endif /* SPACEINVADERS_H_ */

@@ -329,7 +329,6 @@ void draw_character(char c, int fontColor, point_t position, bool erase)
 		xil_printf("Character %c not found in font map\n\r", c);
 		return;
 	}
-//	xil_printf("Print %c at %d %d\n\r", c, position.col, position.row);
 	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, fontColor, characters[offset]}, erase, true, position, false);
 }
 
@@ -346,7 +345,6 @@ void draw_string(const char* s, int fontColor, point_t position, bool erase)
 
 void draw_number(int num, int fontColor, point_t position, bool erase)
 {
-//	xil_printf("Number: %d\n\r", num);
 	int maxLength = 4;
 	char buffer[] = "    ";
 	int pos = 0;
