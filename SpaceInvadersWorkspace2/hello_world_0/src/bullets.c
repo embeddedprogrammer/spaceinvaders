@@ -6,6 +6,7 @@
  */
 
 #include "bullets.h"
+#include "drawShape.h"
 #include "timers.h"
 #include "tank.h"
 #include "aliens.h"
@@ -144,7 +145,7 @@ void bullets_moveBullet(int i)
 		bullets[i].location.row++;
 
 	//Check for off screen
-	if(bullets[i].location.row < SCOREBOARD_SPACING + TANK_BITMAP_HEIGHT || bullets[i].location.row >= GAMEBUFFER_HEIGHT - BULLET_HEIGHT)
+	if(bullets[i].location.row < SCOREBOARD_SPACING + TANK_BITMAP_HEIGHT || bullets[i].location.row >= GRASS_ROW - BULLET_HEIGHT)
 	{
 		bullets[i].bulletType = bullet_none;
 		return;
@@ -209,8 +210,6 @@ void bullets_fireAlienBullet()
 		bullets[i].location.col = alienPos.col + BULLET_ALIEN_OFFSET;
 		draw_bullet(bullets[i]);
 	}
-	else
-		xil_printf("Cannot fire - Maxed out alien bullets\n\r");
 	xil_printf("");
 	addTimer(randNum(ALIEN_MIN_FIRE_TIME, ALIEN_MAX_FIRE_TIME), false, &bullets_fireAlienBullet);
 }
@@ -225,11 +224,8 @@ void bullets_fireTankBullet()
 		point_t tankPos = getTankPositionGlobal();
 		bullets[i].location.row = tankPos.row - BULLET_HEIGHT;
 		bullets[i].location.col = tankPos.col + BULLET_TANK_OFFSET;
-
 		draw_bullet(bullets[i]);
 	}
-	else
-		xil_printf("Cannot fire - Maxed out tank bullets\n\r");
 }
 
 

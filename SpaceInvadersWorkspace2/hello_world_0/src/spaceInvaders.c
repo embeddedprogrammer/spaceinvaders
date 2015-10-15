@@ -43,6 +43,7 @@ void print(char *str);
 #define KEY_ERODE_BUNKER '7'
 #define KEY_RESTART 'r'
 #define KEY_SAUCER 's'
+#define BUTTON_RESPONSE_TIME 20
 
 int getNumber()
 {
@@ -63,6 +64,22 @@ int getNumber()
 			return num;
 		}
 	}
+}
+
+void respondToButtonInput()
+{
+    const int PUSH_BUTTONS_CENTER = 0x01;
+    const int PUSH_BUTTONS_RIGHT  = 0x02;
+    const int PUSH_BUTTONS_DOWN   = 0x04;
+    const int PUSH_BUTTONS_LEFT   = 0x08;
+    const int PUSH_BUTTONS_UP     = 0x10;
+	int buttonState = XGpio_DiscreteRead(&gpPB, 1);
+	if(buttonState & PUSH_BUTTONS_LEFT)
+		tank_moveTankLeft();
+	else if(buttonState & PUSH_BUTTONS_RIGHT)
+		tank_moveTankRight();
+	if(buttonState & PUSH_BUTTONS_UP)
+		tank_fireBullet();
 }
 
 // This is invoked each time there is a change in the button state (result of a push or a bounce).
@@ -198,6 +215,7 @@ void initGameScreen()
 	bullets_init();
 	aliens_init();
 	tank_init(isNewGame);
+	addTimer(BUTTON_RESPONSE_TIME, true, &respondToButtonInput);
 }
 
 void gameOver()

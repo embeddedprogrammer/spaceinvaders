@@ -15,6 +15,7 @@
 #include <stdbool.h>
 
 #define SCOREBOARD_SPACING 10
+#define GRASS_ROW GAMEBUFFER_HEIGHT-5
 
 typedef struct
 {

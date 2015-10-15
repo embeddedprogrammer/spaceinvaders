@@ -167,6 +167,7 @@ void draw_Bunkers()
 	int i;
 	for (i = 0; i < TOTAL_BUNKERS; i++)
 		draw_Bunker(draw_getBunkerLocation(i));
+	draw_rectangle((point_t){0, GRASS_ROW}, GAMEBUFFER_WIDTH, 1, BUNKER_COLOR, false);
 }
 
 // useful for erasing sections of the screen

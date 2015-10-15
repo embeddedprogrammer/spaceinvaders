@@ -344,6 +344,10 @@ void aliens_shiftAlienFleet()
 	if (shiftDown) {
 		directionRight = !directionRight;
 		alienPos.row += ALIEN_FLEET_SHIFT_DOWN_AMOUNT;
+		if (alienPos.row + getAlienFleetBottomRowNumGlobal()*ALIEN_VERTICAL_DISTANCE + ALIEN_BITMAP_HEIGHT > GRASS_ROW) {
+			gameOver();
+			return;
+		}
 		aliens_shiftDownErase(alienPos);// erase remaining alien parts
 
 	} else {// shift left or right
