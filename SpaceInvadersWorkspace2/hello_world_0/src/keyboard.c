@@ -6,26 +6,9 @@
  */
 
 #include <stdio.h>
-#include "platform.h"
-#include "xtmrctr.h"
-#include "xparameters.h"
-#include "xaxivdma.h"
-#include "xio.h"
-#include "fontBitmap.h"
-#include "time.h"
-#include "unistd.h"
-#include "globals.h"
-#include "drawShape.h"
 #include "tank.h"
-#include "bullets.h"
-#include "timers.h"
 #include "aliens.h"
-
-#include "xgpio.h"          // Provides access to PB GPIO driver.
-#include "platform.h"       // Enables caching and other system stuff.
-#include "mb_interface.h"   // provides the microblaze interrupt enables, etc.
-#include "xintc_l.h"        // Provides handy macros for the interrupt controller.
-#include <stdbool.h>
+#include "bullets.h"
 
 #define KEY_KILL_ALIEN '2'
 #define KEY_TANK_LEFT '4'
