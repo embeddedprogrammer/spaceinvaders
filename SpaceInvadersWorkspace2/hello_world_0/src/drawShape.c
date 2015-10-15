@@ -47,6 +47,8 @@ int getBunkerPixel(point_t location)
 			int bunkerPixelCol = location.col - bunkerPos.col;
 			int bunkerErodeSectionRow = bunkerPixelRow / BUNKER_DAMAGE_HEIGHT;
 			int bunkerErodeSectionCol = bunkerPixelCol / BUNKER_DAMAGE_WIDTH;
+			int erodeSectionPixelRow = bunkerPixelRow % BUNKER_DAMAGE_HEIGHT;
+			int erodeSectionPixelCol = bunkerPixelCol % BUNKER_DAMAGE_WIDTH;
 			int bunkerPixel = getBitmapPixel(bitmapBunker.shapeBuffer, bitmapBunker.width, bunkerPixelRow, bunkerPixelCol);
 			if(bunkerPixel)
 			{
@@ -55,13 +57,15 @@ int getBunkerPixel(point_t location)
 				if(damage == 0)
 					damagePixel = 0;
 				else if(damage == 1)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage0.shapeBuffer, bitmapBunkerDamage0.width, bunkerPixelRow, bunkerPixelCol);
+					damagePixel = getBitmapPixel(bitmapBunkerDamage0.shapeBuffer, bitmapBunkerDamage0.width, erodeSectionPixelRow, erodeSectionPixelCol);
 				else if(damage == 2)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage1.shapeBuffer, bitmapBunkerDamage1.width, bunkerPixelRow, bunkerPixelCol);
+					damagePixel = getBitmapPixel(bitmapBunkerDamage1.shapeBuffer, bitmapBunkerDamage1.width, erodeSectionPixelRow, erodeSectionPixelCol);
 				else if(damage == 3)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage2.shapeBuffer, bitmapBunkerDamage2.width, bunkerPixelRow, bunkerPixelCol);
+					damagePixel = getBitmapPixel(bitmapBunkerDamage2.shapeBuffer, bitmapBunkerDamage2.width, erodeSectionPixelRow, erodeSectionPixelCol);
 				else if(damage == 4)
-					damagePixel = getBitmapPixel(bitmapBunkerDamage3.shapeBuffer, bitmapBunkerDamage3.width, bunkerPixelRow, bunkerPixelCol);
+					damagePixel = getBitmapPixel(bitmapBunkerDamage3.shapeBuffer, bitmapBunkerDamage3.width, erodeSectionPixelRow, erodeSectionPixelCol);
+				else
+					damagePixel = 1;
 				return damagePixel ? BACKGROUND_COLOR : BUNKER_COLOR;
 			}
 			else
@@ -76,12 +80,14 @@ int getBunkerPixel(point_t location)
 // it will check and see if the pixel is part of a bunker.
 void drawPixel(point_t location, int color, bool topLayer)
 {
+	if(location.col < 0 || location.row < 0 || location.col >= GAMEBUFFER_WIDTH || location.row >= GAMEBUFFER_HEIGHT)
+		return;//Out of bounds
+	if(topLayer && color == BACKGROUND_COLOR)
+		color = getBunkerPixel(location);
 	uint* frameBuffer = getFrameBuffer();
 	int row = TO_SCREENSIZE(location.row);
 	int col = TO_SCREENSIZE(location.col);
 	int subRow, subCol;
-	if(topLayer && color == BACKGROUND_COLOR)
-		color = getBunkerPixel(location);
 	for(subRow = 0; subRow < 2; subRow++)
 		for(subCol = 0; subCol < 2; subCol++)
 			frameBuffer[(row + subRow)*SCREENBUFFER_WIDTH + (col + subCol)] = color;

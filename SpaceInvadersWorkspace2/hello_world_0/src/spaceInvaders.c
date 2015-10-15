@@ -275,6 +275,8 @@ void listenToKeyPresses()
 	xil_printf("------\n\r");
 
 	while (1) {
+
+		//TODO: REMOVE
 		char input;
 		input = getchar();
 		switch (input) {
@@ -314,6 +316,9 @@ void listenToKeyPresses()
 			break;
 		case KEY_SAUCER:
 			aliens_startSaucer();
+			break;
+		case ' ':
+			draw_rectangle((point_t){0, (GAMEBUFFER_HEIGHT*3)/4}, GAMEBUFFER_WIDTH, BUNKER_HEIGHT, BACKGROUND_COLOR, true);
 			break;
 		default:
 			xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);

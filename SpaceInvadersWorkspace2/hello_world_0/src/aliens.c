@@ -17,10 +17,10 @@
 #define EXPLOSION_TIME 100
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
 #define SAUCER_ADVANCE_TIME 100
-#define MAX_CONCURRENT_EXPLOSIONS 3
+#define MAX_CONCURRENT_EXPLOSIONS 10  //TODO: CHANGE TO 1?
 #define SAUCER_MIN_APPEAR_TIME 20*1000
 #define SAUCER_MAX_APPEAR_TIME 40*1000
-#define STARTING_ALIEN_ADVANCE_TIME 60
+#define STARTING_ALIEN_ADVANCE_TIME 60 //TODO: MULT BY 10
 #define MIN_ALIEN_ADVANCE_TIME 50
 
 static bool aliens_alienLegsIn = false;
@@ -103,7 +103,7 @@ int randNum(int min, int max)
 void aliens_init()
 {
 	point_t alienFleetPos;
-	alienFleetPos.row = GAMEBUFFER_HEIGHT / 7;
+	alienFleetPos.row = GAMEBUFFER_HEIGHT / 2; //7; TODO: Change to 7
 	alienFleetPos.col = GAMEBUFFER_WIDTH / 6;
 	setAlienFleetPositionGlobal(alienFleetPos);
 	draw_AlienFleet(true);

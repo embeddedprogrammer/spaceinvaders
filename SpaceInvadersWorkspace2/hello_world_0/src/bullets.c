@@ -14,9 +14,9 @@
 #include <stdlib.h> //for rand()
 
 #define FIRST_TANK_BULLET 0
-#define MAX_TANK_BULLETS 10
+#define MAX_TANK_BULLETS 50 //TODO: CHANGE TO 1
 #define FIRST_ALIEN_BULLET MAX_TANK_BULLETS
-#define MAX_ALIEN_BULLETS 10
+#define MAX_ALIEN_BULLETS 10 //TODO: CHANGE TO 3
 #define MAX_BULLETS_COUNT (MAX_TANK_BULLETS + MAX_ALIEN_BULLETS)
 static bullet_t bullets[MAX_BULLETS_COUNT];
 #define BULLET_ADVANCE_TIME 10
@@ -87,16 +87,18 @@ bool killAlienIfAlienCollision(point_t location)
 	point_t saucerLocation = aliens_getSaucerLocation();
 
 	point_t fleetPosition = getAlienFleetPositionGlobal();
-	if(location.row > fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
-	   location.col > fleetPosition.col && location.col < (fleetPosition.col + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
+	if(location.row >= fleetPosition.row && location.row < (fleetPosition.row + ALIEN_VERTICAL_DISTANCE * ALIEN_FLEET_ROWS) &&
+	   location.col >= fleetPosition.col && location.col < (fleetPosition.col + ALIEN_HORIZONTAL_DISTANCE * ALIEN_FLEET_COLS))
 	{
 		int row = (location.row - fleetPosition.row) / ALIEN_VERTICAL_DISTANCE;
 		int col = (location.col - fleetPosition.col) / ALIEN_HORIZONTAL_DISTANCE;
-		aliens_killAlienRC(row, col);
-		return true;
+		bool alive = isAlienAlive(row, col);
+		if(alive)
+			aliens_killAlienRC(row, col);
+		return alive;
 	}
-	else if(location.row > saucerLocation.row && location.row < (saucerLocation.row + SAUCER_HEIGHT) &&
-	        location.col > saucerLocation.col && location.col < (saucerLocation.col + SAUCER_WIDTH))
+	else if(location.row >= saucerLocation.row && location.row < (saucerLocation.row + SAUCER_HEIGHT) &&
+	        location.col >= saucerLocation.col && location.col < (saucerLocation.col + SAUCER_WIDTH))
 	{
 		aliens_killSaucer();
 	}
@@ -124,8 +126,8 @@ bool erodeBunkerIfCollision(point_t location)
 bool control_killTankIfCollision(point_t location)
 {
     point_t tankPosition = getTankPositionGlobal();
-    if(location.row > tankPosition.row && location.row < (tankPosition.row + TANK_HEIGHT) &&
-       location.col > tankPosition.col && location.col < (tankPosition.row + TANK_WIDTH))
+    if(location.row >= tankPosition.row && location.row < (tankPosition.row + TANK_HEIGHT) &&
+       location.col >= tankPosition.col && location.col < (tankPosition.row + TANK_WIDTH))
     {
 		tank_killTank();
         return true;
@@ -167,10 +169,11 @@ void bullets_moveBullet(int i)
                 collision = killAlienIfAlienCollision(location) || erodeBunkerIfCollision(location);
             else if (bullets[i].bulletType != bullet_tank)
                 collision = erodeBunkerIfCollision(location) || control_killTankIfCollision(location) || control_killTankIfCollision(location);
-            if(collision == false)
-                xil_printf("Bullet hit unknown pixel\n\r");
-            bullets[i].bulletType = bullet_none;
-            return;
+            if(collision)
+            {
+            	bullets[i].bulletType = bullet_none;
+            	return;
+            }
         }
     }
 
@@ -202,10 +205,10 @@ void bullets_fireAlienBullet()
 {
 	xil_printf("");
 	int i = control_getFirstEmptyBulletPosition(FIRST_ALIEN_BULLET, MAX_ALIEN_BULLETS);
-	if(i != -1)
+	point_t alienPos = getAlienBottomRow();
+	if(i != -1 && (alienPos.row + ALIEN_BITMAP_HEIGHT < GRASS_ROW - BULLET_HEIGHT))
 	{
 		bullets[i].bulletType = (rand() % 2) ? bullet_alien1 : bullet_alien2;
-		point_t alienPos = getAlienBottomRow();
 		bullets[i].location.row = alienPos.row + ALIEN_BITMAP_HEIGHT;
 		bullets[i].location.col = alienPos.col + BULLET_ALIEN_OFFSET;
 		draw_bullet(bullets[i]);
