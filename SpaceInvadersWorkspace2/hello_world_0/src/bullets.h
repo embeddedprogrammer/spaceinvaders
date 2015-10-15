@@ -18,6 +18,7 @@ void bunkers_erodeBunker(int bunker);
 void bullets_fireTankBullet();
 void bullets_init();
 void bunker_init(bool newGame);
+byte getBunkerDamage(int bunker, int row, int col);
 
 
 #endif /* CONTROL_H_ */

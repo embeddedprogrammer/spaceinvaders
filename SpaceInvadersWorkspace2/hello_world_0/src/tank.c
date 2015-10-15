@@ -109,16 +109,6 @@ void tank_init(bool newGame)
 	tankAlive = true;
 }
 
-void tank_cleanup()
-{
-	point_t tankPos = getTankPositionGlobal();
-	draw_tank(tankPos, true);
-	draw_scoreAndLifeText(true);
-	updateLives(0);
-	updateScore(-1);
-	tankAlive = false;
-}
-
 //move tank left
 void tank_moveTankLeft()
 {

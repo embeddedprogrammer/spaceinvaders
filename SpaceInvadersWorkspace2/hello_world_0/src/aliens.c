@@ -16,22 +16,22 @@
 
 #define EXPLOSION_TIME 100
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
-#define ALIEN_ADVANCE_TIME 500
 #define SAUCER_ADVANCE_TIME 100
 #define MAX_CONCURRENT_EXPLOSIONS 3
-#define ALIEN_FIRE_TIME ALIEN_ADVANCE_TIME*2
-#define SAUCER_START_TIME 1000*30
+#define SAUCER_MIN_APPEAR_TIME 20*1000
+#define SAUCER_MAX_APPEAR_TIME 40*1000
+#define STARTING_ALIEN_ADVANCE_TIME 60
+#define MIN_ALIEN_ADVANCE_TIME 50
 
 static bool aliens_alienLegsIn = false;
 point_t explosions[MAX_CONCURRENT_EXPLOSIONS];
 bool spacecraftTravelingRight;
 point_t saucerLocation;
 
-static bool g_aliensAlive[5][11] = {{true, true, true, true, true, true, true, true, true, true, true},
-									{true, true, true, true, true, true, true, true, true, true, true},
-									{true, true, true, true, true, true, true, true, true, true, true},
-									{true, true, true, true, true, true, true, true, true, true, true},
-									{true, true, true, true, true, true, true, true, true, true, true}};
+static bool g_aliensAlive[5][11];
+
+int alienAdvanceTime;
+int alienFireTime;
 
 bool isAlienAlive(int row, int col)
 {
@@ -95,6 +95,11 @@ int getAlienFleetBottomRowNumGlobal()
 	return bottomAlienRow;
 }
 
+int randNum(int min, int max)
+{
+	return min + (rand() % (max - min + 1));
+}
+
 void aliens_init()
 {
 	point_t alienFleetPos;
@@ -112,10 +117,11 @@ void aliens_init()
 	setAlienFleetBottomRowNumGlobal(ALIEN_FLEET_ROWS-1);
 	setAlienFleetLeftColNumGlobal(0);
 	setAlienFleetRightColNumGlobal(ALIEN_FLEET_COLS-1);
-	addTimer(ALIEN_ADVANCE_TIME, true, &aliens_shiftAlienFleet);
-	addTimer(ALIEN_FIRE_TIME, true, &bullets_fireAlienBullet);
+	alienAdvanceTime = STARTING_ALIEN_ADVANCE_TIME;
+	addTimer(alienAdvanceTime, false, &aliens_shiftAlienFleet);
+	addTimer(randNum(ALIEN_MIN_FIRE_TIME, ALIEN_MAX_FIRE_TIME), false, &bullets_fireAlienBullet);
+	addTimer(randNum(SAUCER_MIN_APPEAR_TIME, SAUCER_MAX_APPEAR_TIME), false, &aliens_startSaucer);
 	addTimer(SAUCER_ADVANCE_TIME, true, &aliens_moveSaucer);
-	addTimer(SAUCER_START_TIME, true, &aliens_startSaucer);
 }
 
 //get a viable alien on the bottom row that can fire a bullet
@@ -160,7 +166,7 @@ void aliens_moveSaucer()
 			saucerLocation.col -= ALIEN_SHIFT_AMOUNT;
 			erasePos.col = saucerLocation.col + SAUCER_WIDTH;
 		}
-		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, SAUCER_HEIGHT, BACKGROUND_COLOR);
+		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, SAUCER_HEIGHT, BACKGROUND_COLOR, false);
 		draw_Saucer(saucerLocation, false);
 	}
 }
@@ -184,6 +190,7 @@ void aliens_startSaucer()
 		spacecraftTravelingRight = false;
 		saucerLocation.col = GAMEBUFFER_WIDTH - SAUCER_WIDTH;
 	}
+	addTimer(randNum(SAUCER_MIN_APPEAR_TIME, SAUCER_MAX_APPEAR_TIME), false, &aliens_startSaucer);
 }
 
 void aliens_removeExplosion()
@@ -315,7 +322,7 @@ void aliens_shiftDownErase(point_t alienPos)
 	erasePos.col = alienPos.col + leftAlienCol*ALIEN_HORIZONTAL_DISTANCE;
 	erasePos.row = alienPos.row - ALIEN_FLEET_SHIFT_DOWN_AMOUNT + topAlienRow*(ALIEN_VERTICAL_DISTANCE);
 	for (i = topAlienRow; i < bottomAlienRow + 1; i++ ) {
-		draw_rectangle(erasePos, ALIEN_HORIZONTAL_DISTANCE*(rightAlienCol - leftAlienCol + 1), ALIEN_FLEET_SHIFT_DOWN_AMOUNT, BACKGROUND_COLOR);
+		draw_rectangle(erasePos, ALIEN_HORIZONTAL_DISTANCE*(rightAlienCol - leftAlienCol + 1), ALIEN_FLEET_SHIFT_DOWN_AMOUNT, BACKGROUND_COLOR, true);
 		erasePos.row += ALIEN_VERTICAL_DISTANCE;
 	}
 }
@@ -350,10 +357,14 @@ void aliens_shiftAlienFleet()
 			erasePos.col = alienPos.col + (rightAlienCol+1)*ALIEN_HORIZONTAL_DISTANCE;
 		}
 		erasePos.row = alienPos.row;
-		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, ALIEN_BITMAP_HEIGHT*ALIEN_FLEET_ROWS + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR);// undraw remaing alien pieces
+		draw_rectangle(erasePos, ALIEN_SHIFT_AMOUNT, ALIEN_BITMAP_HEIGHT*ALIEN_FLEET_ROWS + ALIEN_VERTICAL_SPACER*4, BACKGROUND_COLOR, true);// undraw remaing alien pieces
 
 	}
 	setAlienFleetPositionGlobal(alienPos);
 	aliens_alienLegsIn = !aliens_alienLegsIn;
 	draw_AlienFleet(aliens_alienLegsIn);
+	alienAdvanceTime--;
+	if(alienAdvanceTime < MIN_ALIEN_ADVANCE_TIME)
+		alienAdvanceTime = MIN_ALIEN_ADVANCE_TIME;
+	addTimer(alienAdvanceTime, false, &aliens_shiftAlienFleet);
 }

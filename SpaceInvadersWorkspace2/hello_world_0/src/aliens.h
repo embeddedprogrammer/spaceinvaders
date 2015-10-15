@@ -13,6 +13,9 @@
 #include "shapebitmap.h"
 #include "spaceInvaders.h"
 
+#define ALIEN_MIN_FIRE_TIME 500
+#define ALIEN_MAX_FIRE_TIME 4500
+
 bool isAlienAlive(int row, int col);
 void aliens_init();
 void aliens_moveSaucer();
@@ -31,5 +34,6 @@ int getAlienFleetLeftColNumGlobal();
 int getAlienFleetRightColNumGlobal();
 int getAlienFleetTopRowNumGlobal();
 int getAlienFleetBottomRowNumGlobal();
+int randNum(int min, int max);
 
 #endif /* ALIENS_H_ */

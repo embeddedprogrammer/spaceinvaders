@@ -212,6 +212,7 @@ void bullets_fireAlienBullet()
 	else
 		xil_printf("Cannot fire - Maxed out alien bullets\n\r");
 	xil_printf("");
+	addTimer(randNum(ALIEN_MIN_FIRE_TIME, ALIEN_MAX_FIRE_TIME), false, &bullets_fireAlienBullet);
 }
 
 // fires a tank bullet and places it at the end of its turret

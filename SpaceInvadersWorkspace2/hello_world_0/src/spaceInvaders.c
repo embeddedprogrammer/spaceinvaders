@@ -192,13 +192,7 @@ static bool isNewGame;
 static int gameLevel = 1;
 void initGameScreen()
 {
-	uint* framePointer = getFrameBuffer();
-	// Clear screen
-	int row, col;
-	for (row = 0; row < 480; row++)
-		for (col = 0; col < 640; col++)
-			framePointer[row * 640 + col] = BACKGROUND_COLOR;
-
+	draw_clearScreen();
 	draw_Bunkers();
 	bunker_init(isNewGame);
 	bullets_init();
@@ -295,6 +289,9 @@ void listenToKeyPresses()
 			xil_printf("Bunker eroded\r\n");
 			break;
 		case KEY_RESTART:
+			removeAllTimers();
+			isNewGame = true;
+			gameLevel = 1;
 			initGameScreen();
 			break;
 		case KEY_SAUCER:

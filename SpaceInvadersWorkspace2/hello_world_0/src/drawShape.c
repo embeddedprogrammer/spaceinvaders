@@ -15,16 +15,77 @@
 #include <stdint.h>
 #include <stdio.h>
 
-//Draw a 2x2 pixel using the 320x240 pixel location
-void drawPixel(point_t location, int color)
+// Clear the entire screen
+void draw_clearScreen()
+{
+	uint* framePointer = getFrameBuffer();
+	// Clear screen
+	int row, col;
+	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
+		for (col = 0; col < SCREENBUFFER_WIDTH; col++)
+			framePointer[row * SCREENBUFFER_WIDTH + col] = BACKGROUND_COLOR;
+}
+
+// Return the pixel of the bitmap of the specified location
+bool getBitmapPixel(const int* shapeBuffer, const uint width, int row, int col)
+{
+	uint shapeWord = shapeBuffer[row];
+	int amountToShiftWord = width - 1 - col;
+	return shapeWord & (0x01 << amountToShiftWord);
+}
+
+int getBunkerPixel(point_t location)
+{
+	int bunker;
+	for (bunker = 0; bunker < TOTAL_BUNKERS; bunker++)
+	{
+		point_t bunkerPos = draw_getBunkerLocation(bunker);
+		if ((location.row >= bunkerPos.row) && location.row < (bunkerPos.row + BUNKER_HEIGHT) &&
+		    (location.col >= bunkerPos.col) && location.col < (bunkerPos.col + BUNKER_WIDTH))
+		{
+			int bunkerPixelRow = location.row - bunkerPos.row;
+			int bunkerPixelCol = location.col - bunkerPos.col;
+			int bunkerErodeSectionRow = bunkerPixelRow / BUNKER_DAMAGE_HEIGHT;
+			int bunkerErodeSectionCol = bunkerPixelCol / BUNKER_DAMAGE_WIDTH;
+			int bunkerPixel = getBitmapPixel(bitmapBunker.shapeBuffer, bitmapBunker.width, bunkerPixelRow, bunkerPixelCol);
+			if(bunkerPixel)
+			{
+				int damage = getBunkerDamage(bunker, bunkerErodeSectionRow, bunkerErodeSectionCol);
+				int damagePixel = 0;
+				if(damage == 0)
+					damagePixel = 0;
+				else if(damage == 1)
+					damagePixel = getBitmapPixel(bitmapBunkerDamage0.shapeBuffer, bitmapBunkerDamage0.width, bunkerPixelRow, bunkerPixelCol);
+				else if(damage == 2)
+					damagePixel = getBitmapPixel(bitmapBunkerDamage1.shapeBuffer, bitmapBunkerDamage1.width, bunkerPixelRow, bunkerPixelCol);
+				else if(damage == 3)
+					damagePixel = getBitmapPixel(bitmapBunkerDamage2.shapeBuffer, bitmapBunkerDamage2.width, bunkerPixelRow, bunkerPixelCol);
+				else if(damage == 4)
+					damagePixel = getBitmapPixel(bitmapBunkerDamage3.shapeBuffer, bitmapBunkerDamage3.width, bunkerPixelRow, bunkerPixelCol);
+				return damagePixel ? BACKGROUND_COLOR : BUNKER_COLOR;
+			}
+			else
+				return BACKGROUND_COLOR;
+		}
+	}
+	return BACKGROUND_COLOR;
+}
+
+// Draw a 2x2 pixel using the 320x240 pixel location
+// Use top layer only for aliens drawing because when it erases
+// it will check and see if the pixel is part of a bunker.
+void drawPixel(point_t location, int color, bool topLayer)
 {
 	uint* frameBuffer = getFrameBuffer();
 	int row = TO_SCREENSIZE(location.row);
 	int col = TO_SCREENSIZE(location.col);
 	int subRow, subCol;
+	if(topLayer && color == BACKGROUND_COLOR)
+		color = getBunkerPixel(location);
 	for(subRow = 0; subRow < 2; subRow++)
 		for(subCol = 0; subCol < 2; subCol++)
 			frameBuffer[(row + subRow)*SCREENBUFFER_WIDTH + (col + subCol)] = color;
+
 }
 
 //Draw a 2x2 pixel using the 320x240 pixel location
@@ -36,16 +97,8 @@ int getPixel(point_t location)
 	return frameBuffer[row*SCREENBUFFER_WIDTH + col];
 }
 
-// Return the pixel of the bitmap of the specified location
-bool getBitmapPixel(const int* shapeBuffer, const uint width, int row, int col)
-{
-	uint shapeWord = shapeBuffer[row];
-	int amountToShiftWord = width - 1 - col;
-	return shapeWord & (0x01 << amountToShiftWord);
-}
-
 // Draw a bitmap at the specified location
-void draw_bitmap(bitmap_t bitmap, bool eraseForeground, bool eraseBackground, point_t pos)
+void draw_bitmap(bitmap_t bitmap, bool eraseForeground, bool eraseBackground, point_t pos, bool topLayer)
 {
 	int row, col;
 	for (row = 0; row < bitmap.height; row++)
@@ -55,37 +108,37 @@ void draw_bitmap(bitmap_t bitmap, bool eraseForeground, bool eraseBackground, po
 			bool pixel = getBitmapPixel(bitmap.shapeBuffer, bitmap.width, row, col);
 			point_t pixelLocation = (point_t){pos.col + col, pos.row + row};
 			if(pixel)
-				drawPixel(pixelLocation, eraseForeground ? BACKGROUND_COLOR : bitmap.shapeColor);
+				drawPixel(pixelLocation, eraseForeground ? BACKGROUND_COLOR : bitmap.shapeColor, topLayer);
 			else if(eraseBackground)
-				drawPixel(pixelLocation, BACKGROUND_COLOR);
+				drawPixel(pixelLocation, BACKGROUND_COLOR, topLayer);
 		}
 	}
 }
 
 void draw_Saucer(point_t position, bool erase)
 {
-	draw_bitmap(bitmapSaucer, erase, true, position);
+	draw_bitmap(bitmapSaucer, erase, true, position, false);
 }
 
 void draw_AlienExplosion(point_t position, bool erase) {
-	draw_bitmap(bitmapExplosion, erase, true, position);
+	draw_bitmap(bitmapExplosion, erase, true, position, true);
 }
 
 void draw_AlienTop(point_t position, bool in) {
-	draw_bitmap(in ? bitmapAlienTopIn : bitmapAlienTopOut, false, true, position);
+	draw_bitmap(in ? bitmapAlienTopIn : bitmapAlienTopOut, false, true, position, true);
 }
 
 void draw_AlienMiddle(point_t position, bool in) {
-	draw_bitmap(in ? bitmapAlienMiddleIn : bitmapAlienMiddleOut, false, true, position);
+	draw_bitmap(in ? bitmapAlienMiddleIn : bitmapAlienMiddleOut, false, true, position, true);
 }
 
 void draw_AlienBottom(point_t position, bool in) {
-	draw_bitmap(in ? bitmapAlienBottomIn : bitmapAlienBottomOut, false, true, position);
+	draw_bitmap(in ? bitmapAlienBottomIn : bitmapAlienBottomOut, false, true, position, true);
 }
 
 void draw_tank(point_t position, bool erase)
 {
-	draw_bitmap(bitmapTank, erase, true, position);
+	draw_bitmap(bitmapTank, erase, true, position, false);
 }
 
 void draw_erodeTank(point_t position)
@@ -96,7 +149,7 @@ void draw_erodeTank(point_t position)
 }
 
 void draw_Bunker(point_t position) {
-	draw_bitmap(bitmapBunker, false, true, position);
+	draw_bitmap(bitmapBunker, false, true, position, false);
 }
 
 point_t draw_getBunkerLocation(int i)
@@ -117,20 +170,12 @@ void draw_Bunkers()
 }
 
 // useful for erasing sections of the screen
-void draw_rectangle(point_t pos, int width, int height, int color) {
-	uint* frameBuffer = getFrameBuffer();
-	uint row_start = TO_SCREENSIZE(pos.row);
-	uint col_start = TO_SCREENSIZE(pos.col);
-	uint maxCol = col_start + TO_SCREENSIZE(width);
-	uint maxRow = row_start + TO_SCREENSIZE(height);
-	uint row;
-	uint col;
-	for (row = row_start; row < maxRow; row++) {
-		for (col = col_start; col < maxCol;) {
-			frameBuffer[row*SCREENBUFFER_WIDTH + col++] = color;
-			frameBuffer[row*SCREENBUFFER_WIDTH + col++] = color;
-		}
-	}
+void draw_rectangle(point_t pos, int width, int height, int color, bool topLayer)
+{
+	int row, col;
+	for (row = pos.row; row < pos.row + height; row++)
+		for (col = pos.col; col < pos.col + width; col++)
+			drawPixel((point_t){col, row}, color, topLayer);
 }
 
 //point_t getAlienIndex()
@@ -188,7 +233,7 @@ void draw_AlienFleet(bool in)
 			}
 			else
 			{
-				draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR);//undraw alien location
+				draw_rectangle(alienPos, ALIEN_BITMAP_WIDTH, ALIEN_BITMAP_HEIGHT, BACKGROUND_COLOR, true);//undraw alien location
 			}
 			alienPos.col += ALIEN_HORIZONTAL_DISTANCE;
 		}
@@ -216,7 +261,7 @@ void draw_BunkerDamageAtLocation(point_t position, byte damage)
 		damagePtr = bitmapBunkerDamage3;
 		break;
 	}
-	draw_bitmap(damagePtr, true, false, position);
+	draw_bitmap(damagePtr, true, false, position, false);
 }
 
 void draw_BunkerDamageAtIndex(int bunker, int row, int col, byte damage)
@@ -236,7 +281,7 @@ void draw_bullet_color(bullet_t bullet, bool erase)
 		bullet_ptr = bitmapBulletAlien1;
 	else // bullet_alien2
 		bullet_ptr = bitmapBulletAlien2;
-	draw_bitmap(bullet_ptr, erase, false, bullet.location);
+	draw_bitmap(bullet_ptr, erase, false, bullet.location, false);
 }
 
 void draw_bullet(bullet_t bullet)
@@ -260,7 +305,7 @@ void draw_character(char c, int fontColor, point_t position, bool erase)
 		offset = c - '0' + CHARACTER_OFFSET_NUMBER_0;
 	else if(c == ' ')
 	{
-		draw_rectangle(position, FONT_WIDTH, FONT_HEIGHT, BACKGROUND_COLOR);
+		draw_rectangle(position, FONT_WIDTH, FONT_HEIGHT, BACKGROUND_COLOR, false);
 		return;
 	}
 	else
@@ -269,7 +314,7 @@ void draw_character(char c, int fontColor, point_t position, bool erase)
 		return;
 	}
 //	xil_printf("Print %c at %d %d\n\r", c, position.col, position.row);
-	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, fontColor, characters[offset]}, erase, true, position);
+	draw_bitmap((bitmap_t){FONT_WIDTH, FONT_HEIGHT, fontColor, characters[offset]}, erase, true, position, false);
 }
 
 void draw_string(const char* s, int fontColor, point_t position, bool erase)
