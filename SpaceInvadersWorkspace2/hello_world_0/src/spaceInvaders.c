@@ -51,27 +51,6 @@ void respondToButtonInput()
 		tank_fireBullet();
 }
 
-// This is invoked each time there is a change in the button state (result of a push or a bounce).
-void pb_interrupt_handler()
-{
-	// Clear the GPIO interrupt.
-	XGpio_InterruptGlobalDisable(&gpPB);                    // Turn off all PB interrupts for now.
-
-	//Do nothing for now
-	//xil_printf("pb interrupt\n\r");
-
-	int currentButtonState = XGpio_DiscreteRead(&gpPB, 1);  // Get the current state of the buttons.
-	static int previousButtonState;
-	if (previousButtonState != currentButtonState)
-	{
-		previousButtonState = currentButtonState;
-	}
-
-	// You need to do something here.
-	XGpio_InterruptClear(&gpPB, 0xFFFFFFFF);            // Ack the PB interrupt.
-	XGpio_InterruptGlobalEnable(&gpPB);                 // Re-enable PB interrupts.
-}
-
 u32 totalTimeSpentInInterrupts = 0;
 XTmrCtr TmrCtrInstance;
 
@@ -91,12 +70,6 @@ void interrupt_handler_dispatcher(void* ptr)
 		u32 timerValEnd = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		u32 timeInInterrupt = timerValEnd - timerValBegin;
 		totalTimeSpentInInterrupts += timeInInterrupt;
-	}
-	// Check the push buttons.
-	if (intc_status & XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK)
-	{
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK);
-		pb_interrupt_handler();
 	}
 }
 
@@ -233,11 +206,6 @@ void initInterrupts()
 
 	// Set the push button peripheral to be inputs.
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
-	// Enable the global GPIO interrupt for push buttons.
-	XGpio_InterruptGlobalEnable(&gpPB);
-	// Enable all interrupts in the push button peripheral.
-	XGpio_InterruptEnable(&gpPB, 0xFFFFFFFF);
-
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
 			(XPAR_FIT_TIMER_0_INTERRUPT_MASK | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK));
@@ -272,8 +240,8 @@ int main()
 	initInterrupts();
 	isNewGame = true;
 	initGameScreen();
-	while(true);
-	//while (pollKeyboard());
+	//while(true);
+	while (pollKeyboard());
 	printStats();
 	cleanup_platform();
 	return 0;
