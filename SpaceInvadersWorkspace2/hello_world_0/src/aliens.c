@@ -103,7 +103,7 @@ int randNum(int min, int max)
 void aliens_init()
 {
 	point_t alienFleetPos;
-	alienFleetPos.row = GAMEBUFFER_HEIGHT / 7;
+	alienFleetPos.row = GAMEBUFFER_HEIGHT / 2; //TODO: CHANGE BACK
 	alienFleetPos.col = GAMEBUFFER_WIDTH / 6;
 	setAlienFleetPositionGlobal(alienFleetPos);
 	draw_AlienFleet(true);

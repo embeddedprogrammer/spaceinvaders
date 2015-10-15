@@ -8,6 +8,7 @@
 #ifndef KEYBOARD_H_
 #define KEYBOARD_H_
 
-void pollKeyboard();
+#include <stdbool.h>
+bool pollKeyboard();
 
 #endif /* KEYBOARD_H_ */

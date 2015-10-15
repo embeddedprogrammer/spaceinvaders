@@ -42,7 +42,7 @@ int getNumber()
 	}
 }
 
-void pollKeyboard()
+bool pollKeyboard()
 {
 	char input;
 	input = getchar();
@@ -84,7 +84,11 @@ void pollKeyboard()
 	case ' ':
 		draw_rectangle((point_t){0, (GAMEBUFFER_HEIGHT*3)/4}, GAMEBUFFER_WIDTH, BUNKER_HEIGHT*3, BACKGROUND_COLOR, true);
 		break;
+	case 'x':
+		return false;
+		break;
 	default:
 		xil_printf("Key pressed: %c (code %d)\r\n", input, (int)input);
 	}
+	return true;
 }

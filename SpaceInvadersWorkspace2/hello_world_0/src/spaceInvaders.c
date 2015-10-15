@@ -58,7 +58,7 @@ void pb_interrupt_handler()
 	XGpio_InterruptGlobalDisable(&gpPB);                    // Turn off all PB interrupts for now.
 
 	//Do nothing for now
-	//xil_printf("pb interupt\n\r");
+	//xil_printf("pb interrupt\n\r");
 
 	int currentButtonState = XGpio_DiscreteRead(&gpPB, 1);  // Get the current state of the buttons.
 	static int previousButtonState;
@@ -72,17 +72,25 @@ void pb_interrupt_handler()
 	XGpio_InterruptGlobalEnable(&gpPB);                 // Re-enable PB interrupts.
 }
 
+u32 totalTimeSpentInInterrupts = 0;
+XTmrCtr TmrCtrInstance;
+
 // Main interrupt handler, queries the interrupt controller to see what peripheral
 // fired the interrupt and then dispatches the corresponding interrupt handler.
 // This routine acks the interrupt at the controller level but the peripheral
 // interrupt must be ack'd by the dispatched interrupt handler.
-void interrupt_handler_dispatcher(void* ptr) {
+void interrupt_handler_dispatcher(void* ptr)
+{
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the FIT interrupt first.
 	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK)
 	{
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
+		u32 timerValBegin = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		timer_interrupt_handler();
+		u32 timerValEnd = XTmrCtr_GetValue(&TmrCtrInstance, 0);
+		u32 timeInInterrupt = timerValEnd - timerValBegin;
+		totalTimeSpentInInterrupts += timeInInterrupt;
 	}
 	// Check the push buttons.
 	if (intc_status & XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK)
@@ -218,7 +226,7 @@ void nextLevel()
 	addTimer(3000, false, &initGameScreen);
 }
 
-void initInterupts()
+void initInterrupts()
 {
 	// Initialize the GPIO peripherals. NOTE: We wait to do this till after the HDMI to ensure that nothing happens before the HDMI is enabled.
 	XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
@@ -237,46 +245,36 @@ void initInterupts()
 	microblaze_enable_interrupts();
 }
 
-void listenToKeyPresses()
+void initTimers()
 {
-	XTmrCtr TmrCtrInstance;
 	if (XTmrCtr_Initialize(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID) != XST_SUCCESS)
 	{
 		xil_printf("Error initializing timer\n\r");
 	    return;
 	}
+	XTmrCtr_Start(&TmrCtrInstance, 0);
+}
 
+void printStats()
+{
+    int runningTimeInMs = (XTmrCtr_GetValue(&TmrCtrInstance, 0) / (XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ / 1000));
+    int interruptsTimeInMs = (totalTimeSpentInInterrupts / (XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ / 1000));
 
-	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
-	xil_printf("Start\n\r"); XTmrCtr_Start(&TmrCtrInstance, 0);
-	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
-	xil_printf("Stop\n\r"); XTmrCtr_Stop(&TmrCtrInstance, 0);
-	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
-	xil_printf("Reset\n\r"); XTmrCtr_Reset(&TmrCtrInstance, 0);
-	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
-	xil_printf("Start\n\r"); XTmrCtr_Start(&TmrCtrInstance, 0);
-	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
-	xil_printf("Stop\n\r"); XTmrCtr_Stop(&TmrCtrInstance, 0);
-	xil_printf("Time: %d\n\r", XTmrCtr_GetValue(&TmrCtrInstance, 0));
-
-	//XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ
-
-	while (1)
-	{
-		pollKeyboard();
-	}
+    xil_printf("Total time running: %d\n\r", runningTimeInMs);
+    xil_printf("Total time spent in interrupts: %d\n\r", interruptsTimeInMs);
+    xil_printf("CPU utilization: %d%%\n\r", interruptsTimeInMs*100/runningTimeInMs);
 }
 
 int main()
 {
+	initTimers();
 	initVideo();
-	initInterupts();
+	initInterrupts();
 	isNewGame = true;
 	initGameScreen();
-	while (1)
-	{
-		pollKeyboard();
-	}
+	while(true);
+	//while (pollKeyboard());
+	printStats();
 	cleanup_platform();
 	return 0;
 }
