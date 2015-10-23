@@ -233,6 +233,7 @@ void printStats()
     xil_printf("CPU utilization: %d%%\n\r", interruptsTimeInMs*100/runningTimeInMs);
 }
 
+
 int main()
 {
 	initTimers();
