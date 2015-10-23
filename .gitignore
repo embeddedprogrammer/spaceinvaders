@@ -7,6 +7,8 @@ SpaceInvaderTestHW2_hw_platform/
 Debug/
 .*project
 lscript.ld
+*.wav
+*.asv
 
 
 
