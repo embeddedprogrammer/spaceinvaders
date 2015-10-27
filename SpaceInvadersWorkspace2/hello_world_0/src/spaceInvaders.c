@@ -83,11 +83,14 @@ void interrupt_handler_dispatcher(void* ptr)
 void initSound()
 {
 	XAC97_HardReset(SOUNDCHIP_BASEADDR);
-	while (!XAC97_isRegisterAccessFinished(SOUNDCHIP_BASEADDR)) {}
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, enable);
-	while (!XAC97_isRegisterAccessFinished(SOUNDCHIP_BASEADDR)) {}
+
+	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
+
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
+
+	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
+
 	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
-	while (!XAC97_isRegisterAccessFinished(SOUNDCHIP_BASEADDR)) {}
 }
 
 XAxiVdma videoDMAController;

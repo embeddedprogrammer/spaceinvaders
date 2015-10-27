@@ -10,7 +10,7 @@
 
 typedef struct
 {
-	const int* soundData;
+	const char* soundData;
 	int numberOfSamples;
 	int sampleRate;
 } sound_t;
