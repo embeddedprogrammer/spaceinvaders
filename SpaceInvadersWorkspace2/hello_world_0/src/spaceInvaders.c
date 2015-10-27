@@ -26,10 +26,17 @@
 #include "platform.h"       // Enables caching and other system stuff.
 #include "mb_interface.h"   // provides the microblaze interrupt enables, etc.
 #include "xintc_l.h"        // Provides handy macros for the interrupt controller.
+#include "xac97_l.h"        // Provides the functions for the sounds controller
+
 #include <stdbool.h>
+
+#include "soundtest.h"
 
 XGpio gpLED;  // This is a handle for the LED GPIO block.
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
+
+static const int enable = 1;
+static const int disable = 0;
 
 #define DEBUG
 void print(char *str);
@@ -71,6 +78,16 @@ void interrupt_handler_dispatcher(void* ptr)
 		u32 timeInInterrupt = timerValEnd - timerValBegin;
 		totalTimeSpentInInterrupts += timeInInterrupt;
 	}
+}
+
+void initSound()
+{
+	XAC97_HardReset(SOUNDCHIP_BASEADDR);
+	while (!XAC97_isRegisterAccessFinished(SOUNDCHIP_BASEADDR)) {}
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, enable);
+	while (!XAC97_isRegisterAccessFinished(SOUNDCHIP_BASEADDR)) {}
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
+	while (!XAC97_isRegisterAccessFinished(SOUNDCHIP_BASEADDR)) {}
 }
 
 XAxiVdma videoDMAController;
@@ -236,12 +253,14 @@ void printStats()
 
 int main()
 {
-	initTimers();
-	initVideo();
-	initInterrupts();
-	isNewGame = true;
-	initGameScreen();
-	while(true);
-	cleanup_platform();
-	return 0;
+//	initTimers();
+//	initVideo();
+//	initSound();
+//	initInterrupts();
+//	isNewGame = true;
+//	initGameScreen();
+//	while(true);
+//	cleanup_platform();
+//	return 0;
+	testSound();
 }
