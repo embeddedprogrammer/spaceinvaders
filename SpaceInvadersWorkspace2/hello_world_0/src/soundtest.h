@@ -10,7 +10,7 @@
 
 void testSoundPolling();
 void testSoundInterrupt();
-
+void testSoundInterruptOld();
 
 #endif /* SOUNDTEST_H_ */
 

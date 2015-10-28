@@ -79,6 +79,28 @@ void writeSoundDataToFifo(int maxCount)
 	xil_printf("%d %d\n\r", levelBefore, levelAfter);
 }
 
+void interrupt_handler_dispatcher2Old(void* ptr)
+{
+	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
+	// Check the FIT interrupt first.
+	if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK)
+	{
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
+		//printf(".\n\r");
+		int i;
+		int itr;
+		if (itr >= ufo_lowpitch_sound.numberOfSamples) {
+			itr = 0;
+		}
+		while (i++ < 256 && !XAC97_isInFIFOFull(SOUNDCHIP_BASEADDR)) {
+			XAC97_mSetInFifoData(SOUNDCHIP_BASEADDR, (ufo_lowpitch_sound.soundData[itr] | ufo_lowpitch_sound.soundData[itr] << 16 ));
+			itr++;
+		}
+	}
+	else
+		xil_printf("Unknown interupt\n\r");
+}
+
 void interrupt_handler_dispatcher2(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
@@ -200,3 +222,36 @@ void testSoundPolling()
 	}
 }
 
+void testSoundInterruptOld()
+{
+	// print status register
+	xil_printf("Start status: ");
+	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
+
+	// output control register?
+	microblaze_register_handler(interrupt_handler_dispatcher2Old, NULL);
+	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
+	microblaze_enable_interrupts();
+
+	XAC97_HardReset(SOUNDCHIP_BASEADDR);
+
+	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
+
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
+
+	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
+
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
+
+	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
+
+	XAC97_mSetControl(SOUNDCHIP_BASEADDR, AC97_ENABLE_IN_FIFO_INTERRUPT);
+
+	XAC97_Delay(100000);
+
+	xil_printf("After init  : ");
+	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
+
+	xil_printf("starting sound loop \n\r");
+	while (true);
+}
