@@ -9,7 +9,7 @@
 #ifndef SOUND_H_
 #define SOUND_H_
 
-int sound_setVolume(int volume)
+void sound_setVolume(int volume);
 void sound_volumeUp();
 void sound_volumeDown();
 void sound_test();
