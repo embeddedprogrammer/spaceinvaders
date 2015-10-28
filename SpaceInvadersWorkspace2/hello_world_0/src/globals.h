@@ -8,6 +8,7 @@
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
+#include "xparameters.h"
 #include <stdint.h>
 #include <sys/types.h>
 #include "stdbool.h"

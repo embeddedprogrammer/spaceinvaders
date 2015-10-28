@@ -22,6 +22,7 @@
 #include "timers.h"
 #include "aliens.h"
 #include "soundtest.h"
+#include "sound.h"
 
 #include "xgpio.h"          // Provides access to PB GPIO driver.
 #include "platform.h"       // Enables caching and other system stuff.
@@ -30,8 +31,6 @@
 #include "xac97_l.h"        // Provides the functions for the sounds controller
 
 #include <stdbool.h>
-
-#include "soundtest.h"
 
 XGpio gpLED;  // This is a handle for the LED GPIO block.
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
@@ -47,16 +46,27 @@ void print(char *str);
 
 void respondToButtonInput()
 {
+	xil_printf("button pushed \n\r");
+	const int PUSH_BUTTONS_CENTER = 0x01;
     const int PUSH_BUTTONS_RIGHT  = 0x02;
     const int PUSH_BUTTONS_LEFT   = 0x08;
     const int PUSH_BUTTONS_UP     = 0x10;
+    const int PUSH_BUTTONS_DOWN   = 0x04;
+
 	int buttonState = XGpio_DiscreteRead(&gpPB, 1);
-	if(buttonState & PUSH_BUTTONS_LEFT)
+
+	if (buttonState & PUSH_BUTTONS_LEFT)
 		tank_moveTankLeft();
-	else if(buttonState & PUSH_BUTTONS_RIGHT)
+	else if (buttonState & PUSH_BUTTONS_RIGHT)
 		tank_moveTankRight();
-	if(buttonState & PUSH_BUTTONS_UP)
+
+	if (buttonState & PUSH_BUTTONS_UP)
 		tank_fireBullet();
+
+	if (buttonState & PUSH_BUTTONS_CENTER)
+		sound_volumeUp();
+	else if (buttonState & PUSH_BUTTONS_DOWN)
+		sound_volumeDown();
 }
 
 u32 totalTimeSpentInInterrupts = 0;
@@ -257,14 +267,16 @@ void printStats()
 
 int main()
 {
-//	initTimers();
-//	initVideo();
+	xil_printf("starting program \n\r");
+	initTimers();
+	initVideo();
 //	initSound();
-//	initInterrupts();
+	initInterrupts();
 //	isNewGame = true;
 //	initGameScreen();
 //	while(true);
 //	cleanup_platform();
-//	return 0;
+	xil_printf("finished interrupts \n\r");
 	testSound();
+	return 0;
 }

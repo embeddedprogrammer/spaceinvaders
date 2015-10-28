@@ -24,4 +24,7 @@ void soundCallback_playAlienMarching();
 void soundCallback_playSaucerHit();
 void soundCallback_playAlienKilled();
 
+void sound_volumeUp();
+void sound_volumeDown();
+
 #endif /* SOUND_H_ */
