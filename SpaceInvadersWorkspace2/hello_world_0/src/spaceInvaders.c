@@ -79,14 +79,16 @@ void interrupt_handler_dispatcher(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the FIT interrupt first.
-	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK)
-	{
+	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK) {
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
 		u32 timerValBegin = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		timer_interrupt_handler();
 		u32 timerValEnd = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		u32 timeInInterrupt = timerValEnd - timerValBegin;
 		totalTimeSpentInInterrupts += timeInInterrupt;
+	}
+	if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK) {
+
 	}
 }
 
@@ -242,7 +244,10 @@ void initInterrupts()
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
-			(XPAR_FIT_TIMER_0_INTERRUPT_MASK | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK));
+			(XPAR_FIT_TIMER_0_INTERRUPT_MASK
+		   | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK
+		   | XPAR_AXI_AC97_0_INTERRUPT_MASK));
+
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
 }

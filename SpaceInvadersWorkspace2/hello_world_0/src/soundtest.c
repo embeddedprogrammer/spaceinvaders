@@ -55,6 +55,7 @@ void writeSoundDataToFifo(int maxCount)
 	if(!playingSound)
 		return;
 	int i;
+	int levelBefore = XAC97_getInFIFOLevel(SOUNDCHIP_BASEADDR);
 	for(i = 0; i < maxCount; i++)
 	{
 		// Our data is signed, in 2s complement. So we will add 128.
@@ -68,10 +69,14 @@ void writeSoundDataToFifo(int maxCount)
 
 		if(currentSoundPosition >= currentSound.numberOfSamples)
 		{
+			xil_printf("Done playing sound\n\r");
 			playingSound = false;
+			XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, 0);
 			return;
 		}
 	}
+	int levelAfter = XAC97_getInFIFOLevel(SOUNDCHIP_BASEADDR);
+	xil_printf("%d %d\n\r", levelBefore, levelAfter);
 }
 
 void interrupt_handler_dispatcher2(void* ptr)
@@ -81,25 +86,15 @@ void interrupt_handler_dispatcher2(void* ptr)
 	if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK)
 	{
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
-		//printf(".\n\r");
-		int i;
-		int itr;
-		if (itr >= ufo_lowpitch_sound.numberOfSamples) {
-			itr = 0;
-		}
-		while (i++ < 256 && !XAC97_isInFIFOFull(SOUNDCHIP_BASEADDR)) {
-			XAC97_mSetInFifoData(SOUNDCHIP_BASEADDR, (ufo_lowpitch_sound.soundData[itr] | ufo_lowpitch_sound.soundData[itr] << 16 ));
-			itr++;
-		}
+		writeSoundDataToFifo(100);
 	}
 	else
-		xil_printf("Unknown interupt\n\r");
+		xil_printf("Unknown interupt: %x\n\r", intc_status);
 }
 
 void initInterrupts2()
 {
 	microblaze_register_handler(interrupt_handler_dispatcher2, NULL);
-	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
 }
@@ -110,6 +105,7 @@ void startPlayingNewSound(sound_t sound)
 	currentSound = sound;
 	currentSoundPosition = 0;
 	playingSound = true;
+	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
 }
 
 void printBinary(uint32_t num)
@@ -128,131 +124,39 @@ void printBinary(uint32_t num)
 
 void testSoundInterrupt()
 {
-	// print status register
-	xil_printf("Start status: ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	// output control register?
 	initInterrupts2();
 
 	XAC97_HardReset(SOUNDCHIP_BASEADDR);
-
 	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
-
 	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
-
 	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
-
 	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
-
 	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
-
 	XAC97_mSetControl(SOUNDCHIP_BASEADDR, AC97_ENABLE_IN_FIFO_INTERRUPT);
-
 	XAC97_Delay(100000);
-
-	xil_printf("After init  : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
 
 	sound_t soundFile;
 	soundEnum_t soundEnum;
 	int repeat = 0;
 
 	xil_printf("starting sound loop \n\r");
-	while (true);
 
-	soundEnum = enum_ufo_highpitch_sound;
-	soundFile = getSoundFile(soundEnum);
-	xil_printf("Play sound %d\n\r", soundEnum);
-	startPlayingNewSound(soundFile);
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	writeSoundDataToFifo(1);
-	xil_printf("Write 1    : ");
-	printBinary(XAC97_mGetStatus(SOUNDCHIP_BASEADDR));
-
-	while (true);
+	while (true)
 	{
-		while (soundEnum == 0 && !XAC97_isInFIFOFull(SOUNDCHIP_BASEADDR))
+		if(!playingSound)
 		{
-			if(!playingSound)
+			repeat++;
+			if(repeat > 10)
 			{
-				repeat++;
-				if(repeat > 10)
-				{
-					soundEnum++;
-					repeat = 0;
-				}
-				soundFile = getSoundFile(soundEnum);
-				xil_printf("Play sound %d\n\r", soundEnum);
-				if (soundEnum > enum_ufo_highpitch_sound) {
-					soundEnum = 0;
-				}
-				startPlayingNewSound(soundFile);
+				soundEnum++;
+				repeat = 0;
 			}
-			writeSoundDataToFifo(1);
-		}
-		XAC97_Delay(10000);
-	}
-}
-
-
-void testSoundPolling()
-{
-	XAC97_HardReset(SOUNDCHIP_BASEADDR);
-
-	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
-
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
-
-	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
-
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
-	XAC97_Delay(100000);
-	unsigned int itr = 0;
-	unsigned int repeats = 0;
-	xil_printf("starting sound loop \n\r");
-	int sound_enum = enum_ufo_lowpitch_sound;
-	sound_t soundFile = getSoundFile(sound_enum);
-
-	while (true) {
-		while (!XAC97_isInFIFOFull(SOUNDCHIP_BASEADDR)) {
-			if (itr >= soundFile.numberOfSamples) {
-				itr = 0;
-				if (repeats++ >= 4) {
-					xil_printf("playing new sound \n\r");
-					repeats = 0;
-					if (++sound_enum > enum_ufo_highpitch_sound) {
-						sound_enum = 0;
-					}
-					soundFile = getSoundFile(sound_enum);
-				}
+			soundFile = getSoundFile(soundEnum);
+			xil_printf("Play sound %d\n\r", soundEnum);
+			if (soundEnum > enum_ufo_highpitch_sound) {
+				soundEnum = 0;
 			}
-			XAC97_mSetInFifoData(SOUNDCHIP_BASEADDR, (soundFile.soundData[itr] | soundFile.soundData[itr] << 16 ));
-			itr++;
+			startPlayingNewSound(soundFile);
 		}
 		XAC97_Delay(10000);
 	}
