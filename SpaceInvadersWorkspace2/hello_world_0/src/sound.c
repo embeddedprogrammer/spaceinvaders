@@ -96,22 +96,36 @@ int getVolumeValue(volume_t vol)
 	}
 }
 
+static const int noVolTimer = -1;
+static int volTimer = -1;
+
+void sound_volumeUpCallback()
+{
+	if (volume > min_volume)
+		volume--;
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCMOutVol, getVolumeValue(volume));
+	volTimer = noVolTimer;
+
+}
+
 void sound_volumeUp()
 {
-	xil_printf("volume Up \n\r");
-	if (++volume > max_volume)
-		volume = max_volume;
+	if (volTimer == noVolTimer)
+		volTimer = addTimer(100, false, &sound_volumeUpCallback);
+}
 
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_MasterVol, getVolumeValue(volume));
+void sound_volumeDownCallback()
+{
+	if (++volume > max_volume)
+			volume = max_volume;
+		XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCMOutVol, getVolumeValue(volume));
+		volTimer = noVolTimer;
 }
 
 void sound_volumeDown()
 {
-	xil_printf("volume Down \n\r");
-	if (--volume < min_volume)
-		volume = min_volume;
-
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_MasterVol, getVolumeValue(volume));
+	if (volTimer == noVolTimer)
+		volTimer = addTimer(100, false, &sound_volumeDownCallback);
 }
 
 
@@ -161,6 +175,11 @@ void soundCallback_playSaucerHit()
 
 }
 void soundCallback_playAlienKilled()
+{
+
+}
+
+void sound_interrruptHandler()
 {
 
 }

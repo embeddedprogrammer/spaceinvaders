@@ -46,7 +46,6 @@ void print(char *str);
 
 void respondToButtonInput()
 {
-	xil_printf("button pushed \n\r");
 	const int PUSH_BUTTONS_CENTER = 0x01;
     const int PUSH_BUTTONS_RIGHT  = 0x02;
     const int PUSH_BUTTONS_LEFT   = 0x08;
@@ -197,6 +196,10 @@ void initGameScreen()
 	bullets_init();
 	aliens_init();
 	tank_init(isNewGame);
+}
+
+void initButtons()
+{
 	addTimer(BUTTON_RESPONSE_TIME, true, &respondToButtonInput);
 }
 
@@ -268,15 +271,16 @@ void printStats()
 int main()
 {
 	xil_printf("starting program \n\r");
-	initTimers();
-	initVideo();
+//	initTimers();
+//	initVideo();
 //	initSound();
-	initInterrupts();
+//	initInterrupts();
+//	initButtons();
 //	isNewGame = true;
 //	initGameScreen();
 //	while(true);
 //	cleanup_platform();
 	xil_printf("finished interrupts \n\r");
-	testSound();
+	testSoundInterrupt();
 	return 0;
 }

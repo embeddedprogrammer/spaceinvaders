@@ -8,7 +8,8 @@
 #ifndef SOUNDTEST_H_
 #define SOUNDTEST_H_
 
-void testSound();
+void testSoundPolling();
+void testSoundInterrupt();
 
 
 #endif /* SOUNDTEST_H_ */
