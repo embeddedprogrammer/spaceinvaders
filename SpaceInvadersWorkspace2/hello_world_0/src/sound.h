@@ -9,22 +9,10 @@
 #ifndef SOUND_H_
 #define SOUND_H_
 
-void sound_playTankHit();
-void sound_playTankFire();
-void sound_playSaucerFlying();
-void sound_playAlienMarching();
-void sound_playSaucerHit();
-void sound_playAlienKilled();
-
-
-void soundCallback_playTankHit();
-void soundCallback_playTankFire();
-void soundCallback_playSaucerFlying();
-void soundCallback_playAlienMarching();
-void soundCallback_playSaucerHit();
-void soundCallback_playAlienKilled();
-
+int sound_setVolume(int volume)
 void sound_volumeUp();
 void sound_volumeDown();
+void sound_test();
+void startPlayingNewSound();
 
 #endif /* SOUND_H_ */

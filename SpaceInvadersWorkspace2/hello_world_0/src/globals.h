@@ -14,8 +14,6 @@
 #include "stdbool.h"
 #include "shapebitmap.h"
 
-#define SOUNDCHIP_BASEADDR XPAR_AXI_AC97_0_BASEADDR
-
 #define SCREENBUFFER_WIDTH  640
 #define SCREENBUFFER_HEIGHT 480
 

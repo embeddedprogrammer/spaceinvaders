@@ -21,7 +21,6 @@
 #include "bullets.h"
 #include "timers.h"
 #include "aliens.h"
-#include "soundtest.h"
 #include "sound.h"
 
 #include "xgpio.h"          // Provides access to PB GPIO driver.
@@ -92,18 +91,18 @@ void interrupt_handler_dispatcher(void* ptr)
 	}
 }
 
-void initSound()
-{
-	XAC97_HardReset(SOUNDCHIP_BASEADDR);
-
-	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
-
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
-
-	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
-
-	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
-}
+//void initSound()
+//{
+//	XAC97_HardReset(SOUNDCHIP_BASEADDR);
+//
+//	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
+//
+//	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
+//
+//	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
+//
+//	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
+//}
 
 XAxiVdma videoDMAController;
 
@@ -286,6 +285,6 @@ int main()
 //	while(true);
 //	cleanup_platform();
 	xil_printf("finished interrupts \n\r");
-	testSoundInterrupt();
+	sound_test();
 	return 0;
 }
