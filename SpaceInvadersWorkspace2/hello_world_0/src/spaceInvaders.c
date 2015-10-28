@@ -286,6 +286,6 @@ int main()
 //	while(true);
 //	cleanup_platform();
 	xil_printf("finished interrupts \n\r");
-	testSoundInterrupt();
+	testSoundPolling();
 	return 0;
 }

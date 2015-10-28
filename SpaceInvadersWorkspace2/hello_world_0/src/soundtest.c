@@ -59,7 +59,7 @@ void writeSoundDataToFifo(int maxCount)
 	for(i = 0; i < maxCount; i++)
 	{
 		// Our data is signed, in 2s complement. So we will add 128.
-		uint16_t data = (128 + currentSound.soundData[currentSoundPosition]);
+		uint16_t data = (128 + currentSound.soundData[currentSoundPosition]);// we dont need this
 
 		// Bits 0-15 are right channel, 16-31 are left channel. Our audio only has one channel, so we will use it for both channels.
 		XAC97_mSetInFifoData(SOUNDCHIP_BASEADDR, (data | data << 16));
@@ -157,6 +157,44 @@ void testSoundInterrupt()
 				soundEnum = 0;
 			}
 			startPlayingNewSound(soundFile);
+		}
+		XAC97_Delay(10000);
+	}
+}
+
+void testSoundPolling()
+{
+	XAC97_HardReset(SOUNDCHIP_BASEADDR);
+
+	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
+
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
+
+	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
+
+	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
+	XAC97_Delay(100000);
+	unsigned int itr = 0;
+	unsigned int repeats = 0;
+	xil_printf("starting sound loop \n\r");
+	int sound_enum = enum_ufo_lowpitch_sound;
+	sound_t soundFile = getSoundFile(sound_enum);
+
+	while (true) {
+		while (!XAC97_isInFIFOFull(SOUNDCHIP_BASEADDR)) {
+			if (itr >= soundFile.numberOfSamples) {
+				itr = 0;
+				if (repeats++ >= 8) {
+					xil_printf("playing new sound \n\r");
+					repeats = 0;
+					if (++sound_enum > enum_ufo_highpitch_sound) {
+						sound_enum = 0;
+					}
+					soundFile = getSoundFile(sound_enum);
+				}
+			}
+			XAC97_mSetInFifoData(SOUNDCHIP_BASEADDR, (soundFile.soundData[itr] | soundFile.soundData[itr] << 16 ));
+			itr++;
 		}
 		XAC97_Delay(10000);
 	}
