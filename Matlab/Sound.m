@@ -11,7 +11,7 @@ function generateCFile()
     fprintf(' *  Created on: Oct 23, 2015\n');
     fprintf(' *      Author: Jacob White and Troy Hinckley\n');
     fprintf(' */\n\n');
-    fprintf('#include "soundData.h"\n');
+    fprintf('#include "soundData.h"\n\n');
     files = dir('*.wav');
     for i = 1:length(files)
         name = files(i).name;
