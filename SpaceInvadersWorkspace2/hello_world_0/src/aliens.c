@@ -11,12 +11,14 @@
 #include "fontBitmap.h"
 #include "timers.h"
 #include "tank.h"
+#include "sound.h"
+#include "soundData.h"
 #include <stdio.h>
 #include <stdlib.h> //for rand()
 
 #define EXPLOSION_TIME 100
 #define ALIEN_FLEET_SHIFT_DOWN_AMOUNT 8
-#define SAUCER_ADVANCE_TIME 50
+#define SAUCER_ADVANCE_TIME 30
 #define MAX_CONCURRENT_EXPLOSIONS 5
 #define SAUCER_MIN_APPEAR_TIME 20*1000
 #define SAUCER_MAX_APPEAR_TIME 40*1000
@@ -173,6 +175,7 @@ void aliens_moveSaucer()
 
 void aliens_startSaucer()
 {
+	sound_play(ufo_lowpitch_sound);
 	if(saucerLocation.row != 0)
 		return;
 	saucerLocation.row = SCOREBOARD_SPACING + TANK_BITMAP_HEIGHT;
@@ -202,6 +205,7 @@ void aliens_removeExplosion()
 
 void aliens_explode(point_t location)
 {
+	sound_play(invaderkilled_sound);
 	draw_AlienExplosion(location, false);
 	int i;
 	for(i = 0; i < MAX_CONCURRENT_EXPLOSIONS; i++)
@@ -270,6 +274,7 @@ void aliens_erasePoints()
 
 void aliens_killSaucer()
 {
+	sound_play(ufo_highpitch_sound);
 	int strLen = 3;
 	alienPointsPosition = (point_t){saucerLocation.col + (SAUCER_WIDTH  / 2) - ((FONT_COLS_OFFSET * strLen)  / 2),
 									saucerLocation.row + (SAUCER_HEIGHT / 2) - (FONT_ROWS_OFFSET / 2)};
@@ -331,6 +336,18 @@ bool aliens_fleetDirectionIsRight()
 // shifts the whole alien fleet left right or down depending on position
 void aliens_shiftAlienFleet()
 {
+	static int invaderSound = 0;
+	switch (invaderSound)
+	{
+		case 0: sound_play(fastinvader1_sound); break;
+		case 1: sound_play(fastinvader2_sound); break;
+		case 2: sound_play(fastinvader3_sound); break;
+		case 3: sound_play(fastinvader4_sound); break;
+	}
+	invaderSound++;
+	if(invaderSound == 4)
+		invaderSound = 0;
+
 	int leftAlienCol = getAlienFleetLeftColNumGlobal();
 	int rightAlienCol = getAlienFleetRightColNumGlobal();
 	point_t alienPos = getAlienFleetPositionGlobal();

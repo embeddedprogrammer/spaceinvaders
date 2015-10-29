@@ -19,6 +19,7 @@ void sound_volumeDown();
 void sound_test();
 void sound_play(sound_t sound);
 void sound_writeToFifo(int count);
+void sound_initAC97();
 void sound_initInterupts();
 
 #endif /* SOUND_H_ */

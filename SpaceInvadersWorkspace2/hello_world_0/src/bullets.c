@@ -10,6 +10,8 @@
 #include "timers.h"
 #include "tank.h"
 #include "aliens.h"
+#include "sound.h"
+#include "soundData.h"
 #include <stdio.h>
 #include <stdlib.h> //for rand()
 
@@ -228,6 +230,7 @@ void bullets_fireTankBullet()
 		bullets[i].location.row = tankPos.row - BULLET_HEIGHT;
 		bullets[i].location.col = tankPos.col + BULLET_TANK_OFFSET;
 		draw_bullet(bullets[i]);
+		sound_play(shoot_sound);
 	}
 }
 

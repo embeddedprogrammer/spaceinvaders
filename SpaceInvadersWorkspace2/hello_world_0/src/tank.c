@@ -12,6 +12,8 @@
 #include "bullets.h"
 #include "fontBitmap.h"
 #include "spaceInvaders.h"
+#include "sound.h"
+#include "soundData.h"
 #include <stdio.h>
 
 #define ERODE_TANK_TIME 1000
@@ -166,5 +168,6 @@ void tank_killTank()
 		tankAlive = false;
 		draw_erodeTank(getTankPositionGlobal());
 		addTimer(ERODE_TANK_TIME, false, &tank_disappearTank);
+		sound_play(explosion_sound);
 	}
 }

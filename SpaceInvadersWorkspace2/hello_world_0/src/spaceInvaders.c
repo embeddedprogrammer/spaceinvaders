@@ -86,23 +86,11 @@ void interrupt_handler_dispatcher(void* ptr)
 		u32 timeInInterrupt = timerValEnd - timerValBegin;
 		totalTimeSpentInInterrupts += timeInInterrupt;
 	}
-	if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK) {
-
+	else if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK) {
+		sound_writeToFifo(100);
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
 	}
 }
-
-//void initSound()
-//{
-//	XAC97_HardReset(SOUNDCHIP_BASEADDR);
-//
-//	XAC97_ClearFifos(SOUNDCHIP_BASEADDR);
-//
-//	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
-//
-//	XAC97_AwaitCodecReady(SOUNDCHIP_BASEADDR);
-//
-//	XAC97_WriteReg(SOUNDCHIP_BASEADDR, AC97_PCM_DAC_Rate, AC97_PCM_RATE_11025_HZ);
-//}
 
 XAxiVdma videoDMAController;
 
@@ -189,6 +177,12 @@ void initVideo()
 static bool isNewGame;
 static int gameLevel = 1;
 
+
+void buttons_init()
+{
+	addTimer(BUTTON_RESPONSE_TIME, true, &respondToButtonInput);
+}
+
 void initGameScreen()
 {
 	draw_clearScreen();
@@ -197,11 +191,7 @@ void initGameScreen()
 	bullets_init();
 	aliens_init();
 	tank_init(isNewGame);
-}
-
-void initButtons()
-{
-	addTimer(BUTTON_RESPONSE_TIME, true, &respondToButtonInput);
+	buttons_init();
 }
 
 void restart()
@@ -238,9 +228,9 @@ void initInterrupts()
 {
 	// Initialize the GPIO peripherals. NOTE: We wait to do this till after the HDMI to ensure that nothing happens before the HDMI is enabled.
 	XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
-
 	// Set the push button peripheral to be inputs.
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
+
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
 			(XPAR_FIT_TIMER_0_INTERRUPT_MASK
@@ -271,20 +261,15 @@ void printStats()
     xil_printf("CPU utilization: %d%%\n\r", interruptsTimeInMs*100/runningTimeInMs);
 }
 
-
 int main()
 {
-	xil_printf("starting program \n\r");
-//	initTimers();
-//	initVideo();
-//	initSound();
-//	initInterrupts();
-//	initButtons();
-//	isNewGame = true;
-//	initGameScreen();
-//	while(true);
-//	cleanup_platform();
-	xil_printf("finished interrupts \n\r");
-	sound_test();
+	initTimers();
+	initVideo();
+	sound_initAC97();
+	initInterrupts();
+	isNewGame = true;
+	initGameScreen();
+	while(true);
+	cleanup_platform();
 	return 0;
 }
