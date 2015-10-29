@@ -14,14 +14,14 @@
 #include "xintc_l.h"
 #include "xparameters.h"
 
-static int volumeLevel = 31;
+static int volumeLevel = MAX_VOLUME; // The HW is set to max volume (zero attenuation) by default.
 static int currentSoundPosition;
 static sound_t currentSound;
 static bool playingSound = false;
 
 //VOLUME
 
-int getAC97Attn(int volume)
+int sound_getAC97Attn(int volume)
 {
 	switch(volume)
 	{
@@ -63,12 +63,17 @@ int getAC97Attn(int volume)
 
 void sound_setVolume(int volume)
 {
-	if(volume > 31)
-		volume = 31;
-	if(volume < 0)
-		volume = 0;
+	if(volume > MAX_VOLUME)
+		volume = MAX_VOLUME;
+	if(volume < MIN_VOLUME)
+		volume = MIN_VOLUME;
 	volumeLevel = volume;
-	XAC97_WriteReg(XPAR_AXI_AC97_0_BASEADDR, AC97_PCMOutVol, getAC97Attn(volume));
+	XAC97_WriteReg(XPAR_AXI_AC97_0_BASEADDR, AC97_PCMOutVol, sound_getAC97Attn(volume));
+}
+
+int sound_getVolume()
+{
+	return volumeLevel;
 }
 
 void sound_volumeUp()
@@ -83,10 +88,10 @@ void sound_volumeDown()
 
 // SOUND
 
-void writeSoundDataToFifo(int maxCount)
+void sound_writeToFifo(int count)
 {
 	int i;
-	for(i = 0; i < maxCount; i++)
+	for(i = 0; i < count; i++)
 	{
 		// If there is no sound playing, push zeros into the queue.
 		uint16_t data = playingSound ? (128 + currentSound.soundData[currentSoundPosition]) : 0;
@@ -101,37 +106,40 @@ void writeSoundDataToFifo(int maxCount)
 	}
 }
 
-void interrupt_handler_dispatcher2(void* ptr)
+void sound_interrupt_handler(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the FIT interrupt first.
 	if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK)
 	{
-		writeSoundDataToFifo(100);
+		sound_writeToFifo(100);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
 	}
 	else
 		xil_printf("Unknown interupt: %x\n\r", intc_status);
 }
 
-void initInterrupts2()
-{
-	microblaze_register_handler(interrupt_handler_dispatcher2, NULL);
-	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
-	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
-	microblaze_enable_interrupts();
-}
-
-void startPlayingNewSound(sound_t sound)
+void sound_play(sound_t sound)
 {
 	currentSound = sound;
 	currentSoundPosition = 0;
 	playingSound = true;
 }
 
-void sound_init()
+// Enable interrupts by using a simple interrupt routine. If more complex
+// interrupt routine is needed, you must create your own interrupt handler routine.
+void sound_initInterupts()
 {
-	initInterrupts2();
+	microblaze_register_handler(sound_interrupt_handler, NULL);
+	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
+	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
+	microblaze_enable_interrupts();
+}
+
+// Inits the AC97. Note: you must also enable interrupts by either calling
+// sound_initInterupts, or create your own interrupt handler routine.
+void sound_initAC97()
+{
 	XAC97_HardReset(XPAR_AXI_AC97_0_BASEADDR);
 	XAC97_ClearFifos(XPAR_AXI_AC97_0_BASEADDR);
 	XAC97_WriteReg(XPAR_AXI_AC97_0_BASEADDR, AC97_ExtendedAudioStat, AC97_EXTENDED_AUDIO_CONTROL_VRA);
@@ -144,7 +152,8 @@ void sound_init()
 
 void sound_test()
 {
-	sound_init();
+	sound_initAC97();
+	sound_initInterupts();
 	xil_printf("Press a number between 0 and 8 to play a sound\r\n");
 	while(true)
 	{
@@ -152,31 +161,31 @@ void sound_test()
 		input = getchar();
 		switch (input) {
 		case '0':
-			startPlayingNewSound(explosion_sound);
+			sound_play(explosion_sound);
 			break;
 		case '1':
-			startPlayingNewSound(fastinvader1_sound);
+			sound_play(fastinvader1_sound);
 			break;
 		case '2':
-			startPlayingNewSound(fastinvader2_sound);
+			sound_play(fastinvader2_sound);
 			break;
 		case '3':
-			startPlayingNewSound(fastinvader3_sound);
+			sound_play(fastinvader3_sound);
 			break;
 		case '4':
-			startPlayingNewSound(fastinvader4_sound);
+			sound_play(fastinvader4_sound);
 			break;
 		case '5':
-			startPlayingNewSound(invaderkilled_sound);
+			sound_play(invaderkilled_sound);
 			break;
 		case '6':
-			startPlayingNewSound(shoot_sound);
+			sound_play(shoot_sound);
 			break;
 		case '7':
-			startPlayingNewSound(ufo_highpitch_sound);
+			sound_play(ufo_highpitch_sound);
 			break;
 		case '8':
-			startPlayingNewSound(ufo_lowpitch_sound);
+			sound_play(ufo_lowpitch_sound);
 			break;
 		case '+':
 			sound_volumeUp();
