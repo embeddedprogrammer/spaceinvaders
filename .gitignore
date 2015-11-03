@@ -9,6 +9,15 @@ Debug/
 lscript.ld
 *.wav
 *.asv
+SpaceInvaderXPS_HW2*/*
+!SpaceInvaderXPS_HW2/pcores/
+SpaceInvaderXPS_HW2/pcores/*
+!SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/
+SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/*
+!SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/hdl/
+
+
+
 
 
 
