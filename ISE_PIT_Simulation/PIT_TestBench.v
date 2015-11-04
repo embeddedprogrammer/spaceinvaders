@@ -34,14 +34,20 @@ module PIT_TestBench;
 
 	// Outputs
 	wire IP_Interupt;
+	wire [31:0] counter;
+	wire [31:0] slv_reg0;
+	wire [31:0] slv_reg1;
 	wire [31:0] IP2Bus_Data;
 	wire IP2Bus_RdAck;
 	wire IP2Bus_WrAck;
 	wire IP2Bus_Error;
-
+	
 	// Instantiate the Unit Under Test (UUT)
 	PIT_TopLevel uut (
 		.IP_Interupt(IP_Interupt), 
+		.counter(counter),
+		.slv_reg0(slv_reg0),
+		.slv_reg1(slv_reg1),
 		.Bus2IP_Clk(Bus2IP_Clk), 
 		.Bus2IP_Resetn(Bus2IP_Resetn), 
 		.Bus2IP_Data(Bus2IP_Data), 
@@ -70,31 +76,71 @@ module PIT_TestBench;
 		#20;
 		Bus2IP_Resetn = 1;
 		
-		// Write to register 0
-		Bus2IP_RdCE = 2'b10;
-		Bus2IP_Data = 7;		
-		#20
-		Bus2IP_WrCE = 2'b10;
-		#20
-		Bus2IP_WrCE = 2'b00;
-		Bus2IP_RdCE = 2'b00;
-		#20
-		
+// Test decrement functionality
 		// Write to register 1		
 		Bus2IP_RdCE = 2'b01;
-		Bus2IP_Data = 56;
-		#20
+		Bus2IP_Data = 30;
+		#20;
 		Bus2IP_WrCE = 2'b01;
-		#20
+		#20;
 		Bus2IP_WrCE = 2'b00;
 		Bus2IP_RdCE = 2'b00;
 		
-		// Read register values
-		#20
+		// Write to register 0
 		Bus2IP_RdCE = 2'b10;
-		#20
-		Bus2IP_RdCE = 2'b01;
+		Bus2IP_Data = 32'b001; //Decrement
+		#20;
+		Bus2IP_WrCE = 2'b10;
+		#20;
+		Bus2IP_WrCE = 2'b00;
+		Bus2IP_RdCE = 2'b11;
+		#20;
 		
+		// Wait for counter to expire
+		#1000;
+		
+// Test reload functionality
+		// Write to register 0
+		Bus2IP_RdCE = 2'b10;
+		Bus2IP_Data = 32'b101; // Reload
+		#20;
+		Bus2IP_WrCE = 2'b10;
+		#20;
+		Bus2IP_WrCE = 2'b00;
+		Bus2IP_RdCE = 2'b11;
+		#20;
+		
+		// Wait for counter to expire
+		#2000;
+		
+// Test interupt functionality
+		// Write to register 0
+		Bus2IP_RdCE = 2'b10;
+		Bus2IP_Data = 32'b111; // Enable interrupts
+		#20;
+		Bus2IP_WrCE = 2'b10;
+		#20;
+		Bus2IP_WrCE = 2'b00;
+		Bus2IP_RdCE = 2'b11;
+		#20;
+		
+		// Wait for counter to expire
+		#2000;
+		
+// Test interupt functionality without reload enable
+		// Write to register 0
+		Bus2IP_RdCE = 2'b10;
+		Bus2IP_Data = 32'b011; // Enable interrupts
+		#20;
+		Bus2IP_WrCE = 2'b10;
+		#20;
+		Bus2IP_WrCE = 2'b00;
+		Bus2IP_RdCE = 2'b11;
+		#20;
+		
+		// Wait for counter to expire
+		#2000;		
+	
 	end
 endmodule
 
