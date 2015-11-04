@@ -53,10 +53,7 @@
 
 module user_logic
 (
-  // -- ADD USER PORTS BELOW THIS LINE ---------------
-	myinternalinterrupt,
-  // -- ADD USER PORTS ABOVE THIS LINE ---------------
-
+	IP_Interrupt,
   // -- DO NOT EDIT BELOW THIS LINE ------------------
   // -- Bus protocol ports, do not add to or delete 
   Bus2IP_Clk,                     // Bus to IP clock
@@ -70,10 +67,9 @@ module user_logic
   IP2Bus_WrAck,                   // IP to Bus write transfer acknowledgement
   IP2Bus_Error                    // IP to Bus error response
   // -- DO NOT EDIT ABOVE THIS LINE ------------------
-); // user_logic
+);
 
 // -- ADD USER PARAMETERS BELOW THIS LINE ------------
-// --USER parameters added here 
 // -- ADD USER PARAMETERS ABOVE THIS LINE ------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -83,7 +79,7 @@ parameter C_SLV_DWIDTH                   = 32;
 // -- DO NOT EDIT ABOVE THIS LINE --------------------
 
 // -- ADD USER PORTS BELOW THIS LINE -----------------
-output                                    myinternalinterrupt;
+output                                    IP_Interrupt;
 // -- ADD USER PORTS ABOVE THIS LINE -----------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -104,94 +100,76 @@ output                                    IP2Bus_Error;
 // Implementation
 //----------------------------------------------------------------------------
 
-  // --USER nets declarations added here, as needed for user logic
-
   // Nets for user logic slave model s/w accessible register example
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_reg0;
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_reg1;
-  wire       [1 : 0]                        slv_reg_write_sel;
-  wire       [1 : 0]                        slv_reg_read_sel;
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
-  wire                                      slv_read_ack;
-  wire                                      slv_write_ack;
-  integer                                   byte_index, bit_index;
-
-  // USER logic implementation added here
-
-  // ------------------------------------------------------
-  // Example code to read/write user logic slave model s/w accessible registers
-  // 
-  // Note:
-  // The example code presented here is to show you one way of reading/writing
-  // software accessible registers implemented in the user logic slave model.
-  // Each bit of the Bus2IP_WrCE/Bus2IP_RdCE signals is configured to correspond
-  // to one software accessible register by the top level template. For example,
-  // if you have four 32 bit software accessible registers in the user logic,
-  // you are basically operating on the following memory mapped registers:
-  // 
-  //    Bus2IP_WrCE/Bus2IP_RdCE   Memory Mapped Register
-  //                     "1000"   C_BASEADDR + 0x0
-  //                     "0100"   C_BASEADDR + 0x4
-  //                     "0010"   C_BASEADDR + 0x8
-  //                     "0001"   C_BASEADDR + 0xC
-  // 
-  // ------------------------------------------------------
+	reg        [C_SLV_DWIDTH-1 : 0]           slv_reg0_control;
+	reg        [C_SLV_DWIDTH-1 : 0]           slv_reg1_delay;
+	reg        [C_SLV_DWIDTH-1 : 0]           counter;
+	reg                                       IP_Interrupt;
+	wire       [1 : 0]                        slv_reg_write_sel;
+	wire       [1 : 0]                        slv_reg_read_sel;
+	reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
+	wire                                      slv_read_ack;
+	wire                                      slv_write_ack;
+	integer                                   byte_index, bit_index;
 
   assign
     slv_reg_write_sel = Bus2IP_WrCE[1:0],
     slv_reg_read_sel  = Bus2IP_RdCE[1:0],
     slv_write_ack     = Bus2IP_WrCE[0] || Bus2IP_WrCE[1],
-    slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1];
+    slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1],
+		decrement         = slv_reg0_control[0],
+		enableInterrupts  = slv_reg0_control[1],
+		enableReload      = slv_reg0_control[2];
 
-  // implement slave model register(s)
-  always @( posedge Bus2IP_Clk )
+  // Counter and PIT logic
+  always @(posedge Bus2IP_Clk)
     begin
-      if ( Bus2IP_Resetn == 1'b0 )
+      if(Bus2IP_Resetn == 1'b0)
         begin
-          slv_reg0 <= 0;
-          slv_reg1 <= 0;
+          slv_reg0_control <= 0;
+          slv_reg1_delay <= 0;
+					counter <= 32'hFFFF_FFFF;
         end
       else
-//        case ( slv_reg_write_sel )
-//          2'b10 :
-//            for ( byte_index = 0; byte_index <= (C_SLV_DWIDTH/8)-1; byte_index = byte_index+1 )
-//              if ( Bus2IP_BE[byte_index] == 1 )
-//                slv_reg0[(byte_index*8) +: 8] <= Bus2IP_Data[(byte_index*8) +: 8];
-//          2'b01 :
-//            for ( byte_index = 0; byte_index <= (C_SLV_DWIDTH/8)-1; byte_index = byte_index+1 )
-//              if ( Bus2IP_BE[byte_index] == 1 )
-//                slv_reg1[(byte_index*8) +: 8] <= Bus2IP_Data[(byte_index*8) +: 8];
-//          default : begin
-//            slv_reg0 <= slv_reg0;
-//            slv_reg1 <= slv_reg1;
-//                    end
-//        endcase
 				begin
-					slv_reg0 <= slv_reg0 + 1;
-					slv_reg1 <= slv_reg1 + 1;
+					case(slv_reg_write_sel)
+						2'b10: 
+							slv_reg0_control <= Bus2IP_Data;
+						2'b01:
+							slv_reg1_delay <= Bus2IP_Data;
+						default:
+							begin
+								slv_reg0_control <= slv_reg0_control;
+								slv_reg1_delay <= slv_reg1_delay;
+							end
+					endcase
+					if(decrement)
+						if(counter == 32'hFFFF_FFFF)
+							counter <= slv_reg1_delay;
+						else if(counter > 0)
+							counter <= counter - 1;
+						else if(enableReload)
+							counter <= slv_reg1_delay;
+					IP_Interrupt <= (counter == 1) && enableInterrupts;
 				end
-    end // SLAVE_REG_WRITE_PROC
+    end
 
-  // implement slave model register read mux
-  always @( slv_reg_read_sel or slv_reg0 or slv_reg1 )
+  // Slave register read mux
+  always @(slv_reg_read_sel or slv_reg0_control or slv_reg1_delay)
     begin 
-
-      case ( slv_reg_read_sel )
-        2'b10 : slv_ip2bus_data <= slv_reg0;
-        2'b01 : slv_ip2bus_data <= slv_reg1;
-        default : slv_ip2bus_data <= 0;
+      case(slv_reg_read_sel)
+        2'b10:
+					slv_ip2bus_data <= slv_reg0_control;
+        2'b01:
+					slv_ip2bus_data <= slv_reg1_delay;
+        default:
+					slv_ip2bus_data <= 0;
       endcase
+    end
 
-    end // SLAVE_REG_READ_PROC
-
-  // ------------------------------------------------------------
-  // Example code to drive IP to Bus signals
-  // ------------------------------------------------------------
-
-assign IP2Bus_Data = (slv_read_ack == 1'b1) ? slv_ip2bus_data :  0 ;
+  // Drive IP to Bus signals
+	assign IP2Bus_Data = (slv_read_ack == 1'b1) ? slv_ip2bus_data : 0;
   assign IP2Bus_WrAck = slv_write_ack;
   assign IP2Bus_RdAck = slv_read_ack;
   assign IP2Bus_Error = 0;
-	assign myinternalinterrupt = slv_reg0[26];
-
 endmodule

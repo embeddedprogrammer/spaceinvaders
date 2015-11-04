@@ -248,7 +248,7 @@ architecture IMP of pit is
     port
     (
       -- ADD USER PORTS BELOW THIS LINE ------------------
-      myinternalinterrupt            : out std_logic;
+      IP_Interrupt                    : out std_logic;
       -- ADD USER PORTS ABOVE THIS LINE ------------------
 
       -- DO NOT EDIT BELOW THIS LINE ---------------------
@@ -336,7 +336,7 @@ begin
     port map
     (
       -- MAP USER PORTS BELOW THIS LINE ------------------
-      myinternalinterrupt            => Interrupt,
+      IP_Interrupt                    => Interrupt,
       -- MAP USER PORTS ABOVE THIS LINE ------------------
 
       Bus2IP_Clk                     => ipif_Bus2IP_Clk,
