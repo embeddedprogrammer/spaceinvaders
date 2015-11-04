@@ -12,3 +12,17 @@
 
 /************************** Function Definitions ***************************/
 
+void PIT_startRecurringTimer(Xuint32 BaseAddress, Xuint32 TimerValue)
+{
+    PIT_mWriteDelayReg(BaseAddress, TimerValue);
+    PIT_mWriteControlReg(BaseAddress, PIT_ENABLE_RELOAD | PIT_ENABLE_DECREMENT | PIT_ENABLE_INTERRUPTS);
+}
+
+void PIT_startSingleTimer(Xuint32 BaseAddress, Xuint32 TimerValue)
+{
+    PIT_mWriteDelayReg(BaseAddress, TimerValue);
+    PIT_mWriteControlReg(BaseAddress, PIT_ENABLE_DECREMENT | PIT_ENABLE_INTERRUPTS);
+}
+
+
+

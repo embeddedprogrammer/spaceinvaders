@@ -34,10 +34,6 @@
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
 
 static int counter = 0;
-static int largecounter = 0;
-
-static int counter2 = 0;
-static int largecounter2 = 0;
 
 // Main interrupt handler, queries the interrupt controller to see what peripheral
 // fired the interrupt and then dispatches the corresponding interrupt handler.
@@ -47,29 +43,11 @@ void interrupt_handler_dispatcher(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the FIT interrupt first.
-	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK)
-	{
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
-		counter++;
-		if(counter == 100)
-		{
-			counter = 0;
-			largecounter++;
-			xil_printf("%d\n\r", largecounter);
-			//xil_printf("%d\n\r", PIT_mReadSlaveReg0(XPAR_PIT_0_BASEADDR, 0));
-			//Note: Clock runs at 100,000,000 Hz (100 MHz)
-		}
-	}
-	else if (intc_status & XPAR_PIT_0_INTERRUPT_MASK)
+	if (intc_status & XPAR_PIT_0_INTERRUPT_MASK)
 	{
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
-		counter2++;
-		if(counter2 == 100000)
-		{
-			counter2 = 0;
-			largecounter2++;
-			xil_printf("z:%d\n\r", largecounter2);
-		}
+		counter++;
+		xil_printf("%d\n\r", counter);
 	}
 }
 
@@ -81,20 +59,26 @@ void initInterrupts()
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
 
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
-	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK
-			| XPAR_PIT_0_INTERRUPT_MASK);
+	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
 
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
 }
-
 
 int main()
 {
     init_platform();
     initInterrupts();
 
-    xil_printf("Hello World!\n\r");
+    xil_printf("Control reg: %d\n\r", PIT_mReadControlReg(XPAR_PIT_0_BASEADDR));
+    xil_printf("Delay reg  : %d\n\r", PIT_mReadDelayReg(XPAR_PIT_0_BASEADDR));
+
+    //Write to delay and control register
+    PIT_mWriteDelayReg(XPAR_PIT_0_BASEADDR, 100000000); // 1 second
+    PIT_mWriteControlReg(XPAR_PIT_0_BASEADDR, PIT_ENABLE_DECREMENT | PIT_ENABLE_INTERRUPTS);
+
+    xil_printf("Control reg: %d\n\r", PIT_mReadControlReg(XPAR_PIT_0_BASEADDR));
+    xil_printf("Delay reg  : %d\n\r", PIT_mReadDelayReg(XPAR_PIT_0_BASEADDR));
 
     while(1);
 
