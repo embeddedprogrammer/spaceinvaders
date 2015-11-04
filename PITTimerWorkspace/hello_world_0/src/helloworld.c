@@ -36,6 +36,9 @@ XGpio gpPB;   // This is a handle for the push-button GPIO block.
 static int counter = 0;
 static int largecounter = 0;
 
+static int counter2 = 0;
+static int largecounter2 = 0;
+
 // Main interrupt handler, queries the interrupt controller to see what peripheral
 // fired the interrupt and then dispatches the corresponding interrupt handler.
 // This routine acks the interrupt at the controller level but the peripheral
@@ -53,8 +56,19 @@ void interrupt_handler_dispatcher(void* ptr)
 			counter = 0;
 			largecounter++;
 			xil_printf("%d\n\r", largecounter);
-			xil_printf("%d\n\r", PIT_mReadSlaveReg0(XPAR_PIT_0_BASEADDR, 0));
+			//xil_printf("%d\n\r", PIT_mReadSlaveReg0(XPAR_PIT_0_BASEADDR, 0));
 			//Note: Clock runs at 100,000,000 Hz (100 MHz)
+		}
+	}
+	else if (intc_status & XPAR_PIT_0_INTERRUPT_MASK)
+	{
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
+		counter2++;
+		if(counter2 == 100000)
+		{
+			counter2 = 0;
+			largecounter2++;
+			xil_printf("z:%d\n\r", largecounter2);
 		}
 	}
 }
@@ -67,7 +81,8 @@ void initInterrupts()
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
 
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
-	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
+	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK
+			| XPAR_PIT_0_INTERRUPT_MASK);
 
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();

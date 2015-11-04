@@ -134,7 +134,7 @@ entity pit is
   port
   (
     -- ADD USER PORTS BELOW THIS LINE ------------------
-		myinterrupt                    : in  std_logic;
+		Interrupt                      : out  std_logic;
     -- ADD USER PORTS ABOVE THIS LINE ------------------
 
     -- DO NOT EDIT BELOW THIS LINE ---------------------
@@ -228,11 +228,11 @@ architecture IMP of pit is
   signal user_IP2Bus_RdAck              : std_logic;
   signal user_IP2Bus_WrAck              : std_logic;
   signal user_IP2Bus_Error              : std_logic;
-
+	
   ------------------------------------------
   -- Component declaration for verilog user logic
   ------------------------------------------
-  component user_logic is
+	component user_logic is
     generic
     (
       -- ADD USER GENERICS BELOW THIS LINE ---------------
@@ -248,7 +248,7 @@ architecture IMP of pit is
     port
     (
       -- ADD USER PORTS BELOW THIS LINE ------------------
-      --USER ports added here
+      myinternalinterrupt            : out std_logic;
       -- ADD USER PORTS ABOVE THIS LINE ------------------
 
       -- DO NOT EDIT BELOW THIS LINE ---------------------
@@ -336,7 +336,7 @@ begin
     port map
     (
       -- MAP USER PORTS BELOW THIS LINE ------------------
-      myinterrupt                    => myinternalinterupt
+      myinternalinterrupt            => Interrupt,
       -- MAP USER PORTS ABOVE THIS LINE ------------------
 
       Bus2IP_Clk                     => ipif_Bus2IP_Clk,

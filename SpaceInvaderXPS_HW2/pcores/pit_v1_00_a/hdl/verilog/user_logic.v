@@ -54,7 +54,7 @@
 module user_logic
 (
   // -- ADD USER PORTS BELOW THIS LINE ---------------
-	myinternalinterupt,
+	myinternalinterrupt,
   // -- ADD USER PORTS ABOVE THIS LINE ---------------
 
   // -- DO NOT EDIT BELOW THIS LINE ------------------
@@ -83,7 +83,7 @@ parameter C_SLV_DWIDTH                   = 32;
 // -- DO NOT EDIT ABOVE THIS LINE --------------------
 
 // -- ADD USER PORTS BELOW THIS LINE -----------------
-output                                    myinternalinterupt;
+output                                    myinternalinterrupt;
 // -- ADD USER PORTS ABOVE THIS LINE -----------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -192,6 +192,6 @@ assign IP2Bus_Data = (slv_read_ack == 1'b1) ? slv_ip2bus_data :  0 ;
   assign IP2Bus_WrAck = slv_write_ack;
   assign IP2Bus_RdAck = slv_read_ack;
   assign IP2Bus_Error = 0;
-	assign myinternalinterupt = slv_reg0[26];
+	assign myinternalinterrupt = slv_reg0[26];
 
 endmodule
