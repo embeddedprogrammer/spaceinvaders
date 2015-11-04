@@ -34,9 +34,6 @@ module PIT_TestBench;
 
 	// Outputs
 	wire IP_Interupt;
-	wire [31:0] counter;
-	wire [31:0] slv_reg0;
-	wire [31:0] slv_reg1;
 	wire [31:0] IP2Bus_Data;
 	wire IP2Bus_RdAck;
 	wire IP2Bus_WrAck;
@@ -45,9 +42,6 @@ module PIT_TestBench;
 	// Instantiate the Unit Under Test (UUT)
 	PIT_TopLevel uut (
 		.IP_Interupt(IP_Interupt), 
-		.counter(counter),
-		.slv_reg0(slv_reg0),
-		.slv_reg1(slv_reg1),
 		.Bus2IP_Clk(Bus2IP_Clk), 
 		.Bus2IP_Resetn(Bus2IP_Resetn), 
 		.Bus2IP_Data(Bus2IP_Data), 
@@ -79,7 +73,7 @@ module PIT_TestBench;
 // Test decrement functionality
 		// Write to register 1		
 		Bus2IP_RdCE = 2'b01;
-		Bus2IP_Data = 30;
+		Bus2IP_Data = 2;
 		#20;
 		Bus2IP_WrCE = 2'b01;
 		#20;
@@ -93,7 +87,7 @@ module PIT_TestBench;
 		Bus2IP_WrCE = 2'b10;
 		#20;
 		Bus2IP_WrCE = 2'b00;
-		Bus2IP_RdCE = 2'b11;
+		Bus2IP_RdCE = 2'b00;
 		#20;
 		
 		// Wait for counter to expire
@@ -107,7 +101,7 @@ module PIT_TestBench;
 		Bus2IP_WrCE = 2'b10;
 		#20;
 		Bus2IP_WrCE = 2'b00;
-		Bus2IP_RdCE = 2'b11;
+		Bus2IP_RdCE = 2'b00;
 		#20;
 		
 		// Wait for counter to expire
@@ -121,7 +115,7 @@ module PIT_TestBench;
 		Bus2IP_WrCE = 2'b10;
 		#20;
 		Bus2IP_WrCE = 2'b00;
-		Bus2IP_RdCE = 2'b11;
+		Bus2IP_RdCE = 2'b00;
 		#20;
 		
 		// Wait for counter to expire
@@ -135,11 +129,11 @@ module PIT_TestBench;
 		Bus2IP_WrCE = 2'b10;
 		#20;
 		Bus2IP_WrCE = 2'b00;
-		Bus2IP_RdCE = 2'b11;
+		Bus2IP_RdCE = 2'b00;
 		#20;
 		
 		// Wait for counter to expire
-		#2000;		
+		#2000;
 	
 	end
 endmodule
