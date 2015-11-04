@@ -36,5 +36,6 @@
 
 void PIT_startRecurringTimer(Xuint32 BaseAddress, Xuint32 TimerValue);
 void PIT_startSingleTimer(Xuint32 BaseAddress, Xuint32 TimerValue);
+void PIT_stopTimer(Xuint32 BaseAddress);
 
 #endif /** PIT_H */

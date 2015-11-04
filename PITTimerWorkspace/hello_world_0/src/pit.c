@@ -24,5 +24,9 @@ void PIT_startSingleTimer(Xuint32 BaseAddress, Xuint32 TimerValue)
     PIT_mWriteControlReg(BaseAddress, PIT_ENABLE_DECREMENT | PIT_ENABLE_INTERRUPTS);
 }
 
+void PIT_stopTimer(Xuint32 BaseAddress)
+{
+    PIT_mWriteControlReg(BaseAddress, 0);
+}
 
 
