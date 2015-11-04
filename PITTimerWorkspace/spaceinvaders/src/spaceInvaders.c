@@ -281,7 +281,7 @@ int getNumber2()
 		else if(input == BACKSPACE)
 		{
 			num = num / 10;
-			if(num > 0) //Erase space
+			if(num > 0) // Erase space
 				xil_printf("\r%d ", num);
 			else
 				xil_printf("\r ");
