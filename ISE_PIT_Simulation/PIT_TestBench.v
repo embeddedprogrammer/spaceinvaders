@@ -4,7 +4,7 @@
 // Company: 
 // Engineer:
 //
-// Create Date:   19:56:22 11/03/2015
+// Create Date:   20:22:08 11/03/2015
 // Design Name:   PIT_TopLevel
 // Module Name:   C:/Users/superman/Documents/HinckWhite/ISE_PIT_Simulation/PIT_TestBench.v
 // Project Name:  ISE_PIT_Simulation
@@ -25,36 +25,51 @@
 module PIT_TestBench;
 
 	// Inputs
-	reg CLOCK;
-	reg DIRECTION;
+	reg Bus2IP_Clk;
+	reg Bus2IP_Resetn;
+	reg [31:0] Bus2IP_Data;
+	reg [3:0] Bus2IP_BE;
+	reg [1:0] Bus2IP_RdCE;
+	reg [1:0] Bus2IP_WrCE;
 
 	// Outputs
-	wire [3:0] COUNT;
-	wire LED;
-	reg RST;
+	wire IP_Interupt;
+	wire [31:0] IP2Bus_Data;
+	wire IP2Bus_RdAck;
+	wire IP2Bus_WrAck;
+	wire IP2Bus_Error;
 
 	// Instantiate the Unit Under Test (UUT)
 	PIT_TopLevel uut (
-		.CLOCK(CLOCK), 
-		.DIRECTION(DIRECTION), 
-		.COUNT(COUNT), 
-		.RST(RST), 
-		.LED(LED)
+		.IP_Interupt(IP_Interupt), 
+		.Bus2IP_Clk(Bus2IP_Clk), 
+		.Bus2IP_Resetn(Bus2IP_Resetn), 
+		.Bus2IP_Data(Bus2IP_Data), 
+		.Bus2IP_BE(Bus2IP_BE), 
+		.Bus2IP_RdCE(Bus2IP_RdCE), 
+		.Bus2IP_WrCE(Bus2IP_WrCE), 
+		.IP2Bus_Data(IP2Bus_Data), 
+		.IP2Bus_RdAck(IP2Bus_RdAck), 
+		.IP2Bus_WrAck(IP2Bus_WrAck), 
+		.IP2Bus_Error(IP2Bus_Error)
 	);
 	
 	always
-		#10 CLOCK = ~CLOCK;
+			#10 Bus2IP_Clk = ~Bus2IP_Clk;
 
 	initial begin
 		// Initialize Inputs
-		CLOCK = 0;
-		DIRECTION = 1;
-		RST = 1;
+		Bus2IP_Clk = 0;
+		Bus2IP_Resetn = 0;
+		Bus2IP_Data = 0;
+		Bus2IP_BE = 0;
+		Bus2IP_RdCE = 0;
+		Bus2IP_WrCE = 0;
+		Bus2IP_RdCE = 2'b01; //Register 1
 
 		// Wait 100 ns for global reset to finish
-		#10;
-		RST = 0;
-		DIRECTION = 0;
+		#20;
+		Bus2IP_Resetn = 1;
 		
         
 		// Add stimulus here
