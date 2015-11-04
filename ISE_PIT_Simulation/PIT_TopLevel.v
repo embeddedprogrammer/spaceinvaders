@@ -92,34 +92,33 @@ output                                    IP2Bus_Error;
           slv_reg1 <= 0;
         end
       else
-//        case ( slv_reg_write_sel )
-//          2'b10 :
-//            for ( byte_index = 0; byte_index <= (C_SLV_DWIDTH/8)-1; byte_index = byte_index+1 )
-//              if ( Bus2IP_BE[byte_index] == 1 )
-//                slv_reg0[(byte_index*8) +: 8] <= Bus2IP_Data[(byte_index*8) +: 8];
-//          2'b01 :
-//            for ( byte_index = 0; byte_index <= (C_SLV_DWIDTH/8)-1; byte_index = byte_index+1 )
-//              if ( Bus2IP_BE[byte_index] == 1 )
-//                slv_reg1[(byte_index*8) +: 8] <= Bus2IP_Data[(byte_index*8) +: 8];
-//          default : begin
-//            slv_reg0 <= slv_reg0;
-//            slv_reg1 <= slv_reg1;
-//                    end
-//        endcase
-				begin
-					slv_reg0 <= slv_reg0 + 1;
-					slv_reg1 <= slv_reg1 + 1;
-				end
-    end // SLAVE_REG_WRITE_PROC
+        case (slv_reg_write_sel)
+					2'b10: 
+						slv_reg0 <= Bus2IP_Data;
+					2'b01:
+						slv_reg1 <= Bus2IP_Data;
+					default:
+						begin
+							slv_reg0 <= slv_reg0;
+							slv_reg1 <= slv_reg1;
+						end
+        endcase
+//				begin
+//					slv_reg0 <= slv_reg0 + 1;
+//					slv_reg1 <= slv_reg1 + 1;
+//				end
+    end
 
   // implement slave model register read mux
   always @( slv_reg_read_sel or slv_reg0 or slv_reg1 )
     begin 
-
       case ( slv_reg_read_sel )
-        2'b10 : slv_ip2bus_data <= slv_reg0;
-        2'b01 : slv_ip2bus_data <= slv_reg1;
-        default : slv_ip2bus_data <= 0;
+        2'b10:
+					slv_ip2bus_data <= slv_reg0;
+        2'b01:
+					slv_ip2bus_data <= slv_reg1;
+        default:
+					slv_ip2bus_data <= 0;
       endcase
 
     end // SLAVE_REG_READ_PROC

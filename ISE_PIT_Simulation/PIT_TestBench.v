@@ -65,16 +65,36 @@ module PIT_TestBench;
 		Bus2IP_BE = 0;
 		Bus2IP_RdCE = 0;
 		Bus2IP_WrCE = 0;
-		Bus2IP_RdCE = 2'b01; //Register 1
 
-		// Wait 100 ns for global reset to finish
+		// Reset
 		#20;
 		Bus2IP_Resetn = 1;
 		
-        
-		// Add stimulus here
-
+		// Write to register 0
+		Bus2IP_RdCE = 2'b10;
+		Bus2IP_Data = 7;		
+		#20
+		Bus2IP_WrCE = 2'b10;
+		#20
+		Bus2IP_WrCE = 2'b00;
+		Bus2IP_RdCE = 2'b00;
+		#20
+		
+		// Write to register 1		
+		Bus2IP_RdCE = 2'b01;
+		Bus2IP_Data = 56;
+		#20
+		Bus2IP_WrCE = 2'b01;
+		#20
+		Bus2IP_WrCE = 2'b00;
+		Bus2IP_RdCE = 2'b00;
+		
+		// Read register values
+		#20
+		Bus2IP_RdCE = 2'b10;
+		#20
+		Bus2IP_RdCE = 2'b01;
+		
 	end
-      
 endmodule
 
