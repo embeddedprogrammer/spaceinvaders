@@ -28,8 +28,12 @@
 #include "mb_interface.h"   // provides the microblaze interrupt enables, etc.
 #include "xintc_l.h"        // Provides handy macros for the interrupt controller.
 #include "xac97_l.h"        // Provides the functions for the sounds controller
+#include "pit.h"
 
 #include <stdbool.h>
+
+#define CLOCK_FREQ_HZ 100000000 //100MHz
+#define INTERRUPTS_PER_SECOND 100 //Every 10 ms
 
 XGpio gpLED;  // This is a handle for the LED GPIO block.
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
@@ -77,9 +81,9 @@ XTmrCtr TmrCtrInstance;
 void interrupt_handler_dispatcher(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
-	// Check the FIT interrupt first.
-	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK) {
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
+	// Check the PIT interrupt first.
+	if (intc_status & XPAR_PIT_0_INTERRUPT_MASK) {
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
 		u32 timerValBegin = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		timer_interrupt_handler();
 		u32 timerValEnd = XTmrCtr_GetValue(&TmrCtrInstance, 0);
@@ -233,7 +237,7 @@ void initInterrupts()
 
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
-			(XPAR_FIT_TIMER_0_INTERRUPT_MASK
+			(XPAR_PIT_0_INTERRUPT_MASK
 		   | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK
 		   | XPAR_AXI_AC97_0_INTERRUPT_MASK));
 
@@ -261,6 +265,40 @@ void printStats()
     xil_printf("CPU utilization: %d%%\n\r", interruptsTimeInMs*100/runningTimeInMs);
 }
 
+#define ENTER 13
+#define BACKSPACE 8
+
+int getNumber2()
+{
+	xil_printf("\r\nPlease enter a number to load into the PIT Timer Register:\r\n");
+	int num = 0;
+	char input;
+	while (true)
+	{
+		input = getchar();
+		if(input >= '0' && input <= '9')
+			num = num*10 + (input - '0');
+		else if(input == BACKSPACE)
+		{
+			num = num / 10;
+			if(num > 0) //Erase space
+				xil_printf("\r%d ", num);
+			else
+				xil_printf("\r ");
+		}
+		if(num > 0)
+			xil_printf("\r%d", num);
+		else
+			xil_printf("\r");
+
+		if(input == ENTER)
+		{
+			xil_printf("\r\n");
+			return num;
+		}
+	}
+}
+
 int main()
 {
 	initTimers();
@@ -269,7 +307,17 @@ int main()
 	initInterrupts();
 	isNewGame = true;
 	initGameScreen();
-	while(true);
+
+	PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, CLOCK_FREQ_HZ / INTERRUPTS_PER_SECOND);
+
+	while(1)  // Program never ends.
+	{
+		getchar();
+		PIT_stopTimer(XPAR_PIT_0_BASEADDR);
+		Xuint32 delayValue = getNumber2();
+		PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, delayValue);
+	}
+
 	cleanup_platform();
 	return 0;
 }
