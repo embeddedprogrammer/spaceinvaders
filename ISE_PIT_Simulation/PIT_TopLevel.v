@@ -21,6 +21,9 @@
 module PIT_TopLevel
 (
 	IP_Interupt,
+	counter,          // TODO: REMOVE
+	slv_reg0_control, // TODO: REMOVE
+	slv_reg1_delay,   // TODO: REMOVE
   // -- DO NOT EDIT BELOW THIS LINE ------------------
   // -- Bus protocol ports, do not add to or delete 
   Bus2IP_Clk,                     // Bus to IP clock
@@ -47,6 +50,9 @@ parameter C_SLV_DWIDTH                   = 32;
 
 // -- ADD USER PORTS BELOW THIS LINE -----------------
 output                                    IP_Interupt;
+output                                    counter;          // TODO: REMOVE
+output                                    slv_reg0_control; // TODO: REMOVE
+output                                    slv_reg1_delay;   // TODO: REMOVE
 // -- ADD USER PORTS ABOVE THIS LINE -----------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
