@@ -63,10 +63,21 @@ module PS2_sim;
 	
 	assign Din = Dout;
 
+	wire bus;
+	reg device1_usingBus;
+	reg device2_usingBus;
+	reg device1_Dout;
+	reg device2_Dout;
+	assign bus = (device1_usingBus && !device1_Dout) ? device1_Dout : 'bz;
+	assign bus = (device2_usingBus && !device2_Dout) ? device2_Dout : 'bz;
+	PULLUP pullup0 (.O(bus));
+	//inout [2:0] a;
+
 	always
 		#5 Bus2IP_Clk = ~Bus2IP_Clk; //Clock at 100 MHz
-
-	initial begin
+		
+	initial
+	begin
 		// Initialize Inputs
 		Bus2IP_Clk = 1;
 		Bus2IP_Resetn = 0;
@@ -74,18 +85,40 @@ module PS2_sim;
 		Bus2IP_BE = 0;
 		Bus2IP_RdCE = 0;
 		Bus2IP_WrCE = 0;
-
-		// Reset
+		
+		device1_usingBus = 0;
+		device2_usingBus = 0;
 		#10;
-		Bus2IP_Resetn = 1;
+		device1_usingBus = 1;
+		device2_usingBus = 0;
+		device1_Dout = 1;
+		#10;
+		device1_Dout = 0;
+		#10;
+		device1_usingBus = 0;
+		device2_usingBus = 0;
+		#10
+		device1_usingBus = 0;
+		device2_usingBus = 1;
+		device2_Dout = 1;
+		#10;
+		device2_Dout = 0;
+		#10;
 		
-// Test writing a character
-		writeReg(1, 8'b01001011);
 		
-// Read character
-		while (!IP_Interupt)
-			#1;
-		readReg(0);	
+		
+
+//		// Reset
+//		#10;
+//		Bus2IP_Resetn = 1;
+//		
+//// Test writing a character
+//		writeReg(1, 8'b01001011);
+//		
+//// Read character
+//		while (!IP_Interupt)
+//			#1;
+//		readReg(0);	
 		
 	end
 	task writeReg;
