@@ -21,6 +21,8 @@ SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/*
 SpaceInvaderXPS_HW2_hw_platform/
 ISE_PIT_Simulation/*
 !ISE_PIT_Simulation/*.v
+ISE_PS2_Simulation/*
+!ISE_PS2_Simulation/*.v
 PITTimerWorkspace2/
 
 
