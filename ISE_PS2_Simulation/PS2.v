@@ -78,7 +78,7 @@ output                                    IP2Bus_Error;
   // Nets for user logic slave model s/w accessible register example
 	reg        [10:0]                         bitsToSend;
 	reg        [10:0]                         bitsReceived;
-	reg                                       IP_Interupt;
+	wire                                      IP_Interupt;
 	wire       [1 : 0]                        slv_reg_write_sel;
 	wire       [1 : 0]                        slv_reg_read_sel;
 	reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
@@ -98,18 +98,19 @@ output                                    IP2Bus_Error;
 		if(Bus2IP_Resetn == 1'b0)
 		begin
 			bitsToSend <= 11'b11111111111;
-			bitsReceived <= 1;
+			bitsReceived <= 11'b11111111111;
 		end
 		else
 		begin
 			case(slv_reg_write_sel)
-				//2'b10: //reg 0 (read)
-				2'b01: //reg 1 (write)
+				2'b10: //reg 0 (read Din)
 				begin
-					bitsToSend[0] <= 0;
-					// Start bit
-					bitsToSend[8:1] <= Bus2IP_Data[7:0];
-					// Start bit
+					bitsReceived <= Bus2IP_Data[11:0]; // TODO: Make this be a control bit.
+				end
+				2'b01: //reg 1 (write to Dout)
+				begin
+					bitsToSend[0] <= 0; // Start bit
+					bitsToSend[8:1] <= Bus2IP_Data[7:0]; // Data
 					bitsToSend[9] <= ~^Bus2IP_Data[7:0]; // Bitwise reduction XNOR for odd parity bit.
 					bitsToSend[10] <= 1; // Stop bit
 				end
@@ -117,6 +118,8 @@ output                                    IP2Bus_Error;
 				begin
 					bitsToSend[9:0] <= bitsToSend[10:1]; // Shift bits to continue sending data.
 					bitsToSend[10] <= 1;
+					bitsReceived[9:0] <= bitsReceived[10:1]; // Shift bits to continue receiving data.
+					bitsReceived[10] <= Din;
 				end
 			endcase
 		end
@@ -124,12 +127,14 @@ output                                    IP2Bus_Error;
 
   // Slave register read mux
   always @(slv_reg_read_sel or bitsReceived or bitsToSend)
-    begin 
+    begin
       case(slv_reg_read_sel)
         2'b10:
-					slv_ip2bus_data <= bitsReceived;
+				begin
+					slv_ip2bus_data <= bitsReceived[8:1];
+				end
         2'b01:
-					slv_ip2bus_data <= bitsToSend;
+					slv_ip2bus_data <= bitsToSend[8:1];
         default:
 					slv_ip2bus_data <= 0;
       endcase
@@ -141,4 +146,5 @@ output                                    IP2Bus_Error;
   assign IP2Bus_RdAck = slv_read_ack;
   assign IP2Bus_Error = 0;
   assign Dout = bitsToSend[0];
+  assign IP_Interupt = !bitsReceived[0];
 endmodule

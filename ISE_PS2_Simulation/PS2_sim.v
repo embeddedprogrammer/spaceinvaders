@@ -30,7 +30,7 @@ module PS2_sim;
 	reg [3:0] Bus2IP_BE;
 	reg [1:0] Bus2IP_RdCE;
 	reg [1:0] Bus2IP_WrCE;
-	reg Din;
+	wire Din;
 
 	// Outputs
 	wire IP_Interupt;
@@ -60,6 +60,8 @@ module PS2_sim;
 		.IP2Bus_WrAck(IP2Bus_WrAck), 
 		.IP2Bus_Error(IP2Bus_Error)
 	);
+	
+	assign Din = Dout;
 
 	always
 		#5 Bus2IP_Clk = ~Bus2IP_Clk; //Clock at 100 MHz
@@ -79,6 +81,11 @@ module PS2_sim;
 		
 // Test writing a character
 		writeReg(1, 8'b01001011);
+		
+// Read character
+		while (!IP_Interupt)
+			#1;
+		readReg(0);	
 		
 	end
 	task writeReg;
