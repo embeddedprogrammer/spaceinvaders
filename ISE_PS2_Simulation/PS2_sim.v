@@ -78,13 +78,25 @@ module PS2_sim;
 		Bus2IP_Resetn = 1;
 		
 // Test writing a character
-		// Write to register 1		
-		Bus2IP_RdCE = 2'b01;
-		Bus2IP_Data = 8'b01001011;
-		#10;
-		Bus2IP_WrCE = 2'b01;
-		#10;
-		Bus2IP_WrCE = 2'b00;
-		Bus2IP_RdCE = 2'b00;
+		writeReg(1, 8'b01001011);
+		
 	end
+	task writeReg;
+		input [31:0] regNum;
+		input [31:0] writeVal;
+		begin
+			Bus2IP_Data = writeVal;
+			Bus2IP_WrCE = 1 << (1 - regNum);
+			#10;
+			Bus2IP_WrCE = 0;
+		end
+	endtask
+	task readReg;
+		input [31:0] regNum;
+		begin
+			Bus2IP_RdCE = 1 << (1 - regNum);
+			#10
+			Bus2IP_RdCE = 0;
+		end
+	endtask
 endmodule
