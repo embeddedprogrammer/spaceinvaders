@@ -216,3 +216,74 @@ output                                    IP2Bus_Error;
   assign Dout = bitsToSend[0];
   assign IP_Interupt = !bitsReceived[0];
 endmodule
+
+
+
+module Transmitter_Test;
+	// Inputs
+	reg CLK;
+	reg Resetn;
+	reg Load;
+	reg [7:0] LoadVal;
+	
+	// Outputs
+	wire Dout;
+	wire [10:0] bitsToSend;
+	
+	// Instantiate the Unit Under Test (UUT)
+	Transmitter uut (CLK, Resetn, Load, LoadVal, Dout, bitsToSend);
+	
+	always
+		#5 CLK = ~CLK; //Clock at 100 MHz
+
+	initial begin
+		// Initialize Inputs
+		CLK = 1;
+		Resetn = 0;
+		Load = 0;
+		LoadVal = 8'b01001011;
+
+		// Reset
+		#10;
+		Resetn = 1;
+		#10;
+		Load = 1;
+		#1;
+		Load = 0;
+		#9;
+	end
+endmodule
+module Transmitter(CLK, Resetn, Load, LoadVal, Dout, bitsToSend);
+	input       CLK;
+	input       Resetn;
+	input       Load;
+	input [7:0] LoadVal;
+	output      Dout;
+	output [10:0] bitsToSend;
+	
+	reg  [10:0] bitsToSend;
+
+  always @(negedge CLK or ~Resetn or posedge Load)
+	begin
+		if(!Resetn)
+		begin
+			bitsToSend <= 11'b11111111111;
+		end
+		else
+		begin
+			if(Load)
+			begin
+				bitsToSend[0] <= 0; // Start bit
+				bitsToSend[8:1] <= LoadVal[7:0]; // Data
+				bitsToSend[9] <= ~^LoadVal[7:0]; // Bitwise reduction XNOR for odd parity bit.
+				bitsToSend[10] <= 1; // Stop bit
+			end
+			else
+			begin
+				bitsToSend[9:0] <= bitsToSend[10:1]; // Shift bits to continue sending data.
+				bitsToSend[10] <= 1;
+			end
+		end
+	end
+	assign Dout = bitsToSend[0];
+endmodule
