@@ -118,7 +118,7 @@ module PS2_sim;
 //// Read character
 //		while (!IP_Interupt)
 //			#1;
-//		readReg(0);	
+//		readReg(0);
 		
 	end
 	task writeReg;
