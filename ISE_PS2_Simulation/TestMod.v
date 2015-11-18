@@ -218,7 +218,117 @@ output                                    IP2Bus_Error;
 endmodule
 
 
+module TestMouse;
+	reg CLK_OUT;
+	reg CLK_T;
+	wire CLK_IN;
+	
+	assign CLK = CLK_T ? 1'bz : CLK_OUT;
+	assign CLK_IN = CLK;
 
+	reg D_OUT;
+	reg D_T;
+	wire D_IN;
+	
+	assign D = D_T ? 1'bz : D_OUT;
+	assign D_IN = D;
+	
+	// Instantiate the Unit Under Test (UUT)
+	Mouse uut(D, CLK);
+	
+	initial begin
+		// Initialize Inputs
+		CLK_T = 1;
+		CLK_OUT = 1;
+		D_T = 1;
+		D_OUT = 1;
+		#40;
+		CLK_OUT = 0;
+		CLK_T = 0;
+		#100; //Wait to ensure mouse doesn't randomly do stuff.
+		D_T = 0;
+		D_OUT = 0;
+		#10;
+		CLK_T = 1;
+		#1;
+		                   D_OUT = 0;                      //Start Bit
+		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //b0
+		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //b1
+		while (CLK_IN) #1; D_OUT = 0; while (!CLK_IN) #1;  //b2
+		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //b3
+		while (CLK_IN) #1; D_OUT = 0; while (!CLK_IN) #1;  //b4
+		while (CLK_IN) #1; D_OUT = 0; while (!CLK_IN) #1;  //b5
+		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //b6
+		while (CLK_IN) #1; D_OUT = 0; while (!CLK_IN) #1;  //b7
+		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //Parity
+		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //Stop bit
+		D_T = 1;
+	end
+endmodule
+module Mouse(D, CLK);
+	inout D;
+	inout CLK;
+	
+	PULLUP pullup0 (.O(CLK));
+	PULLUP pullup1 (.O(D));
+	
+	reg CLK_OUT;
+	reg CLK_T;
+	wire CLK_IN;
+	
+	assign CLK = CLK_T ? 1'bz : CLK_OUT;
+	assign CLK_IN = CLK;
+	
+	reg D_OUT;
+	reg D_T;
+	wire D_IN;
+	
+	assign D = D_T ? 1'bz : D_OUT;
+	assign D_IN = D;	
+	
+	initial begin
+		CLK_OUT = 0;
+		CLK_T = 1;
+		D_T = 1;
+		D_OUT = 1;
+		#10;
+		
+		while (CLK_IN) #1; //Wait till host pulls clock low.
+		while (!CLK_IN) #1; //Wait till host releases clock.
+		#15;
+		CLK_T = 0;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
+		CLK_OUT = 0; #5; CLK_OUT = 1; #4; D_T = 0; D_OUT = 0; #1 //ACK
+		CLK_OUT = 0; #5; CLK_OUT = 1; #1; D_T = 1; D_OUT = 1; #4
+		CLK_T = 1;
+		
+		#100; //Send a character
+		CLK_T = 0;
+		D_T = 0;
+		CLK_OUT = 1; #1; D_OUT = 0; #4; CLK_OUT = 0; #5;  //Start Bit
+		CLK_OUT = 1; #1; D_OUT = 1; #4; CLK_OUT = 0; #5;  //b0
+		CLK_OUT = 1; #1; D_OUT = 1; #4; CLK_OUT = 0; #5;  //b1
+		CLK_OUT = 1; #1; D_OUT = 0; #4; CLK_OUT = 0; #5;  //b2
+		CLK_OUT = 1; #1; D_OUT = 1; #4; CLK_OUT = 0; #5;  //b3
+		CLK_OUT = 1; #1; D_OUT = 0; #4; CLK_OUT = 0; #5;  //b4
+		CLK_OUT = 1; #1; D_OUT = 0; #4; CLK_OUT = 0; #5;  //b5
+		CLK_OUT = 1; #1; D_OUT = 1; #4; CLK_OUT = 0; #5;  //b6
+		CLK_OUT = 1; #1; D_OUT = 0; #4; CLK_OUT = 0; #5;  //b7
+		CLK_OUT = 1; #1; D_OUT = 1; #4; CLK_OUT = 0; #5;  //Parity
+		CLK_OUT = 1; #1; D_OUT = 1; #4; CLK_OUT = 0; #5;  //Stop bit
+		CLK_OUT = 1;
+		CLK_T = 1;
+		D_T = 1;
+	end
+endmodule
 module Transmitter_Test;
 	// Inputs
 	reg CLK;
@@ -301,9 +411,6 @@ module Receiver_Test;
 	
 	// Instantiate the Unit Under Test (UUT)
 	Receiver    uut2 (CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
-	
-	always
-		#5 CLK = ~CLK; //Clock at 100 MHz
 
 	initial begin
 		// Initialize Inputs
@@ -312,17 +419,20 @@ module Receiver_Test;
 		Din = 1;
 		#10;
 		Resetn = 1;
-		#10; Din = 0; //Start Bit
-		#10; Din = 1; //b0
-		#10; Din = 1; //b1
-		#10; Din = 0; //b2
-		#10; Din = 1; //b3
-		#10; Din = 0; //b4
-		#10; Din = 0; //b5
-		#10; Din = 1; //b6
-		#10; Din = 0; //b7
-		#10; Din = 1; //Parity
-		#10; Din = 1; //Stop bit
+		#10;
+		//Send character
+		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //Start Bit
+		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b0
+		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b1
+		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b2
+		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b3
+		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b4
+		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b5
+		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b6
+		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b7
+		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //Parity
+		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //Stop bit
+		CLK = 1; //END
 	end
 endmodule
 module Receiver(CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
