@@ -423,10 +423,11 @@ module Transmitter_Test;
 	
 	// Outputs
 	wire Dout;
-	wire [10:0] bitsToSend;
+	wire [11:0] bitsToSend;
+	wire Done;
 	
 	// Instantiate the Unit Under Test (UUT)
-	Transmitter uut (CLK, Resetn, Load, LoadVal, Dout, bitsToSend);
+	Transmitter uut (CLK, Resetn, Load, LoadVal, Dout, Done, bitsToSend);
 	
 	always
 		#5 CLK = ~CLK; //Clock at 100 MHz
@@ -448,21 +449,22 @@ module Transmitter_Test;
 		#9;
 	end
 endmodule
-module Transmitter(CLK, Resetn, Load, LoadVal, Dout, bitsToSend);
+module Transmitter(CLK, Resetn, Load, LoadVal, Dout, Done, bitsToSend);
 	input       CLK;
 	input       Resetn;
 	input       Load;
 	input [7:0] LoadVal;
 	output      Dout;
-	output [10:0] bitsToSend;
+	output      Done;
+	output [11:0] bitsToSend;
 	
-	reg  [10:0] bitsToSend;
+	reg  [11:0] bitsToSend;
 
   always @(negedge CLK or ~Resetn or posedge Load)
 	begin
 		if(!Resetn)
 		begin
-			bitsToSend <= 11'b11111111111;
+			bitsToSend <= 12'b1111_1111_1111;
 		end
 		else
 		begin
@@ -472,15 +474,21 @@ module Transmitter(CLK, Resetn, Load, LoadVal, Dout, bitsToSend);
 				bitsToSend[8:1] <= LoadVal[7:0]; // Data
 				bitsToSend[9] <= ~^LoadVal[7:0]; // Bitwise reduction XNOR for odd parity bit.
 				bitsToSend[10] <= 1; // Stop bit
+				bitsToSend[11] <= 0; // End of transmission (this bit won't actually be sent, but is needed for the SM to stop)
+			end
+			else if(Done)
+			begin
+				bitsToSend <= 12'b1111_1111_1111;
 			end
 			else
 			begin
-				bitsToSend[9:0] <= bitsToSend[10:1]; // Shift bits to continue sending data.
-				bitsToSend[10] <= 1;
+				bitsToSend[10:0] <= bitsToSend[11:1]; // Shift bits to continue sending data.
+				bitsToSend[11] <= 1;
 			end
 		end
 	end
 	assign Dout = bitsToSend[0];
+	assign Done = (bitsToSend == 12'b1111_1111_1101);
 endmodule
 
 module Receiver_Test;
