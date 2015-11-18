@@ -217,7 +217,92 @@ output                                    IP2Bus_Error;
   assign IP_Interupt = !bitsReceived[0];
 endmodule
 
+module TestReceiverTransmitter;
+	// Inputs
+	reg CLK_OUT;
+	reg CLK_T;
+	reg D_T;
+	reg Resetn;
+	reg Load;
+	reg [7:0] LoadVal;
+	
+	// Bidirectional inouts
+	wire PS2_CLK;
+	wire D;
+	
+	// Outputs
+	wire D_OUT;
+	wire CLK_IN;
+	wire D_IN;
+	wire [7:0] ReadVal;
+	wire Interrupt;
+	wire [10:0] bitsReceived;
+	wire [10:0] bitsToSend;
+	
+	// Tri-state IOBUFF drivers	
+	assign PS2_CLK = CLK_T ? 1'bz : CLK_OUT;
+	assign CLK_IN = PS2_CLK;
+	assign D = D_T ? 1'bz : D_OUT;
+	assign D_IN = D_T ? D : 1;
+	
+	// Instantiate the Units Under Test (UUT)
+	Mouse       uut1 (D, PS2_CLK);
+	Transmitter uut2 (PS2_CLK, Resetn, Load, LoadVal, D_OUT, bitsToSend);
+	Receiver    uut3 (PS2_CLK, Resetn, Interrupt, ReadVal, D_IN, bitsReceived);
+	
+//localparam [1:0]
+//	IDLE = 2'd0,
+//	DRIVE_CLOCK_LOW = 2'd1,
+//	SENDING_DATA    = 2'd2;
+//	
+//reg [1:0] state;
+//
+//  always @(posedge CLK)
+//	begin
+//		case(slv_reg_write_sel)
+//			2'b10: //reg 0 (read Din)
+//			begin
+//				bitsReceived <= Bus2IP_Data[11:0]; // TODO: Make this be a control bit.
+//			end
+//			2'b01: //reg 1 (write to Dout)
+//			begin
+//				bitsToSend[0] <= 0; // Start bit
+//				bitsToSend[8:1] <= Bus2IP_Data[7:0]; // Data
+//				bitsToSend[9] <= ~^Bus2IP_Data[7:0]; // Bitwise reduction XNOR for odd parity bit.
+//				bitsToSend[10] <= 1; // Stop bit
+//			end
+//			default:
+//			begin
+//				bitsToSend[9:0] <= bitsToSend[10:1]; // Shift bits to continue sending data.
+//				bitsToSend[10] <= 1;
+//				bitsReceived[9:0] <= bitsReceived[10:1]; // Shift bits to continue receiving data.
+//				bitsReceived[10] <= Din;
+//			end
+//		endcase
+//	end
 
+	initial begin
+		// Initialize Inputs
+		CLK_T = 1;
+		CLK_OUT = 1;
+		Resetn = 0; //Reset
+		D_T = 1;
+		LoadVal = 8'b01001011;
+		Load = 0;
+		#10;
+		Resetn = 1; //End reset
+		#40; //Wait to ensure mouse doesn't randomly do stuff.
+		CLK_OUT = 0; //Pull clock line low
+		CLK_T = 0;
+		#100; 
+		CLK_T = 1;//Release clock
+		Load = 1; // Load to start transmitting bits.
+		D_T = 0;  //Pull data line low
+		#1;
+		Load = 0; //How do we know when the trasmitter is done?
+		//D_T = 1;
+	end
+endmodule
 module TestMouse;
 	reg CLK_OUT;
 	reg CLK_T;
