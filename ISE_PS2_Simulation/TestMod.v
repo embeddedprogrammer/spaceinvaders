@@ -237,7 +237,8 @@ module TestReceiverTransmitter;
 	wire [7:0] ReadVal;
 	wire Interrupt;
 	wire [10:0] bitsReceived;
-	wire [10:0] bitsToSend;
+	wire [11:0] bitsToSend;
+	wire Done;
 	
 	// Tri-state IOBUFF drivers	
 	assign PS2_CLK = CLK_T ? 1'bz : CLK_OUT;
@@ -247,7 +248,7 @@ module TestReceiverTransmitter;
 	
 	// Instantiate the Units Under Test (UUT)
 	Mouse       uut1 (D, PS2_CLK);
-	Transmitter uut2 (PS2_CLK, Resetn, Load, LoadVal, D_OUT, bitsToSend);
+	Transmitter uut2 (PS2_CLK, Resetn, Load, LoadVal, D_OUT, Done, bitsToSend);
 	Receiver    uut3 (PS2_CLK, Resetn, Interrupt, ReadVal, D_IN, bitsReceived);
 	
 //localparam [1:0]
@@ -299,8 +300,9 @@ module TestReceiverTransmitter;
 		Load = 1; // Load to start transmitting bits.
 		D_T = 0;  //Pull data line low
 		#1;
-		Load = 0; //How do we know when the trasmitter is done?
-		//D_T = 1;
+		Load = 0; 
+		while (!Done) #1; //Wait till transmitter is done.
+		D_T = 1;
 	end
 endmodule
 module TestMouse;
