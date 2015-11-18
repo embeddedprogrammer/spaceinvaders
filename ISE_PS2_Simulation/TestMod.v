@@ -287,3 +287,66 @@ module Transmitter(CLK, Resetn, Load, LoadVal, Dout, bitsToSend);
 	end
 	assign Dout = bitsToSend[0];
 endmodule
+
+module Receiver_Test;
+	// Inputs
+	reg CLK;
+	reg Resetn;
+	reg Din;
+	
+	// Outputs
+	wire [7:0] ReadVal;
+	wire Interrupt;
+	wire [10:0] bitsReceived;
+	
+	// Instantiate the Unit Under Test (UUT)
+	Receiver    uut2 (CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
+	
+	always
+		#5 CLK = ~CLK; //Clock at 100 MHz
+
+	initial begin
+		// Initialize Inputs
+		CLK = 1;
+		Resetn = 0;
+		Din = 1;
+		#10;
+		Resetn = 1;
+		#10; Din = 0; //Start Bit
+		#10; Din = 1; //b0
+		#10; Din = 1; //b1
+		#10; Din = 0; //b2
+		#10; Din = 1; //b3
+		#10; Din = 0; //b4
+		#10; Din = 0; //b5
+		#10; Din = 1; //b6
+		#10; Din = 0; //b7
+		#10; Din = 1; //Parity
+		#10; Din = 1; //Stop bit
+	end
+endmodule
+module Receiver(CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
+	input         CLK;
+	input         Resetn;
+	output        Interrupt;
+	output [7:0]  ReadVal;
+	input         Din;
+	output [10:0] bitsReceived;
+	
+	reg  [10:0] bitsReceived;
+
+  always @(posedge CLK or ~Resetn)
+	begin
+		if(!Resetn || Interrupt)
+		begin
+			bitsReceived <= 11'b11111111111;
+		end
+		else
+		begin
+			bitsReceived[9:0] <= bitsReceived[10:1]; // Shift bits to continue receiving data.
+			bitsReceived[10] <= Din;
+		end
+	end
+  assign Interrupt = !bitsReceived[0];
+  assign ReadVal = bitsReceived[8:1];
+endmodule
