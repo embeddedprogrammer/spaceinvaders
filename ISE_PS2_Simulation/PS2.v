@@ -95,9 +95,7 @@ output                                    IP2Bus_Error;
 	integer                                   byte_index, bit_index;
 	reg                                       sendingData;
 	reg        [14:0]                         counter; //To pull clock line low
-	reg        [14:0]                         counter_next; 
-	reg        [2:0]                          state;// Seq part of the FSM
-	reg        [2:0]                          state_next;
+	reg        [2:0]                          state;
 	wire                                      Load;
 	wire			 [11:0]													bitsToSend;
 	wire       [10:0]												  bitsReceived;
@@ -128,42 +126,38 @@ output                                    IP2Bus_Error;
     slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1];
 
 
-  // Counter and PIT logic
-  always @(*)
-	begin
-		case(state)
-			IDLE_ST_RECEIVE:
-				if(slv_reg_write_sel == 2'b10)
-					state_next <= CLOCK_LOW;
-			CLOCK_LOW:			
-				if(counter == MAXCOUNT)
-					state_next <= SEND;
-				else
-					counter_next <= counter + 1;
-			SEND:
-				if(Done == 1'b1)
-					state_next <= WAIT;
-			WAIT:
-				if(D_I == 1'b1)
-					state_next <= ACK;
-			ACK:
-				if(D_I == 1'b1)
-					state_next <= IDLE_ST_RECEIVE;
-			default:
-				state_next <= IDLE_ST_RECEIVE;
-		endcase
-	end
-	
-//update state and counter
+// Counter and PIT logic
 always @(posedge Bus2IP_Clk, Bus2IP_Reset)
 begin
-		if(Bus2IP_Reset == 1'b0)
-			state <= IDLE_ST_RECEIVE;
-		else
-			begin
-				state <= state_next;
-				counter <= counter_next;
-			end
+	if(Bus2IP_Reset == 1'b0)
+		state <= IDLE_ST_RECEIVE;
+	else
+		begin
+			case(state)
+				IDLE_ST_RECEIVE:
+					if(slv_reg_write_sel == 2'b10)
+						state <= CLOCK_LOW;
+				CLOCK_LOW:			
+					if(counter == MAXCOUNT)
+						begin
+							state <= SEND;
+							counter <= 0;
+						end
+					else
+						counter <= counter + 1;
+				SEND:
+					if(Done == 1'b1)
+						state <= WAIT;
+				WAIT:
+					if(D_I == 1'b1)
+						state <= ACK;
+				ACK:
+					if(D_I == 1'b1)
+						state <= IDLE_ST_RECEIVE;
+				default:
+					state <= IDLE_ST_RECEIVE;
+		endcase
+	end
 end
 	
   // Slave register read mux
