@@ -1,27 +1,5 @@
 `timescale 1ns / 1ps
 
-////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer:
-//
-// Create Date:   11:30:28 11/12/2015
-// Design Name:   PS2
-// Module Name:   C:/Users/superman/Documents/HinckWhite/ISE_PS2_Simulation/PS2_sim.v
-// Project Name:  ISE_PS2_Simulation
-// Target Device:  
-// Tool versions:  
-// Description: 
-//
-// Verilog Test Fixture created by ISE for module: PS2
-//
-// Dependencies:
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-////////////////////////////////////////////////////////////////////////////////
-
 module PS2_sim;
 	// Inputs
 	reg Bus2IP_Clk;
@@ -30,48 +8,32 @@ module PS2_sim;
 	reg [3:0] Bus2IP_BE;
 	reg [1:0] Bus2IP_RdCE;
 	reg [1:0] Bus2IP_WrCE;
-	wire Din;
 
 	// Outputs
 	wire IP_Interupt;
-	wire [10:0] bitsReceived;
-	wire [10:0] bitsToSend;
-	wire Dout;
+	wire [10:0] debug_bitsReceived;
+	wire [11:0] debug_bitsToSend;
 	wire [31:0] IP2Bus_Data;
+	wire [2:0] state;
+	wire [14:0] counter;
+	wire Load;
+	wire [7:0] LoadVal;
+	wire [7:0] ReadVal;
 	wire IP2Bus_RdAck;
 	wire IP2Bus_WrAck;
 	wire IP2Bus_Error;
 	
-	// Instantiate the Unit Under Test (UUT)
-	PS2 uut (
-		.IP_Interupt(IP_Interupt), 
-		.bitsReceived(bitsReceived),
-		.bitsToSend(bitsToSend),
-		.Dout(Dout),
-		.Din(Din),
-		.Bus2IP_Clk(Bus2IP_Clk), 
-		.Bus2IP_Resetn(Bus2IP_Resetn), 
-		.Bus2IP_Data(Bus2IP_Data), 
-		.Bus2IP_BE(Bus2IP_BE), 
-		.Bus2IP_RdCE(Bus2IP_RdCE), 
-		.Bus2IP_WrCE(Bus2IP_WrCE), 
-		.IP2Bus_Data(IP2Bus_Data), 
-		.IP2Bus_RdAck(IP2Bus_RdAck), 
-		.IP2Bus_WrAck(IP2Bus_WrAck), 
-		.IP2Bus_Error(IP2Bus_Error)
-	);
-	
-	assign Din = Dout;
-
-	wire bus;
-	reg device1_usingBus;
-	reg device2_usingBus;
-	reg device1_Dout;
-	reg device2_Dout;
-	assign bus = (device1_usingBus && !device1_Dout) ? device1_Dout : 'bz;
-	assign bus = (device2_usingBus && !device2_Dout) ? device2_Dout : 'bz;
-	PULLUP pullup0 (.O(bus));
-	//inout [2:0] a;
+	// Instantiate the Units Under Test (UUT)
+	PS2 uut1 (IP_Interupt, C_T, C_I, C_O, D_T, D_I, D_O, debug_bitsReceived, debug_bitsToSend, state, counter, Load, LoadVal, ReadVal,
+		Bus2IP_Clk, Bus2IP_Resetn, Bus2IP_Data, Bus2IP_BE, Bus2IP_RdCE, Bus2IP_WrCE, IP2Bus_Data, IP2Bus_RdAck, IP2Bus_WrAck, IP2Bus_Error);
+		
+	Mouse uut2 (PS2_D, PS2_CLK);
+		
+	// Tri-state IOBUFF drivers	
+	assign PS2_CLK = C_T ? 1'bz : C_I;
+	assign C_O = PS2_CLK;
+	assign PS2_D = D_T ? 1'bz : D_I;
+	assign D_O = PS2_D;
 
 	always
 		#5 Bus2IP_Clk = ~Bus2IP_Clk; //Clock at 100 MHz
@@ -80,46 +42,19 @@ module PS2_sim;
 	begin
 		// Initialize Inputs
 		Bus2IP_Clk = 1;
-		Bus2IP_Resetn = 0;
+		Bus2IP_Resetn = 0; //Reset
 		Bus2IP_Data = 0;
 		Bus2IP_BE = 0;
 		Bus2IP_RdCE = 0;
 		Bus2IP_WrCE = 0;
 		
-		device1_usingBus = 0;
-		device2_usingBus = 0;
 		#10;
-		device1_usingBus = 1;
-		device2_usingBus = 0;
-		device1_Dout = 1;
+		Bus2IP_Resetn = 1; //End reset
 		#10;
-		device1_Dout = 0;
-		#10;
-		device1_usingBus = 0;
-		device2_usingBus = 0;
-		#10
-		device1_usingBus = 0;
-		device2_usingBus = 1;
-		device2_Dout = 1;
-		#10;
-		device2_Dout = 0;
-		#10;
+		writeReg(0, 8'b01001011); //Write a value to be sent to the mouse.
 		
-		
-		
-
-//		// Reset
-//		#10;
-//		Bus2IP_Resetn = 1;
-//		
-//// Test writing a character
-//		writeReg(1, 8'b01001011);
-//		
-//// Read character
-//		while (!IP_Interupt)
-//			#1;
-//		readReg(0);
-		
+		while (!IP_Interupt) #1;  //Wait to receive a value from the mouse
+		readReg(1);
 	end
 	task writeReg;
 		input [31:0] regNum;

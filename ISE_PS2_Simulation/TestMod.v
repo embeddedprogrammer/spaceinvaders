@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 100ps
 
 module TestReceiverTransmitter;
 	// Inputs
@@ -43,16 +43,16 @@ module TestReceiverTransmitter;
 		LoadVal = 8'b01001011;
 		Load = 0;
 		#10;
-		Resetn = 1; //End reset
-		#40; //Wait to ensure mouse doesn't randomly do stuff.
+		Resetn = 1;  //End reset
+		#400_000;    //Wait to ensure mouse doesn't randomly do stuff.
 		CLK_OUT = 0; //Pull clock line low
 		CLK_T = 0;
-		#100; 
-		CLK_T = 1;//Release clock
-		Load = 1; // Load to start transmitting bits.
-		D_T = 0;  //Pull data line low
-		#1;
-		Load = 0; 
+		#100_000; 
+		CLK_T = 1;   //Release clock
+		Load = 1;    //Load to start transmitting bits.
+		D_T = 0;     //Pull data line low
+		#10;
+		Load = 0;
 		while (!Done) #1; //Wait till transmitter is done.
 		D_T = 1;
 	end
@@ -81,16 +81,14 @@ module TestMouse;
 		CLK_OUT = 1;
 		D_T = 1;
 		D_OUT = 1;
-		#40;
+		#100_000;
 		CLK_OUT = 0;
 		CLK_T = 0;
-		#100; //Wait to ensure mouse doesn't randomly do stuff.
-		D_T = 0;
-		D_OUT = 0;
-		#10;
+		#100_000;  //Pull clock low for 100us
+		D_T = 0;   //Pull data line low and release clock
 		CLK_T = 1;
-		#1;
-		                   D_OUT = 0;                      //Start Bit
+		D_OUT = 0; //Start Bit
+		#10;
 		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //b0
 		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //b1
 		while (CLK_IN) #1; D_OUT = 0; while (!CLK_IN) #1;  //b2
@@ -101,70 +99,6 @@ module TestMouse;
 		while (CLK_IN) #1; D_OUT = 0; while (!CLK_IN) #1;  //b7
 		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //Parity
 		while (CLK_IN) #1; D_OUT = 1; while (!CLK_IN) #1;  //Stop bit
-		D_T = 1;
-	end
-endmodule
-module Mouse(D, CLK);
-	inout D;
-	inout CLK;
-	
-	PULLUP pullup0 (.O(CLK));
-	PULLUP pullup1 (.O(D));
-	
-	reg CLK_OUT;
-	reg CLK_T;
-	wire CLK_IN;
-	
-	assign CLK = CLK_T ? 1'bz : CLK_OUT;
-	assign CLK_IN = CLK;
-	
-	reg D_OUT;
-	reg D_T;
-	wire D_IN;
-	
-	assign D = D_T ? 1'bz : D_OUT;
-	assign D_IN = D;	
-	
-	initial begin
-		CLK_OUT = 0;
-		CLK_T = 1;
-		D_T = 1;
-		D_OUT = 1;
-		#10;
-		
-		while (CLK_IN) #1; //Wait till host pulls clock low.
-		while (!CLK_IN) #1; //Wait till host releases clock.
-		#15;
-		CLK_T = 0;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #5;
-		CLK_OUT = 0; #5; CLK_OUT = 1; #2.5; D_T = 0; D_OUT = 0; #2.5 //ACK
-		CLK_OUT = 0; #5; CLK_OUT = 1; #2.5; D_T = 1; D_OUT = 1; #2.5
-		CLK_T = 1;
-		
-		#100; //Send a character
-		CLK_T = 0;
-		D_T = 0;
-		CLK_OUT = 1; #2.5; D_OUT = 0; #2.5; CLK_OUT = 0; #5;  //Start Bit
-		CLK_OUT = 1; #2.5; D_OUT = 1; #2.5; CLK_OUT = 0; #5;  //b0
-		CLK_OUT = 1; #2.5; D_OUT = 1; #2.5; CLK_OUT = 0; #5;  //b1
-		CLK_OUT = 1; #2.5; D_OUT = 0; #2.5; CLK_OUT = 0; #5;  //b2
-		CLK_OUT = 1; #2.5; D_OUT = 1; #2.5; CLK_OUT = 0; #5;  //b3
-		CLK_OUT = 1; #2.5; D_OUT = 0; #2.5; CLK_OUT = 0; #5;  //b4
-		CLK_OUT = 1; #2.5; D_OUT = 0; #2.5; CLK_OUT = 0; #5;  //b5
-		CLK_OUT = 1; #2.5; D_OUT = 1; #2.5; CLK_OUT = 0; #5;  //b6
-		CLK_OUT = 1; #2.5; D_OUT = 0; #2.5; CLK_OUT = 0; #5;  //b7
-		CLK_OUT = 1; #2.5; D_OUT = 1; #2.5; CLK_OUT = 0; #5;  //Parity
-		CLK_OUT = 1; #2.5; D_OUT = 1; #2.5; CLK_OUT = 0; #5;  //Stop bit
-		CLK_OUT = 1;
-		CLK_T = 1;
 		D_T = 1;
 	end
 endmodule
@@ -184,7 +118,7 @@ module Transmitter_Test;
 	Transmitter uut (CLK, Resetn, Load, LoadVal, Dout, Done, bitsToSend);
 	
 	always
-		#5 CLK = ~CLK; //Clock at 100 MHz
+		#50_000 CLK = ~CLK; //Clock at 10 KHz
 
 	initial begin
 		// Initialize Inputs
@@ -198,53 +132,10 @@ module Transmitter_Test;
 		Resetn = 1;
 		#10;
 		Load = 1;
-		#1;
+		#10;
 		Load = 0;
-		#9;
 	end
 endmodule
-module Transmitter(CLK, Resetn, Load, LoadVal, Dout, Done, bitsToSend);
-	input       CLK;
-	input       Resetn;
-	input       Load;
-	input [7:0] LoadVal;
-	output      Dout;
-	output      Done;
-	output [11:0] bitsToSend;
-	
-	reg  [11:0] bitsToSend;
-
-  always @(negedge CLK or ~Resetn or posedge Load)
-	begin
-		if(!Resetn)
-		begin
-			bitsToSend <= 12'b1111_1111_1111;
-		end
-		else
-		begin
-			if(Load)
-			begin
-				bitsToSend[0] <= 0; // Start bit
-				bitsToSend[8:1] <= LoadVal[7:0]; // Data
-				bitsToSend[9] <= ~^LoadVal[7:0]; // Bitwise reduction XNOR for odd parity bit.
-				bitsToSend[10] <= 1; // Stop bit
-				bitsToSend[11] <= 0; // End of transmission (this bit won't actually be sent, but is needed for the SM to stop)
-			end
-			else if(Done)
-			begin
-				bitsToSend <= 12'b1111_1111_1111;
-			end
-			else
-			begin
-				bitsToSend[10:0] <= bitsToSend[11:1]; // Shift bits to continue sending data.
-				bitsToSend[11] <= 1;
-			end
-		end
-	end
-	assign Dout = bitsToSend[0];
-	assign Done = (bitsToSend == 12'b1111_1111_1101);
-endmodule
-
 module Receiver_Test;
 	// Inputs
 	reg CLK;
@@ -268,42 +159,17 @@ module Receiver_Test;
 		Resetn = 1;
 		#10;
 		//Send character
-		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //Start Bit
-		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b0
-		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b1
-		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b2
-		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b3
-		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b4
-		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b5
-		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //b6
-		CLK = 1; #1; Din = 0; #4; CLK = 0; #5;  //b7
-		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //Parity
-		CLK = 1; #1; Din = 1; #4; CLK = 0; #5;  //Stop bit
+		CLK = 1; #25_000; Din = 0; #25_000; CLK = 0; #50_000;  //Start Bit
+		CLK = 1; #25_000; Din = 1; #25_000; CLK = 0; #50_000;  //b0
+		CLK = 1; #25_000; Din = 1; #25_000; CLK = 0; #50_000;  //b1
+		CLK = 1; #25_000; Din = 0; #25_000; CLK = 0; #50_000;  //b2
+		CLK = 1; #25_000; Din = 1; #25_000; CLK = 0; #50_000;  //b3
+		CLK = 1; #25_000; Din = 0; #25_000; CLK = 0; #50_000;  //b4
+		CLK = 1; #25_000; Din = 0; #25_000; CLK = 0; #50_000;  //b5
+		CLK = 1; #25_000; Din = 1; #25_000; CLK = 0; #50_000;  //b6
+		CLK = 1; #25_000; Din = 0; #25_000; CLK = 0; #50_000;  //b7
+		CLK = 1; #25_000; Din = 1; #25_000; CLK = 0; #50_000;  //Parity
+		CLK = 1; #25_000; Din = 1; #25_000; CLK = 0; #50_000;  //Stop bit
 		CLK = 1; //END
 	end
-endmodule
-module Receiver(CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
-	input         CLK;
-	input         Resetn;
-	output        Interrupt;
-	output [7:0]  ReadVal;
-	input         Din;
-	output [10:0] bitsReceived;
-	
-	reg  [10:0] bitsReceived;
-
-  always @(negedge CLK or ~Resetn)
-	begin
-		if(!Resetn || Interrupt)
-		begin
-			bitsReceived <= 11'b11111111111;
-		end
-		else
-		begin
-			bitsReceived[9:0] <= bitsReceived[10:1]; // Shift bits to continue receiving data.
-			bitsReceived[10] <= Din;
-		end
-	end
-  assign Interrupt = !bitsReceived[0];
-  assign ReadVal = bitsReceived[8:1];
 endmodule
