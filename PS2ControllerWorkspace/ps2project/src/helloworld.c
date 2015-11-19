@@ -78,26 +78,65 @@ void test()
 	printBinary(PS2CTRL_mReadSlaveReg4(XPAR_PS2CTRL_0_BASEADDR));
 }
 
+bool charReceived;
+unsigned char receivedChar;
+
 void interrupt_handler_dispatcher(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the PIT interrupt first.
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
-		unsigned char c = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
-		//if(c == 0xFA)
-
-		xil_printf("0x%x\n\r", c);
+		charReceived = true;
+		receivedChar = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
 	}
 }
 
+XGpio gpPB;   // This is a handle for the push-button GPIO block.
+
 void initInterrupts()
 {
+	// Initialize the GPIO peripherals. NOTE: We wait to do this till after the HDMI to ensure that nothing happens before the HDMI is enabled.
+	XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
+	// Set the push button peripheral to be inputs.
+	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
+
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
+}
+
+void pollButtons()
+{
+	const int PUSH_BUTTONS_CENTER = 0x01;
+    const int PUSH_BUTTONS_RIGHT  = 0x02;
+    const int PUSH_BUTTONS_LEFT   = 0x08;
+    const int PUSH_BUTTONS_UP     = 0x10;
+    const int PUSH_BUTTONS_DOWN   = 0x04;
+
+	int buttonState = XGpio_DiscreteRead(&gpPB, 1);
+
+	if (buttonState & PUSH_BUTTONS_LEFT)
+		test();
+	else if (buttonState & PUSH_BUTTONS_RIGHT)
+		enableReporting();
+	else if (buttonState & PUSH_BUTTONS_UP)
+		reset();
+	else if (buttonState & PUSH_BUTTONS_CENTER)
+		XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, 0);
+	else if (buttonState & PUSH_BUTTONS_DOWN)
+		XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
+}
+
+void printInfo()
+{
+	if(charReceived)
+	{
+		xil_printf("0x%x\n\r", receivedChar);
+		charReceived = false;
+	}
 }
 
 int main()
@@ -107,17 +146,8 @@ int main()
     setvbuf(stdin, NULL, _IONBF, 1024); //This makes it so we don't have to wait for the user to push enter.
     while(true)
     {
-    	char c = getchar();
-    	if(c == 'p')
-    		test();
-    	else if(c == 'f')
-    		enableReporting();
-    	else if(c == 'r')
-    		reset();
-    	else if(c == 'd')
-    		XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, 0);
-    	else if(c == 'e')
-    		XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
+    	pollButtons();
+    	printInfo();
     }
     xil_printf("End\n\r");
     cleanup_platform();
