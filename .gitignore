@@ -18,6 +18,12 @@ SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/*
 !SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/
 SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/*
 !SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/*.mpd
+!SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/
+SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/*
+!SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/hdl/
+!SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/data/
+SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/data/*
+!SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/data/*.mpd
 SpaceInvaderXPS_HW2_hw_platform/
 ISE_PIT_Simulation/*
 !ISE_PIT_Simulation/*.v
