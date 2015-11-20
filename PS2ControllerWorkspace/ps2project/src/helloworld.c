@@ -89,7 +89,7 @@ void interrupt_handler_dispatcher(void* ptr)
 	{
 		charReceived = true;
 		receivedChar = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	}
 }
 
@@ -125,16 +125,21 @@ void pollButtons()
 	else if (buttonState & PUSH_BUTTONS_UP)
 		reset();
 	else if (buttonState & PUSH_BUTTONS_CENTER)
-		XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, 0);
-	else if (buttonState & PUSH_BUTTONS_DOWN)
-		XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
+		xil_printf("\n\r");
 }
+
+char lastCharReceived;
 
 void printInfo()
 {
 	if(charReceived)
 	{
 		xil_printf("0x%x\n\r", receivedChar);
+//		if(receivedChar != lastCharReceived)
+//		{
+//			lastCharReceived = receivedChar;
+//			xil_printf("\n\r");
+//		}
 		charReceived = false;
 	}
 }
