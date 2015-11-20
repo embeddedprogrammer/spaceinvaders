@@ -39,6 +39,11 @@
 
 #include <stdbool.h>
 
+bool getBit(Xuint32 num, int i)
+{
+	return (num >> i) & 0x1;
+}
+
 void printBinary(Xuint32 num)
 {
     int i;
@@ -48,7 +53,7 @@ void printBinary(Xuint32 num)
             xil_printf(" ");
         if(i % 8 == 0)
             xil_printf("  ");
-        xil_printf("%d", (num >> (31 - i)) & 0x1);
+        xil_printf("%d", getBit(num, 31 - i));
     }
     xil_printf("\n\r");
 }
@@ -78,8 +83,7 @@ void test()
 	printBinary(PS2CTRL_mReadSlaveReg4(XPAR_PS2CTRL_0_BASEADDR));
 }
 
-bool charReceived;
-unsigned char circularBuffer[100];
+unsigned int circularBuffer[100];
 int startIndex = -1;
 int endIndex = -1;
 
@@ -93,7 +97,7 @@ int size()
 		return (endIndex + 100) - startIndex + 1;
 }
 
-void push(unsigned char c)
+void push(unsigned int c)
 {
 	if(startIndex == -1)
 	{
@@ -109,7 +113,7 @@ void push(unsigned char c)
 	circularBuffer[endIndex] = c;
 }
 
-unsigned char pop()
+unsigned int pop()
 {
 	if(size() == 0)
 	{
@@ -133,8 +137,8 @@ void interrupt_handler_dispatcher(void* ptr)
 	// Check the PIT interrupt first.
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
-		char receivedChar = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
-		push(receivedChar);
+		unsigned int receivedVal = PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR);
+		push(receivedVal);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	}
 }
@@ -185,13 +189,28 @@ void pollButtons()
 
 char lastCharReceived;
 
+bool isParityValid(unsigned int num)
+{
+	bool result = 0;
+	int i;
+	for(i = 1; i <= 9; i++)
+		result = result ^ getBit(num, i);
+	return result; //If odd parity (what it should be), return true.
+}
+
 void printInfo()
 {
 	int count = 0;
 	while(size() > 0)
 	{
-		unsigned char receivedChar = pop();
-		xil_printf("0x%x ", receivedChar);
+		unsigned int valReceived = pop();
+		if(valReceived % 2 != 0)
+		{
+			xil_printf("-");
+		}
+		else if(!isParityValid(valReceived))
+			xil_printf("=");
+		xil_printf("0x%x ", valReceived);
 		count++;
 	}
 	if(count > 0)
