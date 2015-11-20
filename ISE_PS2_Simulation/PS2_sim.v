@@ -54,9 +54,12 @@ module PS2_sim;
 		Bus2IP_BE = 0;
 		Bus2IP_RdCE = 0;
 		Bus2IP_WrCE = 0;
-		
 		#10;
-		Bus2IP_Resetn = 1; //End reset
+		Bus2IP_Resetn = 1;
+		#10;
+		Bus2IP_Resetn = 0;
+		#10;
+		Bus2IP_Resetn = 1; // End Reset.
 		#10;
 		writeReg(0, 8'b01001011); //Write a value to be sent to the mouse.
 		

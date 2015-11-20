@@ -12,7 +12,8 @@ module Receiver(CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
 	begin
 		if(!Resetn || Interrupt)
 		begin
-			bitsReceived <= 11'b11111111111;
+			bitsReceived[9:0] <= 10'b1111111111;
+			bitsReceived[10] <= Din;
 		end
 		else
 		begin
