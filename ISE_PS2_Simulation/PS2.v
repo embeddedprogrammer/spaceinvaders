@@ -20,6 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module PS2
 (
+  // -- ADD USER PORTS BELOW THIS LINE ---------------
 	IP_Interrupt,
 	C_T,
 	C_I,
@@ -27,13 +28,15 @@ module PS2
 	D_T,
 	D_I,
 	D_O,
-	debug_bitsReceived,
-	debug_bitsToSend,
+	bitsReceived,
+	bitsToSend,
 	state,
 	counter,
 	Load,
 	LoadVal,
 	ReadVal,
+  // -- ADD USER PORTS ABOVE THIS LINE ---------------
+
   // -- DO NOT EDIT BELOW THIS LINE ------------------
   // -- Bus protocol ports, do not add to or delete 
   Bus2IP_Clk,                     // Bus to IP clock
@@ -47,14 +50,23 @@ module PS2
   IP2Bus_WrAck,                   // IP to Bus write transfer acknowledgement
   IP2Bus_Error                    // IP to Bus error response
   // -- DO NOT EDIT ABOVE THIS LINE ------------------
-);
+); // user_logic
 
 // -- ADD USER PARAMETERS BELOW THIS LINE ------------
+localparam [2:0]
+	IDLE_RECEIVE = 3'd0,
+	CLOCK_LOW    = 3'd1,
+	SEND         = 3'd2,
+	WAIT         = 3'd3,
+	ACK          = 3'd4;
+
+localparam [13:0]
+	MAXCOUNT = 14'd10_000; //At 100MHz this will give us 100 micro seconds.
 // -- ADD USER PARAMETERS ABOVE THIS LINE ------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
 // -- Bus protocol parameters, do not add to or delete
-parameter C_NUM_REG                      = 2;
+parameter C_NUM_REG                      = 5;
 parameter C_SLV_DWIDTH                   = 32;
 // -- DO NOT EDIT ABOVE THIS LINE --------------------
 
@@ -66,14 +78,13 @@ output                                    C_O;
 output                                    D_T;
 input                                     D_I;
 output                                    D_O;
-output                                    debug_bitsReceived;
-output                                    debug_bitsToSend;
+output                                    bitsReceived;
+output                                    bitsToSend;
 output                                    state;
 output                                    counter;
 output                                    Load;
 output                                    LoadVal;
 output                                    ReadVal;
-
 // -- ADD USER PORTS ABOVE THIS LINE -----------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -95,58 +106,47 @@ output                                    IP2Bus_Error;
 //----------------------------------------------------------------------------
 
   // Nets for user logic slave model s/w accessible register example
-	wire       [10:0]                         debug_bitsReceived;
-	wire       [11:0]                         debug_bitsToSend;
+	wire       [10:0]                         bitsReceived;
+	wire       [11:0]                         bitsToSend;
 	wire                                      IP_Interrupt;
 	
-	wire       [1 : 0]                        slv_reg_write_sel;
-	wire       [1 : 0]                        slv_reg_read_sel;
+  wire       [4 : 0]                        slv_reg_write_sel;
+  wire       [4 : 0]                        slv_reg_read_sel;
 	reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
 	wire                                      slv_read_ack;
 	wire                                      slv_write_ack;
-	integer                                   byte_index, bit_index;
-	reg                                       sendingData;
 	reg        [14:0]                         counter; //To pull clock line low
 	reg        [2:0]                          state;
 	wire                                      Load;
 	reg        [7:0]                          LoadVal;
 	wire       [7:0]                          ReadVal;
-
-	localparam [2:0]
-		IDLE_RECEIVE = 3'd0,
-		CLOCK_LOW    = 3'd1,
-		SEND         = 3'd2,
-		WAIT         = 3'd3,
-		ACK          = 3'd4;
-
-	localparam [13:0]
-		MAXCOUNT = 14'd10_000; //At 100MHz this will give us 100 micro seconds.
+	wire                                      Interrupt;
 
 	assign Resetn = Bus2IP_Resetn;
-	assign Interrupt = IP_Interrupt;
+	assign IP_Interrupt = Interrupt;
 	assign Load = (state == CLOCK_LOW) && (counter == MAXCOUNT); //Load on transition from CLOCK_LOW to SEND
 	
-	assign PS2_CLK = C_O;
-	assign C_I = (state == CLOCK_LOW) ? 0 : 1;
+	assign PS2_CLK = C_I;
+	assign C_O = (state == CLOCK_LOW) ? 0 : 1;
 	assign C_T = (state == CLOCK_LOW) ? 0 : 1;
 	
-	assign D_IN = (state == IDLE_RECEIVE) ? D_O : 1;
-	assign D_I = D_OUT;
+	assign D_IN = (state == IDLE_RECEIVE) ? D_I : 1;
+	assign D_O = D_OUT;
 	assign D_T = (state == SEND) ? 0 : 1;
 	
-	Transmitter transmitter1 (PS2_CLK, Resetn, Load, LoadVal, D_OUT, Done, debug_bitsToSend);
-	Receiver    receiver1    (PS2_CLK, Resetn, Interrupt, ReadVal, D_IN, debug_bitsReceived);
+	Transmitter transmitter1 (PS2_CLK, Resetn, Load, LoadVal, D_OUT, Done, bitsToSend);
+	Receiver    receiver1    (PS2_CLK, Resetn, Interrupt, ReadVal, D_IN, bitsReceived);
 	
   assign
-    slv_reg_write_sel = Bus2IP_WrCE[1:0],
-    slv_reg_read_sel  = Bus2IP_RdCE[1:0],
-    slv_write_ack     = Bus2IP_WrCE[0] || Bus2IP_WrCE[1],
-    slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1];
+    slv_reg_write_sel = Bus2IP_WrCE[4:0],
+    slv_reg_read_sel  = Bus2IP_RdCE[4:0],
+    slv_write_ack     = Bus2IP_WrCE[0] || Bus2IP_WrCE[1] || Bus2IP_WrCE[2] || Bus2IP_WrCE[3] || Bus2IP_WrCE[4],
+    slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1] || Bus2IP_RdCE[2] || Bus2IP_RdCE[3] || Bus2IP_RdCE[4];		
 
-  // Counter and PIT logic
+  // State Machine
   always @(posedge Bus2IP_Clk)
 	begin
-		if(Bus2IP_Resetn == 0'b0)
+		if(Bus2IP_Resetn == 1'b0)
 		begin
 			state <= IDLE_RECEIVE;
 			counter <= 0;
@@ -156,7 +156,7 @@ output                                    IP2Bus_Error;
 		begin	
 			case(state)
 				IDLE_RECEIVE:
-					if(slv_reg_write_sel == 2'b10)
+					if(slv_reg_write_sel == 5'b10000)
 					begin
 						state <= CLOCK_LOW;
 						counter <= 0;
@@ -173,27 +173,33 @@ output                                    IP2Bus_Error;
 					if(Done == 1'b1)
 						state <= WAIT;
 				WAIT:
-					if(D_O == 1'b0)
+					if(D_I == 1'b0)
 						state <= ACK;
 				ACK:
-					if(D_O == 1'b1)
+					if(D_I == 1'b1)
 						state <= IDLE_RECEIVE;
 				default:
 					state <= IDLE_RECEIVE;
 			endcase
-			if(slv_reg_write_sel == 2'b10)
+			if(slv_reg_write_sel == 5'b10000)
 				LoadVal <= Bus2IP_Data;
 		end
 	end
 	
   // Slave register read mux
-  always @(slv_reg_read_sel or debug_bitsReceived or debug_bitsToSend)
+  always @(slv_reg_read_sel or bitsToSend or ReadVal or state or bitsReceived or counter)
     begin
       case(slv_reg_read_sel)
-        2'b10:
-					slv_ip2bus_data <= debug_bitsToSend;
-        2'b01:
+        5'b10000:
+					slv_ip2bus_data <= bitsToSend;
+        5'b01000:
 					slv_ip2bus_data <= ReadVal;
+        5'b00100:
+					slv_ip2bus_data <= state;
+        5'b00010:
+					slv_ip2bus_data <= bitsReceived;
+        5'b00001:
+					slv_ip2bus_data <= counter;
         default:
 					slv_ip2bus_data <= 0;
       endcase
@@ -204,6 +210,4 @@ output                                    IP2Bus_Error;
   assign IP2Bus_WrAck = slv_write_ack;
   assign IP2Bus_RdAck = slv_read_ack;
   assign IP2Bus_Error = 0;
-  assign Dout = debug_bitsToSend[0];
-  assign IP_Interrupt = !debug_bitsReceived[0];
 endmodule

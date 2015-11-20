@@ -8,7 +8,7 @@ module Receiver(CLK, Resetn, Interrupt, ReadVal, Din, bitsReceived);
 	
 	reg  [10:0] bitsReceived;
 
-  always @(negedge CLK or ~Resetn)
+  always @(negedge CLK or negedge Resetn)
 	begin
 		if(!Resetn || Interrupt)
 		begin

@@ -9,7 +9,7 @@ module Transmitter(CLK, Resetn, Load, LoadVal, Dout, Done, bitsToSend);
 	
 	reg  [11:0] bitsToSend;
 
-  always @(negedge CLK or ~Resetn or posedge Load)
+  always @(negedge CLK or negedge Resetn or posedge Load)
 	begin
 		if(!Resetn)
 		begin
