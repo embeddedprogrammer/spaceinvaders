@@ -131,12 +131,15 @@ unsigned int pop()
 	return val;
 }
 
+
+
 void interrupt_handler_dispatcher(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the PIT interrupt first.
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
+		unsigned int readVal = PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR);
 		unsigned int receivedVal = PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR);
 		push(receivedVal);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
@@ -158,6 +161,14 @@ void initInterrupts()
 	microblaze_enable_interrupts();
 }
 
+void util_delayMs(int ms)
+{
+	volatile int i = 0;
+	volatile int m = 0;
+	for(m = 0; m < ms; m++)
+		for(i = 0; i < 10000; i++);
+}
+
 void pollButtons()
 {
 	const int PUSH_BUTTONS_CENTER = 0x01;
@@ -171,9 +182,15 @@ void pollButtons()
 	if (buttonState & PUSH_BUTTONS_LEFT)
 		test();
 	else if (buttonState & PUSH_BUTTONS_RIGHT)
+	{
 		enableReporting();
+		util_delayMs(500);
+	}
 	else if (buttonState & PUSH_BUTTONS_UP)
+	{
 		reset();
+		util_delayMs(500);
+	}
 	else if (buttonState & PUSH_BUTTONS_CENTER)
 		xil_printf("\n\r");
 	else if (buttonState & PUSH_BUTTONS_DOWN)
