@@ -79,7 +79,53 @@ void test()
 }
 
 bool charReceived;
-unsigned char receivedChar;
+unsigned char circularBuffer[100];
+int startIndex = -1;
+int endIndex = -1;
+
+int size()
+{
+	if(startIndex == -1)
+		return 0;
+	else if(startIndex <= endIndex)
+		return endIndex - startIndex + 1;
+	else
+		return (endIndex + 100) - startIndex + 1;
+}
+
+void push(unsigned char c)
+{
+	if(startIndex == -1)
+	{
+		startIndex = 0;
+		endIndex = 0;
+	}
+	else if(size() == 100)
+		xil_printf("Queue full!");
+	else
+	{
+		endIndex = (endIndex + 1) % 100;
+	}
+	circularBuffer[endIndex] = c;
+}
+
+unsigned char pop()
+{
+	if(size() == 0)
+	{
+		xil_printf("Queue empty!\n\r");
+		return 0;
+	}
+	int val = circularBuffer[startIndex];
+	if(size() == 1)
+	{
+		startIndex = -1;
+		endIndex = -1;
+	}
+	else
+		startIndex = (startIndex + 1) % 100;
+	return val;
+}
 
 void interrupt_handler_dispatcher(void* ptr)
 {
@@ -87,8 +133,8 @@ void interrupt_handler_dispatcher(void* ptr)
 	// Check the PIT interrupt first.
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
-		charReceived = true;
-		receivedChar = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
+		char receivedChar = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
+		push(receivedChar);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	}
 }
@@ -126,22 +172,30 @@ void pollButtons()
 		reset();
 	else if (buttonState & PUSH_BUTTONS_CENTER)
 		xil_printf("\n\r");
+	else if (buttonState & PUSH_BUTTONS_DOWN)
+	{
+		push(0x1);
+		push(0x2);
+		push(0x3);
+		push(0x4);
+		push(0x5);
+		push(0x6);
+	}
 }
 
 char lastCharReceived;
 
 void printInfo()
 {
-	if(charReceived)
+	int count = 0;
+	while(size() > 0)
 	{
-		xil_printf("0x%x\n\r", receivedChar);
-//		if(receivedChar != lastCharReceived)
-//		{
-//			lastCharReceived = receivedChar;
-//			xil_printf("\n\r");
-//		}
-		charReceived = false;
+		unsigned char receivedChar = pop();
+		xil_printf("0x%x ", receivedChar);
+		count++;
 	}
+	if(count > 0)
+		xil_printf("\n\r");
 }
 
 int main()
