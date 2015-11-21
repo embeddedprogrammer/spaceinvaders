@@ -201,7 +201,7 @@ output                                    IP2Bus_Error;
 					end
 					else if(counter == GENERATE_CLOCK_TIMEOUT)
 					begin
-						state = IDLE_RECEIVE;
+						state <= IDLE_RECEIVE;
 						counter <= 0;
 						TimeoutErrors[1] <= 1;
 					end
