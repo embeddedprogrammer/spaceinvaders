@@ -75,5 +75,6 @@ TIMESPEC TS_path1 = FROM globclk TO hdmipclk 14 ns;
 TIMESPEC TS_path2 = FROM hdmipclk TO globclk 10 ns;
 
 #### PS2 Mouse Connections
+PIN "ps2ctrl_0_PS2_C_I_BUFG.O" CLOCK_DEDICATED_ROUTE = FALSE;
 NET ps2ctrl_0_PS2_C LOC = "U16" | IOSTANDARD = "LVCMOS33" | CLOCK_DEDICATED_ROUTE = FALSE;
 NET ps2ctrl_0_PS2_D LOC = "U15" | IOSTANDARD = "LVCMOS33";
