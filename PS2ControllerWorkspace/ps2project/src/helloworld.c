@@ -58,16 +58,6 @@ void printBinary(Xuint32 num)
     xil_printf("\n\r");
 }
 
-void enableReporting()
-{
-	PS2CTRL_mWriteSlaveReg0(XPAR_PS2CTRL_0_BASEADDR, 0xF4);
-}
-
-void reset()
-{
-	PS2CTRL_mWriteSlaveReg0(XPAR_PS2CTRL_0_BASEADDR, 0xFF);
-}
-
 void test()
 {
 	xil_printf("Registers:\n\r");
@@ -131,15 +121,13 @@ unsigned int pop()
 	return val;
 }
 
-
-
 void interrupt_handler_dispatcher(void* ptr)
 {
 	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
 	// Check the PIT interrupt first.
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
-		unsigned int readVal = PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR);
+		//unsigned int readVal = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
 		unsigned int receivedVal = PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR);
 		push(receivedVal);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
@@ -221,13 +209,12 @@ void printInfo()
 	while(size() > 0)
 	{
 		unsigned int valReceived = pop();
+		unsigned char readVal = (valReceived >> 1) & 0xFF;
 		if(valReceived % 2 != 0)
-		{
 			xil_printf("-");
-		}
 		else if(!isParityValid(valReceived))
 			xil_printf("=");
-		xil_printf("0x%x ", valReceived);
+		mouseStateMachine(readVal);
 		count++;
 	}
 	if(count > 0)

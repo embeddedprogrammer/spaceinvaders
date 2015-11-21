@@ -39,21 +39,10 @@
 #define PS2CTRL_mReadSlaveReg4(BaseAddress) \
  	Xil_In32((BaseAddress) + (PS2CTRL_SLV_REG4_OFFSET))
 
-//#define PIT_mWriteControlReg(BaseAddress, Value) \
-// 	Xil_Out32((BaseAddress) + (PIT_CONTROL_REG_OFFSET), (Xuint32)(Value))
-//#define PIT_mWriteDelayReg(BaseAddress, Value) \
-// 	Xil_Out32((BaseAddress) + (PIT_DELAY_REG_OFFSET), (Xuint32)(Value))
-//
-//#define PIT_mReadControlReg(BaseAddress) \
-// 	Xil_In32((BaseAddress) + (PIT_CONTROL_REG_OFFSET))
-//#define PIT_mReadDelayReg(BaseAddress) \
-// 	Xil_In32((BaseAddress) + (PIT_DELAY_REG_OFFSET))
-
 
 /************************** Function Prototypes ****************************/
-
-//void PIT_startRecurringTimer(Xuint32 BaseAddress, Xuint32 TimerValue);
-//void PIT_startSingleTimer(Xuint32 BaseAddress, Xuint32 TimerValue);
-//void PIT_stopTimer(Xuint32 BaseAddress);
+void enableReporting();
+void reset();
+void mouseStateMachine(unsigned char readVal);
 
 #endif /** PS2CTRL_H */
