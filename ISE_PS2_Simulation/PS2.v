@@ -35,6 +35,8 @@ module PS2
 	Load,
 	LoadVal,
 	ReadVal,
+	Resetn_receive,
+	Resetn_transmit,
   // -- ADD USER PORTS ABOVE THIS LINE ---------------
 
   // -- DO NOT EDIT BELOW THIS LINE ------------------
@@ -60,8 +62,11 @@ localparam [2:0]
 	WAIT         = 3'd3,
 	ACK          = 3'd4;
 
-localparam [13:0]
-	MAXCOUNT = 14'd10_000; //At 100MHz this will give us 100 micro seconds.
+localparam [20:0]
+	CLOCK_LOW_TIME           = 21'd   10_000, //At 100MHz this will give us 100 micro seconds.
+	GENERATE_CLOCK_TIMEOUT   = 21'd1_700_000, //15ms timeout if device does not start generating clock, plus time to send byte
+	ACK_TIMEOUT              = 21'd   20_000, //200 microseconds
+	PARTIAL_RESPONSE_TIMEOUT = 21'd  200_000; //2ms (it takes about 1.1ms to send a byte)
 // -- ADD USER PARAMETERS ABOVE THIS LINE ------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -85,6 +90,8 @@ output                                    counter;
 output                                    Load;
 output                                    LoadVal;
 output                                    ReadVal;
+output                                    Resetn_receive;
+output                                    Resetn_transmit;
 // -- ADD USER PORTS ABOVE THIS LINE -----------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -115,16 +122,19 @@ output                                    IP2Bus_Error;
 	reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
 	wire                                      slv_read_ack;
 	wire                                      slv_write_ack;
-	reg        [14:0]                         counter; //To pull clock line low
+	reg        [20:0]                         counter; //To pull clock line low and handle timeouts
 	reg        [2:0]                          state;
 	wire                                      Load;
 	reg        [7:0]                          LoadVal;
 	wire       [7:0]                          ReadVal;
 	wire                                      Interrupt;
-
-	assign Resetn = Bus2IP_Resetn;
+	reg        [2:0]                          TimeoutErrors;
+	
+	assign Resetn_receive = Bus2IP_Resetn && !((state == IDLE_RECEIVE) && (counter == PARTIAL_RESPONSE_TIMEOUT));
+	assign Resetn_transmit = Bus2IP_Resetn && !((state == SEND) && (counter == GENERATE_CLOCK_TIMEOUT));
+	
 	assign IP_Interrupt = Interrupt;
-	assign Load = (state == CLOCK_LOW) && (counter == MAXCOUNT); //Load on transition from CLOCK_LOW to SEND
+	assign Load = (state == CLOCK_LOW) && (counter == CLOCK_LOW_TIME); //Load on transition from CLOCK_LOW to SEND
 	
 	assign PS2_CLK = C_I;
 	assign C_O = (state == CLOCK_LOW) ? 0 : 1;
@@ -134,8 +144,8 @@ output                                    IP2Bus_Error;
 	assign D_O = D_OUT;
 	assign D_T = (state == SEND) ? 0 : 1;
 	
-	Transmitter transmitter1 (PS2_CLK, Resetn, Load, LoadVal, D_OUT, Done, bitsToSend);
-	Receiver    receiver1    (PS2_CLK, Resetn, Interrupt, ReadVal, D_IN, bitsReceived);
+	Transmitter transmitter1 (PS2_CLK, Resetn_transmit, Load, LoadVal, D_OUT, Done, bitsToSend);
+	Receiver    receiver1    (PS2_CLK, Resetn_receive,  Interrupt, ReadVal, D_IN, bitsReceived);
 	
   assign
     slv_reg_write_sel = Bus2IP_WrCE[4:0],
@@ -151,8 +161,13 @@ output                                    IP2Bus_Error;
 			state <= IDLE_RECEIVE;
 			counter <= 0;
 			LoadVal <= 0;
+			TimeoutErrors <= 3'b000;
 		end
-		else
+		else if(slv_reg_write_sel == 5'b00100)
+		begin
+			TimeoutErrors <= 3'b000;
+		end
+		else	
 		begin	
 			case(state)
 				IDLE_RECEIVE:
@@ -161,20 +176,51 @@ output                                    IP2Bus_Error;
 						state <= CLOCK_LOW;
 						counter <= 0;
 					end
+					else if(PS2_CLK == 1'b0)
+						counter <= 0;
+					else if(counter == PARTIAL_RESPONSE_TIMEOUT)
+					begin
+						counter <= 0;
+						TimeoutErrors[0] <= 1;
+					end
+					else if(bitsReceived != 11'b11111111111)
+						counter <= counter + 1;
 				CLOCK_LOW:			
-					if(counter == MAXCOUNT)
-						begin
-							state <= SEND;
-							counter <= 0;
-						end
+					if(counter == CLOCK_LOW_TIME)
+					begin
+						state <= SEND;
+						counter <= 0;
+					end
 					else
 						counter <= counter + 1;
 				SEND:
 					if(Done == 1'b1)
+					begin
 						state <= WAIT;
+						counter <= 0;
+					end
+					else if(counter == GENERATE_CLOCK_TIMEOUT)
+					begin
+						state = IDLE_RECEIVE;
+						counter <= 0;
+						TimeoutErrors[1] <= 1;
+					end
+					else
+						counter <= counter + 1;
 				WAIT:
 					if(D_I == 1'b0)
+					begin
 						state <= ACK;
+						counter <= 0;
+					end
+					else if(counter == ACK_TIMEOUT)
+					begin
+						TimeoutErrors[2] <= 1;
+						state <= IDLE_RECEIVE;
+						counter <= 0;
+					end
+					else
+						counter <= counter + 1;
 				ACK:
 					if(D_I == 1'b1)
 						state <= IDLE_RECEIVE;
@@ -187,7 +233,7 @@ output                                    IP2Bus_Error;
 	end
 	
   // Slave register read mux
-  always @(slv_reg_read_sel or bitsToSend or ReadVal or state or bitsReceived or counter)
+  always @(slv_reg_read_sel or bitsToSend or ReadVal or state or bitsReceived or counter or TimeoutErrors)
     begin
       case(slv_reg_read_sel)
         5'b10000:
@@ -195,7 +241,11 @@ output                                    IP2Bus_Error;
         5'b01000:
 					slv_ip2bus_data <= ReadVal;
         5'b00100:
-					slv_ip2bus_data <= state;
+				begin
+					slv_ip2bus_data[2:0] <= state;
+					slv_ip2bus_data[5:3] <= TimeoutErrors;
+					slv_ip2bus_data[31:6] <= 24'd0;
+				end
         5'b00010:
 					slv_ip2bus_data <= bitsReceived;
         5'b00001:

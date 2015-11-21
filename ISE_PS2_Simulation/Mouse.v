@@ -85,6 +85,55 @@ module Mouse(D, CLK);
 		CLK_OUT = 1; #11_500; D_OUT = 0; #27_000; CLK_OUT = 0; #38_500;  //b7
 		CLK_OUT = 1; #11_500; D_OUT = 1; #27_000; CLK_OUT = 0; #38_500;  //Parity
 		CLK_OUT = 1; #11_500; D_T   = 1; #27_000; CLK_OUT = 0; #38_500;  //Stop bit
-		CLK_T = 1;		
+		CLK_T = 1;
+		
+		#500_000; //Send a partial response (for testing purposes)
+		CLK_OUT = 0;
+		D_T = 0;              D_OUT = 0; #10_000; CLK_T   = 0; #38_500;  //Start Bit
+		CLK_OUT = 1; #11_500; D_OUT = 0; #27_000; CLK_OUT = 0; #38_500;  //b0
+		CLK_OUT = 1; #11_500; D_OUT = 0; #27_000; CLK_OUT = 0; #38_500;  //b1
+		CLK_OUT = 1; #11_500; D_OUT = 1; #27_000; CLK_OUT = 0; #38_500;  //Parity
+		CLK_OUT = 1; #11_500; D_T   = 1; #27_000; CLK_OUT = 0; #38_500;  //Stop bit
+		CLK_T = 1;
+		
+		//Don't generate clock (for testing purposes)
+		#10;
+		while (CLK_IN) #1; //Wait till host pulls clock low.
+		while (!CLK_IN) #1; //Wait till host releases clock.
+		
+		//Don't acknowledge bit sent (for testing purposes)
+		while (CLK_IN) #1; //Wait till host pulls clock low.
+		while (!CLK_IN) #1; //Wait till host releases clock.
+		#100_000; //Time before mouse starts generating clock is about 100us
+		CLK_T = 0;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500; //No ACK
+		CLK_OUT = 0; #38_500; CLK_T   = 1; #20_000;
+		
+		#10;		
+		//Make sure everything works one last time.
+		while (CLK_IN) #1; //Wait till host pulls clock low.
+		while (!CLK_IN) #1; //Wait till host releases clock.
+		#100_000; //Time before mouse starts generating clock is about 100us
+		CLK_T = 0;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #38_500;
+		CLK_OUT = 0; #38_500; CLK_OUT = 1; #28_500; D_T = 0; D_OUT = 0; #10_000 //ACK
+		CLK_OUT = 0; #38_500; CLK_T   = 1; #20_000; D_T = 1; D_OUT = 1;		
 	end
 endmodule
