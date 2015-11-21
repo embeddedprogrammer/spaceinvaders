@@ -75,7 +75,7 @@ void test()
 	printBinary(PS2CTRL_mReadSlaveReg0(XPAR_PS2CTRL_0_BASEADDR));
 	xil_printf("Reg 1 - readVal     ");
 	printBinary(PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR));
-	xil_printf("Reg 2 - state and error codes");
+	xil_printf("Reg 2 - state & errs");
 	printBinary(PS2CTRL_mReadSlaveReg2(XPAR_PS2CTRL_0_BASEADDR));
 	xil_printf("Reg 3 - bitsReceived");
 	printBinary(PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR));
