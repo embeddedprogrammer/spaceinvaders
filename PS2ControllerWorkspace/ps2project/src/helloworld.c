@@ -132,6 +132,14 @@ void interrupt_handler_dispatcher(void* ptr)
 		push(receivedVal);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	}
+	if (intc_status & XPAR_PIT_0_INTERRUPT_MASK)
+	{
+		getXMovement();
+		getYMovement();
+		getMouseButtons();
+		xil_printf("\n\r");
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
+	}
 }
 
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
@@ -144,9 +152,12 @@ void initInterrupts()
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
 
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
-	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
+	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK | XPAR_PIT_0_INTERRUPT_MASK);
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
+
+	PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, 100000000);
+	init();
 }
 
 void util_delayMs(int ms)
@@ -182,14 +193,7 @@ void pollButtons()
 	else if (buttonState & PUSH_BUTTONS_CENTER)
 		xil_printf("\n\r");
 	else if (buttonState & PUSH_BUTTONS_DOWN)
-	{
-		push(0x1);
-		push(0x2);
-		push(0x3);
-		push(0x4);
-		push(0x5);
-		push(0x6);
-	}
+		resetErrors();
 }
 
 char lastCharReceived;
@@ -217,8 +221,6 @@ void printInfo()
 		mouseStateMachine(readVal);
 		count++;
 	}
-	if(count > 0)
-		xil_printf("\n\r");
 }
 
 int main()

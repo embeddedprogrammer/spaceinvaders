@@ -17,6 +17,11 @@
 
 unsigned char lastCmd = 0x0;
 
+void init()
+{
+	enableReporting();
+}
+
 void writeCmd(unsigned char cmd)
 {
 	lastCmd = cmd;
@@ -25,15 +30,23 @@ void writeCmd(unsigned char cmd)
 
 void enableReporting()
 {
+	xil_printf("0xF4 Enable reporting\n\r");
 	writeCmd(0xF4);
+}
+
+void resetErrors()
+{
+	xil_printf("Reset errors\n\r");
+	PS2CTRL_mWriteSlaveReg2(XPAR_PS2CTRL_0_BASEADDR, 0);
 }
 
 void reset()
 {
+	xil_printf("0xFF Reset\n\r");
 	writeCmd(0xFF);
 }
 
-bool reportingEnabled;
+bool reportingEnabled = false;
 
 bool getBit2(Xuint32 num, int i)
 {
@@ -53,7 +66,37 @@ void printBinary2(Xuint32 num)
     }
 }
 
+int x = 0;
+int y = 0;
+int b = 0;
+
+int getXMovement()
+{
+	xil_printf("x: %d ", x);
+	return x;
+	x = 0;
+}
+
+int getYMovement()
+{
+	xil_printf("y: %d ", y);
+	return y;
+	y = 0;
+}
+
+int getMouseButtons()
+{
+	if(getBit2(b, 0))
+		xil_printf("Left Click");
+	if(getBit2(b, 1))
+		xil_printf("Right Click");
+	if(getBit2(b, 2))
+		xil_printf("Middle Click");
+	return b;
+}
+
 int reportedCharacter = 0;
+
 
 void mouseStateMachine(unsigned char readVal)
 {
@@ -71,31 +114,27 @@ void mouseStateMachine(unsigned char readVal)
 	}
 	else if(reportingEnabled)
 	{
-		printBinary2(readVal);
-		xil_printf(" Reporting enabled");
+		//printBinary2(readVal);
+		//xil_printf(" Reporting enabled");
 		if(reportedCharacter == 0)
 		{
-			if(getBit2(readVal, 0))
-				xil_printf(" Left Click");
-			if(getBit2(readVal, 1))
-				xil_printf(" Right Click");
-			if(getBit2(readVal, 2))
-				xil_printf(" Middle Click");
 			if(getBit2(readVal, 3))
-				xil_printf(" Bit 3 always 1");
-			else
-				xil_printf(" PROBLEM: Bit 3 is not 1!!!!!");
+			{
+				xil_printf("b");
+				return;
+			}
+			b = readVal & 0x7;
 		}
 		else if(reportedCharacter == 1)
-			xil_printf(" x %d", (char)readVal);
+			x += ((char)readVal);
 		else if(reportedCharacter == 2)
-			xil_printf(" y %d", (char)readVal);
+			y += ((char)readVal);
 		reportedCharacter = (reportedCharacter + 1) % 3;
-
-		xil_printf("\n\r");
 	}
 	else if(readVal == 0xAA)
 		xil_printf("0x%x Self test passed\n\r", readVal);
 	else if(readVal == 0x00)
 		xil_printf("0x%x Mouse ID\n\r", readVal);
+	else
+		xil_printf("0x%x ??\n\r", readVal);
 }

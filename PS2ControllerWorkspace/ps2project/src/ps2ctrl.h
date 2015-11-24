@@ -27,6 +27,8 @@
 /***************** Macros (Inline Functions) Definitions *******************/
 #define PS2CTRL_mWriteSlaveReg0(BaseAddress, Value) \
  	Xil_Out32((BaseAddress) + (PS2CTRL_SLV_REG0_OFFSET), (Xuint32)(Value))
+#define PS2CTRL_mWriteSlaveReg2(BaseAddress, Value) \
+ 	Xil_Out32((BaseAddress) + (PS2CTRL_SLV_REG2_OFFSET), (Xuint32)(Value))
 
 #define PS2CTRL_mReadSlaveReg0(BaseAddress) \
  	Xil_In32((BaseAddress) + (PS2CTRL_SLV_REG0_OFFSET))
@@ -41,8 +43,13 @@
 
 
 /************************** Function Prototypes ****************************/
+void init();
+void resetErrors();
 void enableReporting();
 void reset();
 void mouseStateMachine(unsigned char readVal);
+int getXMovement();
+int getYMovement();
+int getMouseButtons();
 
 #endif /** PS2CTRL_H */
