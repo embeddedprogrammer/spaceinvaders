@@ -34,93 +34,11 @@
 #include "platform.h"       // Enables caching and other system stuff.
 #include "mb_interface.h"   // provides the microblaze interrupt enables, etc.
 #include "pit.h"
-#include "ps2ctrl.h"
-
+#include "mouse.h"
 
 #include <stdbool.h>
 
-bool getBit(Xuint32 num, int i)
-{
-	return (num >> i) & 0x1;
-}
-
-void printBinary(Xuint32 num)
-{
-    int i;
-    for(i = 0; i < 32; i++)
-    {
-        if(i % 4 == 0)
-            xil_printf(" ");
-        if(i % 8 == 0)
-            xil_printf("  ");
-        xil_printf("%d", getBit(num, 31 - i));
-    }
-    xil_printf("\n\r");
-}
-
-void test()
-{
-	xil_printf("Registers:\n\r");
-	xil_printf("Reg 0 - bitsToSend  ");
-	printBinary(PS2CTRL_mReadSlaveReg0(XPAR_PS2CTRL_0_BASEADDR));
-	xil_printf("Reg 1 - readVal     ");
-	printBinary(PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR));
-	xil_printf("Reg 2 - state & errs");
-	printBinary(PS2CTRL_mReadSlaveReg2(XPAR_PS2CTRL_0_BASEADDR));
-	xil_printf("Reg 3 - bitsReceived");
-	printBinary(PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR));
-	xil_printf("Reg 4 - counter     ");
-	printBinary(PS2CTRL_mReadSlaveReg4(XPAR_PS2CTRL_0_BASEADDR));
-}
-
-#define QUEUE_MAX_SIZE 200
-unsigned int circularBuffer[QUEUE_MAX_SIZE];
-int startIndex = -1;
-int endIndex = -1;
-
-int size()
-{
-	if(startIndex == -1)
-		return 0;
-	else if(startIndex <= endIndex)
-		return endIndex - startIndex + 1;
-	else
-		return (endIndex + QUEUE_MAX_SIZE) - startIndex + 1;
-}
-
-void push(unsigned int c)
-{
-	if(startIndex == -1)
-	{
-		startIndex = 0;
-		endIndex = 0;
-	}
-	else if(size() == QUEUE_MAX_SIZE)
-		xil_printf("Queue full!");
-	else
-	{
-		endIndex = (endIndex + 1) % QUEUE_MAX_SIZE;
-	}
-	circularBuffer[endIndex] = c;
-}
-
-unsigned int pop()
-{
-	if(size() == 0)
-	{
-		xil_printf("Queue empty!\n\r");
-		return 0;
-	}
-	int val = circularBuffer[startIndex];
-	if(size() == 1)
-	{
-		startIndex = -1;
-		endIndex = -1;
-	}
-	else
-		startIndex = (startIndex + 1) % QUEUE_MAX_SIZE;
-	return val;
-}
+bool tickOccurred = false;
 
 void interrupt_handler_dispatcher(void* ptr)
 {
@@ -128,17 +46,13 @@ void interrupt_handler_dispatcher(void* ptr)
 	// Check the PIT interrupt first.
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
-		//unsigned int readVal = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
-		unsigned int receivedVal = PS2CTRL_mReadSlaveReg3(XPAR_PS2CTRL_0_BASEADDR);
-		push(receivedVal);
+		unsigned char readVal = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
+		mouse_stateMachine(readVal);
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	}
 	if (intc_status & XPAR_PIT_0_INTERRUPT_MASK)
 	{
-		getXMovement();
-		getYMovement();
-		getMouseButtons();
-		xil_printf("\n\r");
+		tickOccurred = true;
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
 	}
 }
@@ -147,81 +61,18 @@ XGpio gpPB;   // This is a handle for the push-button GPIO block.
 
 void initInterrupts()
 {
-	// Initialize the GPIO peripherals. NOTE: We wait to do this till after the HDMI to ensure that nothing happens before the HDMI is enabled.
-	XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
-	// Set the push button peripheral to be inputs.
-	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
-
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK | XPAR_PIT_0_INTERRUPT_MASK);
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
 
-	PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, 100000000);
-	init();
-}
-
-void util_delayMs(int ms)
-{
-	volatile int i = 0;
-	volatile int m = 0;
-	for(m = 0; m < ms; m++)
-		for(i = 0; i < 10000; i++);
-}
-
-void pollButtons()
-{
-	const int PUSH_BUTTONS_CENTER = 0x01;
-    const int PUSH_BUTTONS_RIGHT  = 0x02;
-    const int PUSH_BUTTONS_LEFT   = 0x08;
-    const int PUSH_BUTTONS_UP     = 0x10;
-    const int PUSH_BUTTONS_DOWN   = 0x04;
-
-	int buttonState = XGpio_DiscreteRead(&gpPB, 1);
-
-	if (buttonState & PUSH_BUTTONS_LEFT)
-		test();
-	else if (buttonState & PUSH_BUTTONS_RIGHT)
-	{
-		enableReporting();
-		util_delayMs(500);
-	}
-	else if (buttonState & PUSH_BUTTONS_UP)
-	{
-		reset();
-		util_delayMs(500);
-	}
-	else if (buttonState & PUSH_BUTTONS_CENTER)
-		xil_printf("\n\r");
-	else if (buttonState & PUSH_BUTTONS_DOWN)
-		resetErrors();
-}
-
-char lastCharReceived;
-
-bool isParityValid(unsigned int num)
-{
-	bool result = 0;
-	int i;
-	for(i = 1; i <= 9; i++)
-		result = result ^ getBit(num, i);
-	return result; //If odd parity (what it should be), return true.
+	PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, 50000000);
+	mouse_init();
 }
 
 void printInfo()
 {
-	int count = 0;
-	while(size() > 0)
-	{
-		unsigned int valReceived = pop();
-		unsigned char readVal = (valReceived >> 1) & 0xFF;
-		if(valReceived % 2 != 0)
-			xil_printf("-");
-		else if(!isParityValid(valReceived))
-			xil_printf("=");
-		mouseStateMachine(readVal);
-		count++;
-	}
+	xil_printf("x: %d, y: %d, b: %d\n\r", mouse_getXMovement(), mouse_getYMovement(), mouse_getMouseButtons());
 }
 
 int main()
@@ -231,8 +82,11 @@ int main()
     setvbuf(stdin, NULL, _IONBF, 1024); //This makes it so we don't have to wait for the user to push enter.
     while(true)
     {
-    	pollButtons();
-    	printInfo();
+    	if(tickOccurred)
+    	{
+			printInfo();
+			tickOccurred = false;
+    	}
     }
     xil_printf("End\n\r");
     cleanup_platform();

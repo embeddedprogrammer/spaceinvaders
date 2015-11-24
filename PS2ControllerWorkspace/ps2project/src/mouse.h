@@ -20,6 +20,10 @@
 #define PS2CTRL_SLV_REG2_OFFSET 0x00000008
 #define PS2CTRL_SLV_REG3_OFFSET 0x0000000C
 #define PS2CTRL_SLV_REG4_OFFSET 0x00000010
+#define MOUSE_LEFT_BUTTON 0x1
+#define MOUSE_RIGHT_BUTTON 0x2
+#define MOUSE_MIDDLE_BUTTON 0x4
+#define MOUSE_ALL_BUTTONS 0x7
 
 /**************************** Type Definitions *****************************/
 
@@ -43,13 +47,13 @@
 
 
 /************************** Function Prototypes ****************************/
-void init();
-void resetErrors();
-void enableReporting();
-void reset();
-void mouseStateMachine(unsigned char readVal);
-int getXMovement();
-int getYMovement();
-int getMouseButtons();
+void mouse_init();
+void mouse_resetErrors();
+void mouse_enableReporting();
+void mouse_reset();
+void mouse_stateMachine(unsigned char readVal);
+int mouse_getXMovement();
+int mouse_getYMovement();
+int mouse_getMouseButtons();
 
 #endif /** PS2CTRL_H */
