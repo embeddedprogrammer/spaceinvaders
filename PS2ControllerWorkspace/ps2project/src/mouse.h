@@ -52,6 +52,7 @@ void mouse_resetErrors();
 void mouse_enableReporting();
 void mouse_reset();
 void mouse_stateMachine(unsigned char readVal);
+unsigned char mouse_ps2ctrlReadValue();
 int mouse_getXMovement();
 int mouse_getYMovement();
 int mouse_getMouseButtons();

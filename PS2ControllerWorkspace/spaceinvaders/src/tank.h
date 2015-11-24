@@ -12,6 +12,7 @@
 
 void tank_moveTankLeft();
 void tank_moveTankRight();
+void tank_moveTank(int dx);
 void tank_killTank();
 void tank_fireBullet();
 void tank_init(bool newGame);

@@ -135,6 +135,22 @@ void tank_moveTankRight()
 	draw_tank(tankPos, false);
 }
 
+void tank_moveTank(int dx)
+{
+	if(!tankAlive)
+		return;
+	point_t tankPos = getTankPositionGlobal();
+	if(dx > 2 || dx < -2)
+		draw_tank(tankPos, true);
+	tankPos.col += dx;
+	if(tankPos.col > GAMEBUFFER_WIDTH - TANK_BITMAP_WIDTH - 2)
+		tankPos.col = GAMEBUFFER_WIDTH - TANK_BITMAP_WIDTH - 2;
+	if(tankPos.col < 2)
+		tankPos.col = 2;
+	draw_tank(tankPos, false);
+	setTankPositionGlobal(tankPos);
+}
+
 void tank_fireBullet()
 {
 	if(tankAlive)

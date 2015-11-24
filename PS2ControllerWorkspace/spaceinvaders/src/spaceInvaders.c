@@ -5,6 +5,7 @@
  *      Author: superman
  */
 
+#include "mouse.h"
 #include <stdio.h>
 #include "platform.h"
 #include "keyboard.h"
@@ -29,7 +30,6 @@
 #include "xintc_l.h"        // Provides handy macros for the interrupt controller.
 #include "xac97_l.h"        // Provides the functions for the sounds controller
 #include "pit.h"
-#include "mouse.h"
 
 #include <stdbool.h>
 
@@ -48,7 +48,6 @@ void print(char *str);
 #define MAX_SILLY_TIMER 10000000;
 #define BUTTON_RESPONSE_TIME 20
 #define TANK_MOUSE_DIVIDER 1
-int x = 0;
 
 void respondToButtonInput()
 {
@@ -73,24 +72,15 @@ void respondToButtonInput()
 	else if (buttonState & PUSH_BUTTONS_DOWN)
 		sound_volumeDown();
 
-	x += mouse_getXMovement();
-
-	if (x <= -TANK_MOUSE_DIVIDER)
-	{
-		x += TANK_MOUSE_DIVIDER;
-		tank_moveTankLeft();
-	}
-	else if (x >= TANK_MOUSE_DIVIDER)
-	{
-		x -= TANK_MOUSE_DIVIDER;
-		tank_moveTankRight();
-	}
+	int x = mouse_getXMovement();
+	tank_moveTank(x / TANK_MOUSE_DIVIDER);
 	if(mouse_getMouseButtons() == MOUSE_LEFT_BUTTON)
 		tank_fireBullet();
 }
 
 u32 totalTimeSpentInInterrupts = 0;
 XTmrCtr TmrCtrInstance;
+int low_priority_intc_status;
 
 // Main interrupt handler, queries the interrupt controller to see what peripheral
 // fired the interrupt and then dispatches the corresponding interrupt handler.
@@ -102,21 +92,36 @@ void interrupt_handler_dispatcher(void* ptr)
 	//Check the PS2 Interrupt first
 	if (intc_status & XPAR_PS2CTRL_0_INTERRUPT_MASK)
 	{
-		unsigned char readVal = PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
-		mouse_stateMachine(readVal);
+		mouse_stateMachine(mouse_ps2ctrlReadValue());
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PS2CTRL_0_INTERRUPT_MASK);
 	}
-	else if (intc_status & XPAR_PIT_0_INTERRUPT_MASK) {
+	if (intc_status & XPAR_PIT_0_INTERRUPT_MASK)
+	{
+		low_priority_intc_status = low_priority_intc_status | XPAR_PIT_0_INTERRUPT_MASK;
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_PIT_0_INTERRUPT_MASK);
+	}
+	if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK)
+	{
+		low_priority_intc_status = low_priority_intc_status | XPAR_AXI_AC97_0_INTERRUPT_MASK;
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
+	}
+}
+
+void lowPriorityInterruptHandler()
+{
+	if (low_priority_intc_status & XPAR_PIT_0_INTERRUPT_MASK)
+	{
 		u32 timerValBegin = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		timer_interrupt_handler();
 		u32 timerValEnd = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		u32 timeInInterrupt = timerValEnd - timerValBegin;
 		totalTimeSpentInInterrupts += timeInInterrupt;
+		low_priority_intc_status = low_priority_intc_status & ~XPAR_PIT_0_INTERRUPT_MASK;
 	}
-	else if (intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK) {
+	if (low_priority_intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK)
+	{
 		sound_writeToFifo(100);
-		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
+		low_priority_intc_status = low_priority_intc_status & ~XPAR_AXI_AC97_0_INTERRUPT_MASK;
 	}
 }
 
@@ -336,13 +341,9 @@ int main()
 
 	PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, CLOCK_FREQ_HZ / INTERRUPTS_PER_SECOND);
 
-	while(1)  // Program never ends.
-	{
-//		getchar();
-//		PIT_stopTimer(XPAR_PIT_0_BASEADDR);
-//		Xuint32 delayValue = getNumber2();
-//		PIT_startRecurringTimer(XPAR_PIT_0_BASEADDR, delayValue);
-	}
+	while(1) // Program never ends.
+		if(low_priority_intc_status != 0)
+			lowPriorityInterruptHandler();
 
 	cleanup_platform();
 	return 0;

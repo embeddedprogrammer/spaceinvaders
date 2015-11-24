@@ -30,19 +30,21 @@ void mouse_writeCmd(unsigned char cmd)
 
 void mouse_enableReporting()
 {
-	xil_printf("0xF4 Enable reporting\n\r");
 	mouse_writeCmd(0xF4);
+}
+
+unsigned char mouse_ps2ctrlReadValue()
+{
+	return PS2CTRL_mReadSlaveReg1(XPAR_PS2CTRL_0_BASEADDR);
 }
 
 void mouse_resetErrors()
 {
-	xil_printf("Reset errors\n\r");
 	PS2CTRL_mWriteSlaveReg2(XPAR_PS2CTRL_0_BASEADDR, 0);
 }
 
 void mouse_reset()
 {
-	xil_printf("0xFF Reset\n\r");
 	mouse_writeCmd(0xFF);
 }
 
