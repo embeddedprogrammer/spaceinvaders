@@ -73,7 +73,8 @@ void test()
 	printBinary(PS2CTRL_mReadSlaveReg4(XPAR_PS2CTRL_0_BASEADDR));
 }
 
-unsigned int circularBuffer[100];
+#define QUEUE_MAX_SIZE 200
+unsigned int circularBuffer[QUEUE_MAX_SIZE];
 int startIndex = -1;
 int endIndex = -1;
 
@@ -84,7 +85,7 @@ int size()
 	else if(startIndex <= endIndex)
 		return endIndex - startIndex + 1;
 	else
-		return (endIndex + 100) - startIndex + 1;
+		return (endIndex + QUEUE_MAX_SIZE) - startIndex + 1;
 }
 
 void push(unsigned int c)
@@ -94,11 +95,11 @@ void push(unsigned int c)
 		startIndex = 0;
 		endIndex = 0;
 	}
-	else if(size() == 100)
+	else if(size() == QUEUE_MAX_SIZE)
 		xil_printf("Queue full!");
 	else
 	{
-		endIndex = (endIndex + 1) % 100;
+		endIndex = (endIndex + 1) % QUEUE_MAX_SIZE;
 	}
 	circularBuffer[endIndex] = c;
 }
@@ -117,7 +118,7 @@ unsigned int pop()
 		endIndex = -1;
 	}
 	else
-		startIndex = (startIndex + 1) % 100;
+		startIndex = (startIndex + 1) % QUEUE_MAX_SIZE;
 	return val;
 }
 

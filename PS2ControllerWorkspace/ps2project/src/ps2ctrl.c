@@ -118,7 +118,7 @@ void mouseStateMachine(unsigned char readVal)
 		//xil_printf(" Reporting enabled");
 		if(reportedCharacter == 0)
 		{
-			if(getBit2(readVal, 3))
+			if(getBit2(readVal, 3) != 1)
 			{
 				xil_printf("b");
 				return;
