@@ -248,5 +248,11 @@ XStatus DMA_CONTROLLER_SelfTest(void * baseaddr_p);
 *  Defines the number of registers available for read and write*/
 #define TEST_AXI_LITE_USER_NUM_REG 8
 
+/* user defined functions */
+void DMA_CONTROLLER_MasterInitiateTransfer(Xuint32 BaseAddress, Xuint32 SrcAddress, Xuint32 DstAddress, Xuint32 transferLength);
+
+
+
+
 
 #endif /** DMA_CONTROLLER_H */

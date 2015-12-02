@@ -71,5 +71,6 @@ typedef enum {
 }bunker_t;
 
 uint* getFrameBuffer();
+uint* getScreenCaptureFramePointer();
 
 #endif /* GLOBALS_H_ */

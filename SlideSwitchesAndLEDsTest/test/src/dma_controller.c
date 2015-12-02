@@ -72,4 +72,12 @@ void DMA_CONTROLLER_MasterRecvWord(Xuint32 BaseAddress, Xuint32 SrcAddress)
    */
   Xil_Out8(BaseAddress+DMA_CONTROLLER_MST_GO_PORT_OFFSET, MST_START);
 }
+#define DMA_CONTROLLER_INTIATE_TRANSACTION 0xCC
+void DMA_CONTROLLER_MasterInitiateTransfer(Xuint32 BaseAddress, Xuint32 SrcAddress, Xuint32 DstAddress, Xuint32 transferLength)
+{
+	Xil_Out32(BaseAddress+DMA_CONTROLLER_SLV_REG0_OFFSET, SrcAddress);// SLV0 is src address
+	Xil_Out32(BaseAddress+DMA_CONTROLLER_SLV_REG1_OFFSET, DstAddress);// SLV1 is dst address
+	Xil_Out32(BaseAddress+DMA_CONTROLLER_SLV_REG2_OFFSET, transferLength);// SLV2 is transfer length
+	Xil_Out32(BaseAddress+DMA_CONTROLLER_SLV_REG3_OFFSET, DMA_CONTROLLER_INTIATE_TRANSACTION);// SLV3 is go
+}
 

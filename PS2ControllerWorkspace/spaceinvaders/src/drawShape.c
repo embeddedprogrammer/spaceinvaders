@@ -23,8 +23,9 @@ void draw_clearScreen()
 	// Clear screen
 	int row, col;
 	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
-		for (col = 0; col < SCREENBUFFER_WIDTH; col++)
+		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
 			framePointer[row * SCREENBUFFER_WIDTH + col] = BACKGROUND_COLOR;
+		}
 }
 
 // Return the pixel of the bitmap of the specified location
@@ -54,7 +55,6 @@ int getBunkerOrTankPixel(point_t location)
 			if(bunkerPixel)
 			{
 				int damage = getBunkerDamage(bunker, bunkerErodeSectionRow, bunkerErodeSectionCol);
-				bool damagePixel = 0;
 				if(damage == 0)
 					return BUNKER_COLOR;
 				else if(damage >= 1 && getBitmapPixel(bitmapBunkerDamage0, erodeSectionPixelRow, erodeSectionPixelCol))
@@ -361,4 +361,16 @@ void draw_number(int num, int fontColor, point_t position, bool erase)
 		pos++;
 	}
 	draw_string(buffer, SCORE_123_COLOR, position, erase);
+}
+
+void draw_captureScreen()
+{
+	int row, col;
+	uint* framePointer = getFrameBuffer();
+	uint* screenCapture = getScreenCaptureFramePointer();
+	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
+		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
+			int index = row * SCREENBUFFER_WIDTH + col;
+			screenCapture[index] = framePointer[index];
+		}
 }

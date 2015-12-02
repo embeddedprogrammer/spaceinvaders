@@ -126,7 +126,8 @@ void lowPriorityInterruptHandler()
 }
 
 XAxiVdma videoDMAController;
-
+static const int frameIndex = 0;
+static const int screenCaptureFrameIndex = 1;
 void initVideo()
 {
 	init_platform(); // Necessary for all programs.
@@ -164,6 +165,7 @@ void initVideo()
 	// Now we tell the driver about the geometry of our frame buffer and a few other things.
 	// Our image is 480 x 640.
 	XAxiVdma_DmaSetup myFrameBuffer;
+
 	myFrameBuffer.VertSizeInput = 480; // 480 vertical pixels.
 	myFrameBuffer.HoriSizeInput = 640 * 4; // 640 horizontal (32-bit pixels).
 	myFrameBuffer.Stride = 640 * 4; // Dont' worry about the rest of the values.
@@ -199,7 +201,6 @@ void initVideo()
 	if (XST_FAILURE == XAxiVdma_DmaStart(&videoDMAController, XAXIVDMA_READ)) {
 		xil_printf("DMA START FAILED\r\n");
 	}
-	int frameIndex = 0;
 	// We have two frames, let's park on frame 0. Use frameIndex to index them.
 	// Note that you have to start the DMA process before parking on a frame.
 	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, frameIndex,
@@ -207,6 +208,33 @@ void initVideo()
 		xil_printf("vdma parking failed\n\r");
 	}
 }
+
+void displayScreenCapture()
+{
+	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, screenCaptureFrameIndex,  XAXIVDMA_READ)) {
+		 xil_printf("vdma parking failed\n\r");
+	}
+}
+
+void displayGame()
+{
+	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, frameIndex,  XAXIVDMA_READ)) {
+		 xil_printf("vdma parking failed\n\r");
+	}
+}
+
+void captureScreen()
+{
+	int row, col;
+	uint* framePointer = getFrameBuffer();
+	uint* screenCapture = getScreenCaptureFramePointer();
+	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
+		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
+			int index = row * SCREENBUFFER_WIDTH + col;
+			screenCapture[index] = framePointer[index];
+		}
+}
+
 static bool isNewGame;
 static int gameLevel = 1;
 

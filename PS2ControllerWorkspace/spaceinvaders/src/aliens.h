@@ -13,8 +13,8 @@
 #include "shapebitmap.h"
 #include "spaceInvaders.h"
 
-#define ALIEN_MIN_FIRE_TIME 500
-#define ALIEN_MAX_FIRE_TIME 4500
+#define ALIEN_MIN_FIRE_TIME 200
+#define ALIEN_MAX_FIRE_TIME 600
 
 bool isAlienAlive(int row, int col);
 void aliens_init();
