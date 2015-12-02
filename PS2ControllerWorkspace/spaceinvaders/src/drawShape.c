@@ -20,11 +20,13 @@
 void draw_clearScreen()
 {
 	uint* framePointer = getFrameBuffer();
+	uint* capturePointer = getScreenCaptureFramePointer();
 	// Clear screen
 	int row, col;
 	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
 		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
 			framePointer[row * SCREENBUFFER_WIDTH + col] = BACKGROUND_COLOR;
+			capturePointer[row * SCREENBUFFER_WIDTH + col] = BACKGROUND_COLOR;
 		}
 }
 

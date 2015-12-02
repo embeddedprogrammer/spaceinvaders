@@ -38,6 +38,7 @@
 
 XGpio gpLED;  // This is a handle for the LED GPIO block.
 XGpio gpPB;   // This is a handle for the push-button GPIO block.
+XGpio gpswitches;
 
 static const int enable = 1;
 static const int disable = 0;
@@ -49,7 +50,46 @@ void print(char *str);
 #define BUTTON_RESPONSE_TIME 20
 #define TANK_MOUSE_DIVIDER 1
 
-void respondToButtonInput()
+XAxiVdma videoDMAController;
+static const int frameIndex = 0;
+static const int screenCaptureFrameIndex = 1;
+
+void displayScreenCapture()
+{
+	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, screenCaptureFrameIndex,  XAXIVDMA_READ)) {
+		 xil_printf("vdma parking failed\n\r");
+	}
+}
+
+void displayGame()
+{
+	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, frameIndex,  XAXIVDMA_READ)) {
+		 xil_printf("vdma parking failed\n\r");
+	}
+}
+
+void captureScreen()
+{
+//	int row, col;
+//	uint* framePointer = getFrameBuffer();
+//	uint* screenCapture = getScreenCaptureFramePointer();
+//	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
+//		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
+//			int index = row * SCREENBUFFER_WIDTH + col;
+//			screenCapture[index] = framePointer[index];
+//		}
+	uint* capturePointer = getScreenCaptureFramePointer();
+	// Clear screen
+	int row, col;
+	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
+		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
+			capturePointer[row * SCREENBUFFER_WIDTH + col] = BACKGROUND_COLOR;
+		}
+	xil_printf("capturing screen\n\r");
+}
+
+static int switchState = 0x40;
+void respondToGPIOInput()
 {
 	const int PUSH_BUTTONS_CENTER = 0x01;
     const int PUSH_BUTTONS_RIGHT  = 0x02;
@@ -76,6 +116,25 @@ void respondToButtonInput()
 	tank_moveTank(x / TANK_MOUSE_DIVIDER);
 	if(mouse_getMouseButtons() == MOUSE_LEFT_BUTTON)
 		tank_fireBullet();
+
+	// switches
+	const int SWITCH_LD6 = 0x40;
+	const int SWITCH_LD5 = 0x20;
+	int oldSwitchState = switchState;
+	switchState = XGpio_DiscreteRead(&gpswitches, 1);
+
+	if ((switchState & SWITCH_LD5) != (oldSwitchState & SWITCH_LD5)) { // switch changed position
+		xil_printf("sw 5 hit\r\n");
+		if (switchState & SWITCH_LD5) {
+			displayScreenCapture();
+		} else {
+			displayGame();
+		}
+	}
+	if ((switchState & SWITCH_LD6) && !(oldSwitchState & SWITCH_LD6)) { // switch flipped up
+		xil_printf("sw 6 hit\r\n");
+		captureScreen();
+	}
 }
 
 u32 totalTimeSpentInInterrupts = 0;
@@ -125,9 +184,7 @@ void lowPriorityInterruptHandler()
 	}
 }
 
-XAxiVdma videoDMAController;
-static const int frameIndex = 0;
-static const int screenCaptureFrameIndex = 1;
+
 void initVideo()
 {
 	init_platform(); // Necessary for all programs.
@@ -152,9 +209,9 @@ void initVideo()
 	// function generates an error if you set the write frame count to 0. We set it to 2
 	// but ignore it because we don't need a write channel at all.
 	XAxiVdma_FrameCounter myFrameConfig;
-	myFrameConfig.ReadFrameCount = 1;
+	myFrameConfig.ReadFrameCount = 2;
 	myFrameConfig.ReadDelayTimerCount = 10;
-	myFrameConfig.WriteFrameCount = 1;
+	myFrameConfig.WriteFrameCount = 2;
 	myFrameConfig.WriteDelayTimerCount = 10;
 	Status = XAxiVdma_SetFrameCounter(&videoDMAController, &myFrameConfig);
 	if (Status != XST_SUCCESS) {
@@ -209,39 +266,13 @@ void initVideo()
 	}
 }
 
-void displayScreenCapture()
-{
-	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, screenCaptureFrameIndex,  XAXIVDMA_READ)) {
-		 xil_printf("vdma parking failed\n\r");
-	}
-}
-
-void displayGame()
-{
-	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, frameIndex,  XAXIVDMA_READ)) {
-		 xil_printf("vdma parking failed\n\r");
-	}
-}
-
-void captureScreen()
-{
-	int row, col;
-	uint* framePointer = getFrameBuffer();
-	uint* screenCapture = getScreenCaptureFramePointer();
-	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
-		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
-			int index = row * SCREENBUFFER_WIDTH + col;
-			screenCapture[index] = framePointer[index];
-		}
-}
-
 static bool isNewGame;
 static int gameLevel = 1;
 
 
 void buttons_init()
 {
-	addTimer(BUTTON_RESPONSE_TIME, true, &respondToButtonInput);
+	addTimer(BUTTON_RESPONSE_TIME, true, &respondToGPIOInput);
 }
 
 void initGameScreen()
@@ -291,6 +322,9 @@ void initInterrupts()
 	XGpio_Initialize(&gpPB, XPAR_PUSH_BUTTONS_5BITS_DEVICE_ID);
 	// Set the push button peripheral to be inputs.
 	XGpio_SetDataDirection(&gpPB, 1, 0x0000001F);
+
+	XGpio_Initialize(&gpswitches, XPAR_SLIDE_SWITCHES_8BITS_DEVICE_ID);
+	XGpio_SetDataDirection(&gpswitches, 1, 0x000000FF);
 
 	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
 	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
