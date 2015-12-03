@@ -51,18 +51,25 @@ void print(char *str);
 #define TANK_MOUSE_DIVIDER 1
 
 XAxiVdma videoDMAController;
-static const int frameIndex = 0;
-static const int screenCaptureFrameIndex = 1;
+
+
+static frame_t frameIndex = frame_gameScreen;
+
+frame_t getFrame() {
+	return frameIndex;
+}
 
 void displayScreenCapture()
 {
-	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, screenCaptureFrameIndex,  XAXIVDMA_READ)) {
+	frameIndex = frame_screenCapture;
+	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, frameIndex,  XAXIVDMA_READ)) {
 		 xil_printf("vdma parking failed\n\r");
 	}
 }
 
 void displayGame()
 {
+	frameIndex = frame_gameScreen;
 	if (XST_FAILURE == XAxiVdma_StartParking(&videoDMAController, frameIndex,  XAXIVDMA_READ)) {
 		 xil_printf("vdma parking failed\n\r");
 	}
@@ -70,22 +77,14 @@ void displayGame()
 
 void captureScreen()
 {
-//	int row, col;
-//	uint* framePointer = getFrameBuffer();
-//	uint* screenCapture = getScreenCaptureFramePointer();
-//	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
-//		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
-//			int index = row * SCREENBUFFER_WIDTH + col;
-//			screenCapture[index] = framePointer[index];
-//		}
-	uint* capturePointer = getScreenCaptureFramePointer();
-	// Clear screen
 	int row, col;
+	uint* framePointer = getFrameBuffer();
+	uint* screenCapture = getScreenCaptureFramePointer();
 	for (row = 0; row < SCREENBUFFER_HEIGHT; row++)
 		for (col = 0; col < SCREENBUFFER_WIDTH; col++) {
-			capturePointer[row * SCREENBUFFER_WIDTH + col] = BACKGROUND_COLOR;
+			int index = row * SCREENBUFFER_WIDTH + col;
+			screenCapture[index] = framePointer[index];
 		}
-	xil_printf("capturing screen\n\r");
 }
 
 static int switchState = 0x40;
@@ -124,15 +123,13 @@ void respondToGPIOInput()
 	switchState = XGpio_DiscreteRead(&gpswitches, 1);
 
 	if ((switchState & SWITCH_LD5) != (oldSwitchState & SWITCH_LD5)) { // switch changed position
-		xil_printf("sw 5 hit\r\n");
-		if (switchState & SWITCH_LD5) {
+		if (switchState & SWITCH_LD5)
 			displayScreenCapture();
-		} else {
+		else
 			displayGame();
-		}
+
 	}
 	if ((switchState & SWITCH_LD6) && !(oldSwitchState & SWITCH_LD6)) { // switch flipped up
-		xil_printf("sw 6 hit\r\n");
 		captureScreen();
 	}
 }
@@ -240,6 +237,7 @@ void initVideo()
 	// is where you will write your video data. The vdma IP/driver then streams it to the HDMI
 	// IP.
 	myFrameBuffer.FrameStoreStartAddr[0] = FRAME_BUFFER_ADDR;
+	myFrameBuffer.FrameStoreStartAddr[1] = FRAME_BUFFER_ADDR + 4*640*480;
 
 	if (XST_FAILURE == XAxiVdma_DmaSetBufferAddr(&videoDMAController,
 			XAXIVDMA_READ, myFrameBuffer.FrameStoreStartAddr)) {
@@ -273,6 +271,7 @@ static int gameLevel = 1;
 void buttons_init()
 {
 	addTimer(BUTTON_RESPONSE_TIME, true, &respondToGPIOInput);
+	gpioFunc = &respondToGPIOInput;
 }
 
 void initGameScreen()

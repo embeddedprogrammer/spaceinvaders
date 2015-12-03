@@ -7,6 +7,7 @@
 
 #include "timers.h"
 #include <stdio.h>
+#include "spaceInvaders.h"
 
 #define TIMER_INTERUPT_PERIOD 10
 #define MAX_TIMERS 10
@@ -16,9 +17,8 @@ customTimer_t timer[MAX_TIMERS];
 int addTimer(int timeRemainingInMs, bool repeat, timerFncPtr_t fncPtr)
 {
 	int i;
-	for(i = 0; i < MAX_TIMERS; i++)
-		if(!timer[i].enabled)
-		{
+	for (i = 0; i < MAX_TIMERS; i++)
+		if (!timer[i].enabled) {
 			timer[i].fncPtr = fncPtr;
 			timer[i].enabled = true;
 			timer[i].repeatEnabled = repeat;
@@ -47,12 +47,11 @@ void removeAllTimers()
 void timer_interrupt_handler()  //10ms
 {
 	int i;
+	frame_t frame = getFrame(); // disable all other timers but gpio when showing screen capture
 	for(i = 0; i < MAX_TIMERS; i++)
-		if(timer[i].enabled)
-		{
+		if (timer[i].enabled && (frame == frame_gameScreen || timer[i].fncPtr == gpioFunc)) {
 			timer[i].timeRemaining -= TIMER_INTERUPT_PERIOD;
-			if(timer[i].timeRemaining <= 0)
-			{
+			if (timer[i].timeRemaining <= 0) {
 				if(timer[i].repeatEnabled)
 					timer[i].timeRemaining = timer[i].repeatPeriod;
 				else
