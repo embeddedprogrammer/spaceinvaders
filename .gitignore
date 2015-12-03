@@ -19,18 +19,30 @@ SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/*
 !SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/
 SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/*
 !SpaceInvaderXPS_HW2/pcores/pit_v1_00_a/data/*.mpd
+
 !SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/
 SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/*
 !SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/hdl/
 !SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/data/
 SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/data/*
 !SpaceInvaderXPS_HW2/pcores/ps2ctrl_v1_00_a/data/*.mpd
+
+!SpaceInvaderXPS_HW2/pcores/dma_controller_v1_00_a/
+SpaceInvaderXPS_HW2/pcores/dma_controller_v1_00_a/*
+!SpaceInvaderXPS_HW2/pcores/dma_controller_v1_00_a/hdl/
+!SpaceInvaderXPS_HW2/pcores/dma_controller_v1_00_a/data/
+SpaceInvaderXPS_HW2/pcores/dma_controller_v1_00_a/data/*
+!SpaceInvaderXPS_HW2/pcores/dma_controller_v1_00_a/data/*.mpd
+
 SpaceInvaderXPS_HW2_hw_platform/
 ISE_PIT_Simulation/*
 !ISE_PIT_Simulation/*.v
 ISE_PS2_Simulation/*
 !ISE_PS2_Simulation/*.v
+ISE_DMA_Simulation/*
+!ISE_DMA_Simulation/*.v
 PITTimerWorkspace2/
+
 
 
 
