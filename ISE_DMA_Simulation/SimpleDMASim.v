@@ -62,12 +62,29 @@ module simpleDMASim;
 		// Wait 10 ns for global reset to finish
 		#10;
 		Bus2IP_Resetn = 1;
-		
-		
-        
-		// Add stimulus here
-
+		#10;
+		writeReg(2, 32'hDEADBEEF);
+		#10;
+		readReg(2);
 	end
+	task writeReg;
+		input [31:0] regNum;
+		input [31:0] writeVal;
+		begin
+			Bus2IP_Data = writeVal;
+			Bus2IP_WrCE = 1 << (8 - 1 - regNum);
+			#10;
+			Bus2IP_WrCE = 0;
+		end
+	endtask
+	task readReg;
+		input [31:0] regNum;
+		begin
+			Bus2IP_RdCE = 1 << (8 - 1 - regNum);
+			#10
+			Bus2IP_RdCE = 0;
+		end
+	endtask
 
 //----------------------------------------------------------------------------
 // Implementation
@@ -165,7 +182,6 @@ module simpleDMASim;
   // implement slave registers
   always @( posedge Bus2IP_Clk )
     begin
-
       if ( Bus2IP_Resetn == 1'b0 )
         begin
           slv_reg0 <= 0;
