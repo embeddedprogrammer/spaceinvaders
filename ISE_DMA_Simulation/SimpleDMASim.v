@@ -56,14 +56,16 @@ module simpleDMASim;
 		bus2ip_mst_rearbitrate = 0;
 		bus2ip_mst_cmd_timeout = 0;
 		bus2ip_mstrd_d = 0;
-		bus2ip_mstrd_src_rdy_n = 0;
-		bus2ip_mstwr_dst_rdy_n = 0;
+		bus2ip_mstrd_src_rdy_n = 1;
+		bus2ip_mstwr_dst_rdy_n = 1;
 
 		// Wait 10 ns for global reset to finish
 		#10;
 		Bus2IP_Resetn = 1;
+		#10
+		writeReg(2, 32'd20); //Length
 		#10;
-		writeReg(2, 32'hDEADBEEF);
+		writeReg(3, 32'hCC); //GO
 		#10;
 		readReg(2);
 	end
@@ -106,7 +108,7 @@ module simpleDMASim;
   reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
   wire                                      slv_read_ack;
   wire                                      slv_write_ack;
-  integer                                   byte_index, bit_index;
+  integer                                   byte_index;
 
   // Nets for user logic master model example
   // signals for master model control/status registers write/read
@@ -173,52 +175,79 @@ module simpleDMASim;
   // 
   // ------------------------------------------------------
 
+	parameter [1:0]
+		IDLE  = 2'b00,
+		READ  = 2'b01,
+		WRITE = 2'b10;
+  reg [1:0] slv_state;
+	wire FIFO_Empty;
+	wire FIFO_Full;
+	wire [31:0] Addr;
+	wire [31:0] wordsLeft;
+
   assign
     slv_reg_write_sel = Bus2IP_WrCE[7:0],
     slv_reg_read_sel  = Bus2IP_RdCE[7:0],
     slv_write_ack     = Bus2IP_WrCE[0] || Bus2IP_WrCE[1] || Bus2IP_WrCE[2] || Bus2IP_WrCE[3] || Bus2IP_WrCE[4] || Bus2IP_WrCE[5] || Bus2IP_WrCE[6] || Bus2IP_WrCE[7],
-    slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1] || Bus2IP_RdCE[2] || Bus2IP_RdCE[3] || Bus2IP_RdCE[4] || Bus2IP_RdCE[5] || Bus2IP_RdCE[6] || Bus2IP_RdCE[7];
+    slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1] || Bus2IP_RdCE[2] || Bus2IP_RdCE[3] || Bus2IP_RdCE[4] || Bus2IP_RdCE[5] || Bus2IP_RdCE[6] || Bus2IP_RdCE[7],
+		slv_go            = (slv_reg3 == 32'hCC),
+		wordsLeft         = slv_reg2;
+
+  // implement top level state machine
+	always @(posedge Bus2IP_Clk)
+	begin
+		if (!Bus2IP_Resetn)
+		begin
+			slv_state <= IDLE;
+		end
+		else
+			case(slv_state)
+				IDLE:
+					if(slv_go)
+						slv_state <= READ;
+				READ:
+					if(FIFO_Full || wordsLeft == 0)
+						slv_state <= WRITE;
+				WRITE:
+					if(FIFO_Empty)
+						if(wordsLeft == 0)
+							slv_state <= IDLE;
+						else
+							slv_state <= READ;
+			endcase
+	end
 
   // implement slave registers
-  always @( posedge Bus2IP_Clk )
-    begin
-      if ( Bus2IP_Resetn == 1'b0 )
-        begin
-          slv_reg0 <= 0;
-          slv_reg1 <= 0;
-          slv_reg2 <= 0;
-          slv_reg3 <= 0;
-          slv_reg4 <= 0;
-          slv_reg5 <= 0;
-          slv_reg6 <= 0;
-          slv_reg7 <= 0;
-        end
-      else
-        case ( slv_reg_write_sel )
-          8'b10000000 :
-						slv_reg0 <= Bus2IP_Data;
-          8'b01000000 :
-						slv_reg1 <= Bus2IP_Data;
-          8'b00100000 :
-						slv_reg2 <= Bus2IP_Data;
-          8'b00010000 :
-						slv_reg3 <= Bus2IP_Data;
-          8'b00001000 :
-						slv_reg4 <= Bus2IP_Data;
-          8'b00000100 :
-						slv_reg5 <= Bus2IP_Data;
-          8'b00000010 :
-						slv_reg6 <= Bus2IP_Data;
-          8'b00000001 :
-						slv_reg7 <= Bus2IP_Data;
-        endcase
-    end // SLAVE_REG_WRITE_PROC
+  always @(posedge Bus2IP_Clk)
+	begin
+		if (!Bus2IP_Resetn)
+		begin
+			slv_reg0 <= 0;
+			slv_reg1 <= 0;
+			slv_reg2 <= 0;
+			slv_reg3 <= 0;
+			slv_reg4 <= 0;
+			slv_reg5 <= 0;
+			slv_reg6 <= 0;
+			slv_reg7 <= 0;
+		end
+		else
+			case(slv_reg_write_sel)
+				8'b10000000: slv_reg0 <= Bus2IP_Data;
+				8'b01000000: slv_reg1 <= Bus2IP_Data;
+				8'b00100000: slv_reg2 <= Bus2IP_Data;
+				8'b00010000: slv_reg3 <= Bus2IP_Data;
+				8'b00001000: slv_reg4 <= Bus2IP_Data;
+				8'b00000100: slv_reg5 <= Bus2IP_Data;
+				8'b00000010: slv_reg6 <= Bus2IP_Data;
+				8'b00000001: slv_reg7 <= Bus2IP_Data;
+			endcase
+	end // SLAVE_REG_WRITE_PROC	
 
   // implement slave model register read mux
-  always @( slv_reg_read_sel or slv_reg0 or slv_reg1 or slv_reg2 or slv_reg3 or slv_reg4 or slv_reg5 or slv_reg6 or slv_reg7 )
-    begin 
-
-      case ( slv_reg_read_sel )
+  always @(slv_reg_read_sel or slv_reg0 or slv_reg1 or slv_reg2 or slv_reg3 or slv_reg4 or slv_reg5 or slv_reg6 or slv_reg7)
+    begin
+      case (slv_reg_read_sel)
         8'b10000000 : slv_ip2bus_data <= slv_reg0;
         8'b01000000 : slv_ip2bus_data <= slv_reg1;
         8'b00100000 : slv_ip2bus_data <= slv_reg2;
@@ -229,7 +258,6 @@ module simpleDMASim;
         8'b00000001 : slv_ip2bus_data <= slv_reg7;
         default : slv_ip2bus_data <= 0;
       endcase
-
     end // SLAVE_REG_READ_PROC
 
   //----------------------------------------------------------------------------
@@ -329,7 +357,7 @@ module simpleDMASim;
   begin
     if (Bus2IP_Resetn == 1'b0 )
       begin
-        for ( byte_index = 0; byte_index <= 14; byte_index = byte_index+1 ) 
+        for ( byte_index = 0; byte_index <= 15; byte_index = byte_index+1 ) 
           mst_reg[byte_index] <= 0;
       end
     else 
@@ -550,9 +578,9 @@ module simpleDMASim;
     .Data_In(bus2ip_mstrd_d),
     .FIFO_Read(mst_fifo_valid_read_xfer),
     .Data_Out(ip2bus_mstwr_d),
-    .FIFO_Full(),
-    .FIFO_Empty(),
-    .Addr()); //DATA_CAPTURE_FIFO_I
+    .FIFO_Full(FIFO_Full),
+    .FIFO_Empty(FIFO_Empty),
+    .Addr(Addr)); //DATA_CAPTURE_FIFO_I
   // ------------------------------------------------------------
   // Example code to drive IP to Bus signals
   // ------------------------------------------------------------
