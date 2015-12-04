@@ -60,7 +60,7 @@ module simpleDMASim;
 		bus2ip_mstwr_dst_rdy_n = 1;
 
 		// Wait 10 ns for global reset to finish
-		#10;
+		#30;
 		Bus2IP_Resetn = 1;
 		#10
 		writeReg(0, 32'b1111_0000_0000_0000); //Src
@@ -132,10 +132,10 @@ module simpleDMASim;
   reg        [C_SLV_DWIDTH-1 : 0]           slv_reg1;
   reg        [C_SLV_DWIDTH-1 : 0]           slv_reg2;
   reg        [C_SLV_DWIDTH-1 : 0]           slv_reg3;
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_reg4;
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_reg5;
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_reg6;
-  reg        [C_SLV_DWIDTH-1 : 0]           slv_reg7;
+  wire       [C_SLV_DWIDTH-1 : 0]           slv_reg4;
+  wire       [C_SLV_DWIDTH-1 : 0]           slv_reg5;
+  wire       [C_SLV_DWIDTH-1 : 0]           slv_reg6;
+  wire       [C_SLV_DWIDTH-1 : 0]           slv_reg7;
   wire       [7 : 0]                        slv_reg_write_sel;
   wire       [7 : 0]                        slv_reg_read_sel;
   reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
@@ -214,6 +214,7 @@ module simpleDMASim;
   reg [31:0] slv_addr_reg;
   wire [16:0] slv_be_reg;
 	reg slv_cmd_mst_go;
+	reg slv_interrupt;
 	
 	wire FIFO_Empty;
 	wire FIFO_Full;
@@ -226,8 +227,12 @@ module simpleDMASim;
     slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1] || Bus2IP_RdCE[2] || Bus2IP_RdCE[3] || Bus2IP_RdCE[4] || Bus2IP_RdCE[5] || Bus2IP_RdCE[6] || Bus2IP_RdCE[7],
 		slv_go            = (slv_reg3 == 32'hCC),
 		bytesLeft         = slv_reg2,
-		slv_be_reg        = 16'b1111_1111_1111_1111;
-
+		slv_be_reg        = 16'b1111_1111_1111_1111,
+		slv_reg4          = slv_state,
+		slv_reg5          = mst_cmd_sm_state,
+		slv_reg6          = {mst_cmd_sm_set_timeout, mst_cmd_sm_set_error, mst_cmd_sm_busy},
+		slv_reg7          = {FIFO_Empty, FIFO_Full};
+		
   // implement top level state machine
 	always @(posedge Bus2IP_Clk)
 	begin
@@ -237,6 +242,7 @@ module simpleDMASim;
 			slv_cntl_reg <= 4'b0;
 			slv_addr_reg <= 32'b0;
 			slv_cmd_mst_go <= 0;
+			slv_interrupt <= 0;
 		end
 		else
 		begin
@@ -244,8 +250,11 @@ module simpleDMASim;
 				slv_cmd_mst_go <= 0;
 			case(slv_state)
 				IDLE:
+				begin
+					slv_interrupt <= 0;
 					if(slv_go)
 						slv_state <= READ;
+				end
 				READ:
 					if(FIFO_Full || bytesLeft == 0)
 					begin
@@ -265,7 +274,10 @@ module simpleDMASim;
 				WRITE:
 					if(FIFO_Empty)
 						if(bytesLeft == 0)
+						begin
 							slv_state <= IDLE;
+							slv_interrupt <= 1;
+						end
 						else
 							slv_state <= READ;
 					else if(!mst_cmd_sm_busy) // If not busy, start a write transaction
@@ -276,7 +288,7 @@ module simpleDMASim;
 					end
 					else if(bus2ip_mst_cmplt)
 					begin
-						slv_cmd_mst_go <= 0; 
+						slv_cmd_mst_go <= 0;
 						slv_reg1 <= slv_reg1 + 4; // Increment destination address
 					end
 					else
@@ -294,10 +306,10 @@ module simpleDMASim;
 			slv_reg1 <= 0;
 			slv_reg2 <= 0;
 			slv_reg3 <= 0;
-			slv_reg4 <= 0;
-			slv_reg5 <= 0;
-			slv_reg6 <= 0;
-			slv_reg7 <= 0;
+//			slv_reg4 <= 0; //Read only
+//			slv_reg5 <= 0;
+//			slv_reg6 <= 0;
+//			slv_reg7 <= 0;
 		end
 		else
 			case(slv_reg_write_sel)
@@ -305,10 +317,10 @@ module simpleDMASim;
 				8'b01000000: slv_reg1 <= Bus2IP_Data;
 				8'b00100000: slv_reg2 <= Bus2IP_Data;
 				8'b00010000: slv_reg3 <= Bus2IP_Data;
-				8'b00001000: slv_reg4 <= Bus2IP_Data;
-				8'b00000100: slv_reg5 <= Bus2IP_Data;
-				8'b00000010: slv_reg6 <= Bus2IP_Data;
-				8'b00000001: slv_reg7 <= Bus2IP_Data;
+//				8'b00001000: slv_reg4 <= Bus2IP_Data;  Read only
+//				8'b00000100: slv_reg5 <= Bus2IP_Data;
+//				8'b00000010: slv_reg6 <= Bus2IP_Data;
+//				8'b00000001: slv_reg7 <= Bus2IP_Data;
 			endcase
 	end // SLAVE_REG_WRITE_PROC	
 
