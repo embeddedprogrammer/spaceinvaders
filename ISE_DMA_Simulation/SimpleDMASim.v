@@ -63,11 +63,44 @@ module simpleDMASim;
 		#10;
 		Bus2IP_Resetn = 1;
 		#10
-		writeReg(2, 32'd20); //Length
+		writeReg(0, 32'b1111_0000_0000_0000); //Src
+		writeReg(1, 32'b1001_0000_0000_0000); //Dst
+		writeReg(2, 32'd128); //Length
 		#10;
 		writeReg(3, 32'hCC); //GO
 		#10;
-		readReg(2);
+		
+		while(1)
+		begin
+			if(ip2bus_mstrd_req)
+			begin
+				#20
+				bus2ip_mst_cmdack = 1;
+				#10
+				bus2ip_mst_cmdack = 0;
+				#20
+				bus2ip_mst_cmplt = 1;
+				bus2ip_mstrd_src_rdy_n = 0;
+				#10
+				bus2ip_mst_cmplt = 0;
+				bus2ip_mstrd_src_rdy_n = 1;
+			end
+			else if(ip2bus_mstwr_req)
+			begin
+				#20
+				bus2ip_mst_cmdack = 1;
+				#10
+				bus2ip_mst_cmdack = 0;
+				#20
+				bus2ip_mst_cmplt = 1;
+				bus2ip_mstwr_dst_rdy_n = 0;
+				#10
+				bus2ip_mst_cmplt = 0;
+				bus2ip_mstwr_dst_rdy_n = 1;
+			end
+			else
+				#10;
+		end
 	end
 	task writeReg;
 		input [31:0] regNum;
@@ -108,11 +141,9 @@ module simpleDMASim;
   reg        [C_SLV_DWIDTH-1 : 0]           slv_ip2bus_data;
   wire                                      slv_read_ack;
   wire                                      slv_write_ack;
-  integer                                   byte_index;
 
   // Nets for user logic master model example
   // signals for master model control/status registers write/read
-  reg        [C_SLV_DWIDTH-1 : 0]           mst_ip2bus_data;
   wire                                      mst_reg_write_req;
   wire                                      mst_reg_read_req;
   wire       [3 : 0]                        mst_reg_write_sel;
@@ -120,16 +151,13 @@ module simpleDMASim;
   wire                                      mst_write_ack;
   wire                                      mst_read_ack;
   // signals for master model control/status registers
-  reg        [7 : 0]                        mst_reg [0 : 15];
-  reg        [15 : 0]                       mst_byte_we;
   wire                                      mst_cntl_rd_req;
   wire                                      mst_cntl_wr_req;
   wire                                      mst_cntl_bus_lock;
   wire                                      mst_cntl_burst;
   wire       [C_MST_AWIDTH-1 : 0]           mst_ip2bus_addr;
-  wire       [11 : 0]                       mst_xfer_length;
   wire       [15 : 0]                       mst_ip2bus_be;
-  reg                                       mst_go;
+  wire                                      mst_go;
   // signals for master model command interface state machine
     parameter  [1 : 0]                         CMD_IDLE = 2'b00,
                                              CMD_RUN  = 2'b01,
@@ -180,10 +208,16 @@ module simpleDMASim;
 		READ  = 2'b01,
 		WRITE = 2'b10;
   reg [1:0] slv_state;
+	
+	wire [31:0] bytesLeft;
+	reg [7:0] slv_cntl_reg;
+  reg [31:0] slv_addr_reg;
+  wire [16:0] slv_be_reg;
+	reg slv_cmd_mst_go;
+	
 	wire FIFO_Empty;
 	wire FIFO_Full;
-	wire [31:0] Addr;
-	wire [31:0] wordsLeft;
+	wire [31:0] FIFO_Addr;
 
   assign
     slv_reg_write_sel = Bus2IP_WrCE[7:0],
@@ -191,7 +225,8 @@ module simpleDMASim;
     slv_write_ack     = Bus2IP_WrCE[0] || Bus2IP_WrCE[1] || Bus2IP_WrCE[2] || Bus2IP_WrCE[3] || Bus2IP_WrCE[4] || Bus2IP_WrCE[5] || Bus2IP_WrCE[6] || Bus2IP_WrCE[7],
     slv_read_ack      = Bus2IP_RdCE[0] || Bus2IP_RdCE[1] || Bus2IP_RdCE[2] || Bus2IP_RdCE[3] || Bus2IP_RdCE[4] || Bus2IP_RdCE[5] || Bus2IP_RdCE[6] || Bus2IP_RdCE[7],
 		slv_go            = (slv_reg3 == 32'hCC),
-		wordsLeft         = slv_reg2;
+		bytesLeft         = slv_reg2,
+		slv_be_reg        = 16'b1111_1111_1111_1111;
 
   // implement top level state machine
 	always @(posedge Bus2IP_Clk)
@@ -199,22 +234,55 @@ module simpleDMASim;
 		if (!Bus2IP_Resetn)
 		begin
 			slv_state <= IDLE;
+			slv_cntl_reg <= 4'b0;
+			slv_addr_reg <= 32'b0;
+			slv_cmd_mst_go <= 0;
 		end
 		else
+		begin
+			if(mst_cmd_sm_clr_go)
+				slv_cmd_mst_go <= 0;
 			case(slv_state)
 				IDLE:
 					if(slv_go)
 						slv_state <= READ;
 				READ:
-					if(FIFO_Full || wordsLeft == 0)
+					if(FIFO_Full || bytesLeft == 0)
+					begin
 						slv_state <= WRITE;
+					end
+					else if(!mst_cmd_sm_busy) // If not busy, start a read transaction
+					begin
+						slv_cntl_reg <= 4'b0001;  // Set control register to read
+						slv_addr_reg <= slv_reg0; // Set address to source address
+						slv_cmd_mst_go <= 1;      // Go!
+					end
+					else if(bus2ip_mst_cmplt)
+					begin
+						slv_reg2 <= slv_reg2 - 4; // Decrement bytes left
+						slv_reg0 <= slv_reg0 + 4; // Increment source address
+					end
 				WRITE:
 					if(FIFO_Empty)
-						if(wordsLeft == 0)
+						if(bytesLeft == 0)
 							slv_state <= IDLE;
 						else
 							slv_state <= READ;
+					else if(!mst_cmd_sm_busy) // If not busy, start a write transaction
+					begin
+						slv_cntl_reg <= 4'b0010;  // Set control register to write
+						slv_addr_reg <= slv_reg1; // Set address to destination address
+						slv_cmd_mst_go <= 1;      // Go!
+					end
+					else if(bus2ip_mst_cmplt)
+					begin
+						slv_cmd_mst_go <= 0; 
+						slv_reg1 <= slv_reg1 + 4; // Increment destination address
+					end
+					else
+						slv_cmd_mst_go <= 0;
 			endcase
+		end
 	end
 
   // implement slave registers
@@ -334,111 +402,14 @@ module simpleDMASim;
   assign mst_write_ack     = mst_reg_write_req;
   assign mst_read_ack      = mst_reg_read_req;
 
-  // rip control bits from master model registers
-  assign mst_cntl_rd_req   = mst_reg[0][0];
-  assign mst_cntl_wr_req   = mst_reg[0][1];
-  assign mst_cntl_bus_lock = mst_reg[0][2];
-  assign mst_cntl_burst    = mst_reg[0][3];
-  assign mst_ip2bus_addr   = {mst_reg[7], mst_reg[6], mst_reg[5], mst_reg[4]};
-  assign mst_ip2bus_be     = {mst_reg[9], mst_reg[8]};
-  assign mst_xfer_length   = {mst_reg[13][3 : 0] , mst_reg[12]};
-
-  // implement byte write enable for each byte slice of the master model registers
-  always @ (Bus2IP_BE or mst_reg_write_req or mst_reg_write_sel )
-  begin
-
-    for ( byte_index = 0; byte_index <= 15; byte_index = byte_index+1)
-      mst_byte_we[byte_index] <= mst_reg_write_req & mst_reg_write_sel[3 - (byte_index/BE_WIDTH) ] &
-                                 Bus2IP_BE[byte_index- ((byte_index/BE_WIDTH)*BE_WIDTH)];
-    end // MASTER_REG_BYTE_WR_EN 
-
-  // implement master model registers
-  always @ ( posedge Bus2IP_Clk )
-  begin
-    if (Bus2IP_Resetn == 1'b0 )
-      begin
-        for ( byte_index = 0; byte_index <= 15; byte_index = byte_index+1 ) 
-          mst_reg[byte_index] <= 0;
-      end
-    else 
-      begin
-        if ( mst_byte_we[0] == 1'b1 )
-          begin
-            mst_reg[0][7:0] <= Bus2IP_Data[7 : 0];
-          end
-
-        mst_reg[1][1] <= mst_cmd_sm_busy;  
-
-        if (mst_byte_we[1] == 1'b1 )
-        // allows a clear of the 'Done'/'error'/'timeout'
-          begin
-            mst_reg[1][0] <= Bus2IP_Data[(1-(1/BE_WIDTH)*BE_WIDTH)*8];
-            mst_reg[1][2] <= Bus2IP_Data[(1-(1/BE_WIDTH)*BE_WIDTH)*8+2];
-            mst_reg[1][3] <= Bus2IP_Data[(1-(1/BE_WIDTH)*BE_WIDTH)*8+3];
-          end
-        else
-          // 'Done'/'error'/'timeout' from master control state machine
-          begin
-            mst_reg[1][0]  <= mst_cmd_sm_set_done | mst_reg[1][0];
-            mst_reg[1][2]  <= mst_cmd_sm_set_error | mst_reg[1][2];
-            mst_reg[1][3]  <= mst_cmd_sm_set_timeout | mst_reg[1][3];
-          end 	 
-        // byte 2 and 3 are reserved
-        // address register (byte 4 to 7)
-        // be register (byte 8 to 9)
-        // length register (byte 12 to 13)
-        // byte 10, 11 and 14 are reserved
-        for ( byte_index = 4; byte_index <= 14; byte_index = byte_index+1 )
-          if ( mst_byte_we[byte_index] == 1'b1 )
-            begin
-              mst_reg[byte_index] <= Bus2IP_Data[(byte_index-(byte_index/BE_WIDTH)*BE_WIDTH)*8 +: 8];
-          end
-    end
-  end // MASTER_REG_WRITE_PROC
-
-  // implement master model write only 'go' port
-  always @ ( posedge Bus2IP_Clk)
-    begin
-      if (Bus2IP_Resetn == 1'b0 || mst_cmd_sm_clr_go == 1'b1 )
-        begin
-          mst_go <= 1'b0;
-        end
-      else
-      if ( mst_cmd_sm_busy == 1'b0 && mst_byte_we[GO_BYTE_LANE] == 1'b1 && Bus2IP_Data[(GO_BYTE_LANE-(GO_BYTE_LANE/BE_WIDTH)*BE_WIDTH)*8 +: 8] == GO_DATA_KEY)
-        begin
-          mst_go   <= 1'b1;
-        end
-    end
-  // implement master model register read mux
-  always @ (mst_reg_read_sel, mst_reg)
-    begin 
-      case (mst_reg_read_sel)
-      4'b1000:
-          for ( byte_index = 0; byte_index <= BE_WIDTH-1; byte_index = byte_index+1 )
-            mst_ip2bus_data[byte_index*8 +: 8] <= mst_reg[byte_index];
-      4'b0100:
-          for ( byte_index = 0; byte_index <= BE_WIDTH-1; byte_index = byte_index+1 )
-            mst_ip2bus_data[byte_index*8 +: 8] <= mst_reg[BE_WIDTH+byte_index];
-      4'b0010:
-          for ( byte_index = 0; byte_index <= BE_WIDTH-1; byte_index = byte_index+1 )
-            mst_ip2bus_data[byte_index*8 +: 8] <= mst_reg[BE_WIDTH*2+byte_index];
-      4'b0001:
-          for ( byte_index = 0; byte_index <= BE_WIDTH-1; byte_index = byte_index+1 )
-            if ( byte_index == (BE_WIDTH-1) )
-              begin
-                // go port is not readable
-                mst_ip2bus_data[byte_index*8 +: 8] <= 8'b0;
-              end
-          else
-            begin
-              mst_ip2bus_data[byte_index*8 +: 8] <= mst_reg[BE_WIDTH*3+byte_index];
-            end
-        default : 
-          begin
-            mst_ip2bus_data <= 0;
-          end
-      endcase
-  end //MASTER_REG_READ_PROC	
+  // rip control bits from slv control registers
+  assign mst_cntl_rd_req   = slv_cntl_reg[0];
+  assign mst_cntl_wr_req   = slv_cntl_reg[1];
+  assign mst_cntl_bus_lock = slv_cntl_reg[2];
+  assign mst_cntl_burst    = slv_cntl_reg[3];
+  assign mst_ip2bus_addr   = slv_addr_reg;
+  assign mst_ip2bus_be     = slv_be_reg;
+	assign mst_go            = slv_cmd_mst_go;
 
   // user logic master command interface assignments
   assign ip2bus_mstrd_req  = mst_cmd_sm_rd_req;
@@ -580,12 +551,12 @@ module simpleDMASim;
     .Data_Out(ip2bus_mstwr_d),
     .FIFO_Full(FIFO_Full),
     .FIFO_Empty(FIFO_Empty),
-    .Addr(Addr)); //DATA_CAPTURE_FIFO_I
+    .Addr(FIFO_Addr)); //DATA_CAPTURE_FIFO_I
   // ------------------------------------------------------------
   // Example code to drive IP to Bus signals
   // ------------------------------------------------------------
 
-assign IP2Bus_Data = (slv_read_ack == 1'b1) ? slv_ip2bus_data :  (mst_read_ack == 1'b1) ? mst_ip2bus_data :  0 ;
+assign IP2Bus_Data = (slv_read_ack == 1'b1) ? slv_ip2bus_data : 0;
   assign IP2Bus_WrAck = slv_write_ack || mst_write_ack;
   assign IP2Bus_RdAck = slv_read_ack || mst_read_ack;
   assign IP2Bus_Error = 0;
