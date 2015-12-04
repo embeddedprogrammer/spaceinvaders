@@ -253,7 +253,10 @@ module simpleDMASim;
 				begin
 					slv_interrupt <= 0;
 					if(slv_go)
+					begin
 						slv_state <= READ;
+						slv_reg3 <= 0; //Clear GO register.
+					end
 				end
 				READ:
 					if(FIFO_Full || bytesLeft == 0)

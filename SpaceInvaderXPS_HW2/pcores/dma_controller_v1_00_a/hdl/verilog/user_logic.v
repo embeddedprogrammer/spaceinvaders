@@ -54,7 +54,7 @@
 module user_logic
 (
   // -- ADD USER PORTS BELOW THIS LINE ---------------
-  // --USER ports added here 
+  slv_interrupt,
   // -- ADD USER PORTS ABOVE THIS LINE ---------------
 
   // -- DO NOT EDIT BELOW THIS LINE ------------------
@@ -100,7 +100,7 @@ parameter C_SLV_DWIDTH                   = 32;
 // -- DO NOT EDIT ABOVE THIS LINE --------------------
 
 // -- ADD USER PORTS BELOW THIS LINE -----------------
-// --USER ports added here 
+output                                    slv_interrupt;
 // -- ADD USER PORTS ABOVE THIS LINE -----------------
 
 // -- DO NOT EDIT BELOW THIS LINE --------------------
@@ -264,7 +264,10 @@ input                                     bus2ip_mstwr_dst_rdy_n;
 				begin
 					slv_interrupt <= 0;
 					if(slv_go)
+					begin
 						slv_state <= READ;
+						slv_reg3 <= 0; //Clear GO register.
+					end
 				end
 				READ:
 					if(FIFO_Full || bytesLeft == 0)
@@ -306,21 +309,14 @@ input                                     bus2ip_mstwr_dst_rdy_n;
 						slv_cmd_mst_go <= 0;
 			endcase
 		end
-	end
-
+		
   // implement slave registers
-  always @(posedge Bus2IP_Clk)
-	begin
 		if (!Bus2IP_Resetn)
 		begin
 			slv_reg0 <= 0;
 			slv_reg1 <= 0;
 			slv_reg2 <= 0;
 			slv_reg3 <= 0;
-//			slv_reg4 <= 0; //Read only
-//			slv_reg5 <= 0;
-//			slv_reg6 <= 0;
-//			slv_reg7 <= 0;
 		end
 		else
 			case(slv_reg_write_sel)
@@ -328,10 +324,6 @@ input                                     bus2ip_mstwr_dst_rdy_n;
 				8'b01000000: slv_reg1 <= Bus2IP_Data;
 				8'b00100000: slv_reg2 <= Bus2IP_Data;
 				8'b00010000: slv_reg3 <= Bus2IP_Data;
-//				8'b00001000: slv_reg4 <= Bus2IP_Data;  Read only
-//				8'b00000100: slv_reg5 <= Bus2IP_Data;
-//				8'b00000010: slv_reg6 <= Bus2IP_Data;
-//				8'b00000001: slv_reg7 <= Bus2IP_Data;
 			endcase
 	end // SLAVE_REG_WRITE_PROC	
 
