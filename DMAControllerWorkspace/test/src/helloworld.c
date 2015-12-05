@@ -60,23 +60,49 @@ int testSwitchesAndLEDs()
     return 0;
 }
 
+void printArray(int* array, int length)
+{
+	int i;
+	for(i = 0; i < length; i++)
+	{
+		printf("%d: %x\r\n", i, array[i]);
+	}
+}
+
+void setArray(int* array, int length, int rst)
+{
+	int i;
+	for(i = 0; i < length; i++)
+	{
+		array[i] = rst ? 0 : 0xDEADBEEF + i;
+	}
+}
+
 int main()
 {
-	int source_word = 0xDEADBEEF;
-	int destination_word = 0x0;
+	int source_word[16];
+	int destination_word[16];
+	setArray(source_word, 16, 0);
+	setArray(destination_word, 16, 1);
 
     init_platform();
 
     print("Hello World\n\r");
     cleanup_platform();
     printf("Printing value before DMA transfer.\n\r");
-    xil_printf("%x\r\n", destination_word);
+    printArray(destination_word, 16);
 
-    DMA_CONTROLLER_MasterRecvWord(XPAR_DMA_CONTROLLER_0_BASEADDR, (Xuint32) &source_word);
-    DMA_CONTROLLER_MasterSendWord(XPAR_DMA_CONTROLLER_0_BASEADDR, (Xuint32) &destination_word);
+    DMA_CONTROLLER_InitiateTransfer(XPAR_DMA_CONTROLLER_0_BASEADDR, (Xuint32) &source_word, (Xuint32) &destination_word, 4 * 10);
 
     printf("Printing value after DMA transfer.\n\r");
-    xil_printf("%x\r\n", destination_word);
+    printArray(destination_word, 16);
+
+	setArray(source_word, 6, 1);
+    DMA_CONTROLLER_InitiateTransfer(XPAR_DMA_CONTROLLER_0_BASEADDR, (Xuint32) &source_word, (Xuint32) &destination_word, 4 * 10);
+
+    printf("Printing value after 2nd DMA transfer.\n\r");
+    printArray(destination_word, 16);
+
 
 //    cleanup_platform();
 
