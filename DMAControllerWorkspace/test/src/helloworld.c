@@ -25,6 +25,7 @@
 #include "xparameters.h"
 #include "xgpio.h"
 #include "dma_controller.h"
+#include "xintc_l.h"
 
 XGpio xgpio_pushButtons;
 XGpio xgpio_LEDs;
@@ -78,17 +79,51 @@ void setArray(int* array, int length, int rst)
 	}
 }
 
+// Main interrupt handler, queries the interrupt controller to see what peripheral
+// fired the interrupt and then dispatches the corresponding interrupt handler.
+// This routine acks the interrupt at the controller level but the peripheral
+// interrupt must be ack'd by the dispatched interrupt handler.
+void interrupt_handler_dispatcher(void* ptr)
+{
+	static int boolPrintedFIT = 0;
+	int intc_status = XIntc_GetIntrStatus(XPAR_INTC_0_BASEADDR);
+	//Check the PS2 Interrupt first
+	if (intc_status & XPAR_FIT_TIMER_0_INTERRUPT_MASK)
+	{
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_FIT_TIMER_0_INTERRUPT_MASK);
+		if(!boolPrintedFIT)
+		{
+			xil_printf("FIT Timer Interrupt\n\r");
+			boolPrintedFIT = 1;
+		}
+	}
+	if (intc_status & XPAR_DMA_CONTROLLER_0_INTERRUPT_MASK)
+	{
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_DMA_CONTROLLER_0_INTERRUPT_MASK);
+		printf("DMA Interrupt\n\r");
+	}
+}
+
+void initInterrupts()
+{
+	microblaze_register_handler(interrupt_handler_dispatcher, NULL);
+	XIntc_EnableIntr(XPAR_INTC_0_BASEADDR,
+			(XPAR_FIT_TIMER_0_INTERRUPT_MASK
+		   | XPAR_DMA_CONTROLLER_0_INTERRUPT_MASK));
+	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
+	microblaze_enable_interrupts();
+}
+
 int main()
 {
+    init_platform();
+    initInterrupts();
+
 	int source_word[16];
 	int destination_word[16];
 	setArray(source_word, 16, 0);
 	setArray(destination_word, 16, 1);
 
-    init_platform();
-
-    print("Hello World\n\r");
-    cleanup_platform();
     printf("Printing value before DMA transfer.\n\r");
     printArray(destination_word, 16);
 
@@ -103,8 +138,7 @@ int main()
     printf("Printing value after 2nd DMA transfer.\n\r");
     printArray(destination_word, 16);
 
-
-//    cleanup_platform();
+    cleanup_platform();
 
     return 0;
 }
