@@ -30,6 +30,7 @@
 #include "xintc_l.h"        // Provides handy macros for the interrupt controller.
 #include "xac97_l.h"        // Provides the functions for the sounds controller
 #include "pit.h"
+#include "dma_controller.h"
 
 #include <stdbool.h>
 
@@ -55,7 +56,8 @@ XAxiVdma videoDMAController;
 
 static frame_t frameIndex = frame_gameScreen;
 
-frame_t getFrame() {
+frame_t getFrame()
+{
 	return frameIndex;
 }
 
@@ -75,8 +77,39 @@ void displayGame()
 	}
 }
 
-void captureScreen()
+XTmrCtr TmrCtrInstance;
+
+void initTimer()
 {
+	if (XTmrCtr_Initialize(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID) != XST_SUCCESS)
+	{
+		xil_printf("Error initializing timer\n\r");
+	    return;
+	}
+}
+
+void startTimer()
+{
+	XTmrCtr_Reset(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID);
+	XTmrCtr_Start(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID);
+}
+
+void printTime()
+{
+    int timeInMs = (XTmrCtr_GetValue(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID) / (XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ / 1000));
+    xil_printf("Total time to capture screen: %d ms\n\r", timeInMs);
+}
+
+void captureScreenHW()
+{
+	startTimer();
+    DMA_CONTROLLER_InitiateTransfer(XPAR_DMA_CONTROLLER_0_BASEADDR, getFrameBuffer(), getScreenCaptureFramePointer(),
+    		4 * SCREENBUFFER_HEIGHT * SCREENBUFFER_WIDTH);
+}
+
+void captureScreenSW()
+{
+	startTimer();
 	int row, col;
 	uint* framePointer = getFrameBuffer();
 	uint* screenCapture = getScreenCaptureFramePointer();
@@ -85,6 +118,7 @@ void captureScreen()
 			int index = row * SCREENBUFFER_WIDTH + col;
 			screenCapture[index] = framePointer[index];
 		}
+	printTime();
 }
 
 static int switchState = 0x40;
@@ -117,25 +151,27 @@ void respondToGPIOInput()
 		tank_fireBullet();
 
 	// switches
-	const int SWITCH_LD6 = 0x40;
-	const int SWITCH_LD5 = 0x20;
+	const int SWITCH_SW7 = 0x80;
+	const int SWITCH_SW6 = 0x40;
+	const int SWITCH_SW5 = 0x20;
 	int oldSwitchState = switchState;
 	switchState = XGpio_DiscreteRead(&gpswitches, 1);
 
-	if ((switchState & SWITCH_LD5) != (oldSwitchState & SWITCH_LD5)) { // switch changed position
-		if (switchState & SWITCH_LD5)
+	if ((switchState & SWITCH_SW5) != (oldSwitchState & SWITCH_SW5)) { // switch changed position
+		if (switchState & SWITCH_SW5)
 			displayScreenCapture();
 		else
 			displayGame();
 
 	}
-	if ((switchState & SWITCH_LD6) && !(oldSwitchState & SWITCH_LD6)) { // switch flipped up
-		captureScreen();
+	if ((switchState & SWITCH_SW7) && !(oldSwitchState & SWITCH_SW7)) { // switch flipped up
+		captureScreenHW();
+	}
+	if ((switchState & SWITCH_SW6) && !(oldSwitchState & SWITCH_SW6)) { // switch flipped up
+		captureScreenSW();
 	}
 }
 
-u32 totalTimeSpentInInterrupts = 0;
-XTmrCtr TmrCtrInstance;
 int low_priority_intc_status;
 
 // Main interrupt handler, queries the interrupt controller to see what peripheral
@@ -161,17 +197,18 @@ void interrupt_handler_dispatcher(void* ptr)
 		low_priority_intc_status = low_priority_intc_status | XPAR_AXI_AC97_0_INTERRUPT_MASK;
 		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_AXI_AC97_0_INTERRUPT_MASK);
 	}
+	if (intc_status & XPAR_DMA_CONTROLLER_0_INTERRUPT_MASK)
+	{
+		printTime();
+		XIntc_AckIntr(XPAR_INTC_0_BASEADDR, XPAR_DMA_CONTROLLER_0_INTERRUPT_MASK);
+	}
 }
 
 void lowPriorityInterruptHandler()
 {
 	if (low_priority_intc_status & XPAR_PIT_0_INTERRUPT_MASK)
 	{
-		u32 timerValBegin = XTmrCtr_GetValue(&TmrCtrInstance, 0);
 		timer_interrupt_handler();
-		u32 timerValEnd = XTmrCtr_GetValue(&TmrCtrInstance, 0);
-		u32 timeInInterrupt = timerValEnd - timerValBegin;
-		totalTimeSpentInInterrupts += timeInInterrupt;
 		low_priority_intc_status = low_priority_intc_status & ~XPAR_PIT_0_INTERRUPT_MASK;
 	}
 	if (low_priority_intc_status & XPAR_AXI_AC97_0_INTERRUPT_MASK)
@@ -180,7 +217,6 @@ void lowPriorityInterruptHandler()
 		low_priority_intc_status = low_priority_intc_status & ~XPAR_AXI_AC97_0_INTERRUPT_MASK;
 	}
 }
-
 
 void initVideo()
 {
@@ -330,30 +366,11 @@ void initInterrupts()
 			(XPAR_PIT_0_INTERRUPT_MASK
 		   | XPAR_PUSH_BUTTONS_5BITS_IP2INTC_IRPT_MASK
 		   | XPAR_AXI_AC97_0_INTERRUPT_MASK
-		   | XPAR_PS2CTRL_0_INTERRUPT_MASK));
+		   | XPAR_PS2CTRL_0_INTERRUPT_MASK
+		   | XPAR_DMA_CONTROLLER_0_INTERRUPT_MASK));
 
 	XIntc_MasterEnable(XPAR_INTC_0_BASEADDR);
 	microblaze_enable_interrupts();
-}
-
-void initTimers()
-{
-	if (XTmrCtr_Initialize(&TmrCtrInstance, XPAR_AXI_TIMER_0_DEVICE_ID) != XST_SUCCESS)
-	{
-		xil_printf("Error initializing timer\n\r");
-	    return;
-	}
-	XTmrCtr_Start(&TmrCtrInstance, 0);
-}
-
-void printStats()
-{
-    int runningTimeInMs = (XTmrCtr_GetValue(&TmrCtrInstance, 0) / (XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ / 1000));
-    int interruptsTimeInMs = (totalTimeSpentInInterrupts / (XPAR_AXI_TIMER_0_CLOCK_FREQ_HZ / 1000));
-
-    xil_printf("Total time running: %d\n\r", runningTimeInMs);
-    xil_printf("Total time spent in interrupts: %d\n\r", interruptsTimeInMs);
-    xil_printf("CPU utilization: %d%%\n\r", interruptsTimeInMs*100/runningTimeInMs);
 }
 
 #define ENTER 13
@@ -392,7 +409,7 @@ int getNumber2()
 
 int main()
 {
-	initTimers();
+	initTimer();
 	initVideo();
 	sound_initAC97();
 	mouse_init();
